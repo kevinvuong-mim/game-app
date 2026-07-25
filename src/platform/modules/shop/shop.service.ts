@@ -6,14 +6,13 @@ import type { ProductKey } from '@platform/modules/iap';
 import { iap, getProductByKey } from '@platform/modules/iap';
 import { saveService } from '@platform/modules/save';
 
-type ShopItemType = 'skin' | 'boost' | 'entitlement' | 'coins';
+type ShopItemType = 'boost' | 'entitlement' | 'coins';
 
 export interface ShopItem {
   id: string;
   name: string;
   icon: string;
   price: number;
-  duration?: number;
   type: ShopItemType;
   description: string;
   productKey?: ProductKey;
@@ -21,13 +20,6 @@ export interface ShopItem {
   coinAmount?: number;
   currency: 'iap' | 'coins';
 }
-
-const DEFAULT_PLAYER_COLOR = 0x4a90d9;
-
-const SKIN_COLORS: Record<string, number> = {
-  skin_blue: 0x4a90d9,
-  skin_gold: 0xffd700,
-};
 
 class ShopService {
   private items: ShopItem[] = catalog.items as ShopItem[];
@@ -57,10 +49,6 @@ class ShopService {
     return !!usePlatformStore.getState().inventory.items[id];
   }
 
-  isEquipped(id: string): boolean {
-    return !!usePlatformStore.getState().inventory.items[id]?.equipped;
-  }
-
   getQuantity(id: string): number {
     return usePlatformStore.getState().inventory.items[id]?.quantity ?? 0;
   }
@@ -74,39 +62,10 @@ class ShopService {
     return true;
   }
 
-  /** Timed coin multiplier is unused; skills are quantity-based. */
-  getActiveCoinMultiplier(_now = Date.now()): number {
-    return 1;
-  }
-
-  getEquippedSkinColor(): number {
-    const items = usePlatformStore.getState().inventory.items;
-    for (const [id, item] of Object.entries(items)) {
-      if (item.equipped && SKIN_COLORS[id] !== undefined) {
-        return SKIN_COLORS[id];
-      }
-    }
-    return DEFAULT_PLAYER_COLOR;
-  }
-
-  equipSkin(id: string): boolean {
-    const item = this.getItem(id);
-    if (!item || item.type !== 'skin' || !this.isOwned(id)) {
-      return false;
-    }
-    usePlatformStore.getState().equipItem(id);
-    eventBus.emit('shop:equip', { itemId: id });
-    return true;
-  }
-
   async purchase(itemId: string): Promise<boolean> {
     const item = this.getItem(itemId);
     if (!item) {
       logger.warn(`[Shop] Item not found: ${itemId}`);
-      return false;
-    }
-
-    if (item.type === 'skin' && this.isOwned(itemId)) {
       return false;
     }
 
@@ -141,22 +100,9 @@ class ShopService {
     return true;
   }
 
-  async restore(): Promise<number> {
-    const result = await iap.restore();
-    return result.restoredEntitlements.length;
-  }
-
   private grantItem(item: ShopItem): void {
-    const store = usePlatformStore.getState();
-
-    if (item.type === 'skin') {
-      store.addItem(item.id);
-      store.equipItem(item.id);
-      return;
-    }
-
     if (item.type === 'boost') {
-      store.addItem(item.id, 1);
+      usePlatformStore.getState().addItem(item.id, 1);
     }
   }
 

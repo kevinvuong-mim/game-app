@@ -13,9 +13,6 @@ interface CurrencyState {
 interface InventoryItem {
   id: string;
   quantity: number;
-  equipped?: boolean;
-  /** Boost expiry wall-clock ms; ignored for non-boost items. */
-  expiresAt?: number;
 }
 
 interface InventoryState {
@@ -33,8 +30,6 @@ export interface SettingsState {
   language: string;
   soundEnabled: boolean;
   musicEnabled: boolean;
-  vibrationEnabled: boolean;
-  graphicsQuality: 'low' | 'high' | 'medium';
 }
 
 type MissionStatus = 'active' | 'claimed' | 'completed';
@@ -104,7 +99,5 @@ export const DEFAULT_STATE: PlatformState = {
     language: 'en',
     soundEnabled: true,
     musicEnabled: true,
-    vibrationEnabled: true,
-    graphicsQuality: 'medium',
   },
 };

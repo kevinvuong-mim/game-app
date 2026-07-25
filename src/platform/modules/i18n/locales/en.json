@@ -5,7 +5,6 @@
   },
   "home": {
     "play": "Play",
-    "playBadge": "NEW",
     "shop": "Shop",
     "settings": "Settings",
     "leaderboard": "Leaderboard",
@@ -41,16 +40,9 @@
   "shop": {
     "title": "Shop",
     "buy": "Buy",
-    "equip": "Equip",
-    "equipped": "Equipped",
-    "owned": "Owned",
-    "restore": "Restore Purchases",
     "purchaseSuccess": "Purchased {{name}}!",
-    "equipSuccess": "Equipped {{name}}!",
     "purchaseFailed": "Purchase failed",
     "notEnoughCoins": "Not enough coins!",
-    "restoreSuccess": "Restored {{count}} purchase(s)",
-    "restoreEmpty": "No purchases to restore",
     "getCoins": {
       "missions": "Missions",
       "dailyReward": "Daily Reward",
@@ -140,9 +132,7 @@
     "mergeFruit15": "Merge fruits 15 times",
     "watchAd2": "Watch 2 ad videos",
     "playGames5": "Play 5 matches",
-    "dailyLogin": "Log in every day",
-    "watchAd3": "Watch 3 rewarded ads",
-    "watchAd": "Watch ad"
+    "dailyLogin": "Log in every day"
   },
   "dailyReward": {
     "title": "Daily Reward",

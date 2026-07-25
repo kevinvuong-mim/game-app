@@ -25,7 +25,6 @@ export interface MissionDefinition {
   goScene?: string;
   titleKey: string;
   reward: MissionReward;
-  descriptionKey?: string;
   resetPolicy?: MissionResetPolicy;
   type: MissionBehaviorType | string;
 }

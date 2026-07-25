@@ -1,5 +1,4 @@
 import { adsModule } from './ads.service';
-import { ads } from '@platform/core/advertising';
 import type { IEventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
 
@@ -23,12 +22,7 @@ export function bindAdsController(events: IEventBus): () => void {
     }),
 
     events.on('ad:show:request', async ({ placement }) => {
-      const result = await adsModule.showPlacement(placement);
-      events.emit('ad:show:result', { placement, ...result });
-    }),
-
-    events.on('ad:banner:hide', () => {
-      void ads.hideBanner();
+      await adsModule.showPlacement(placement);
     }),
 
     events.on('ad:context:change', ({ context }) => {

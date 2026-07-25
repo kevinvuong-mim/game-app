@@ -40,7 +40,6 @@ class DeepLinkService {
     }
 
     this.pendingDeepLink = parsed;
-    eventBus.emit('deeplink:received', parsed);
     logger.info('[DeepLink] Received', {
       scene: parsed.scene,
       path: parsed.path,

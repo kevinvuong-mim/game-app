@@ -29,7 +29,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(
-    data: { score?: number; jumps?: number; returnTo?: string; isNewRecord?: boolean } = {}
+    data: { score?: number; returnTo?: string; isNewRecord?: boolean } = {}
   ): void {
     this.cleanupEventListeners();
     this.events.once('shutdown', this.shutdown, this);

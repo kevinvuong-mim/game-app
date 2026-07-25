@@ -103,10 +103,6 @@ function clearLegacySession(): void {
   }
 }
 
-export function hasGameRunSave(): boolean {
-  return loadGameRunSave() != null;
-}
-
 export function loadGameRunSave(): GameRunSnapshot | null {
   if (memory) return memory;
 

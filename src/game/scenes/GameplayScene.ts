@@ -184,7 +184,6 @@ export class GameplayScene extends Phaser.Scene {
         this.completeSession();
         this.scene.start('GameOver', {
           score: this.score,
-          jumps: this.merges,
           returnTo: this.returnTo,
           isNewRecord,
         });
@@ -296,7 +295,7 @@ export class GameplayScene extends Phaser.Scene {
     eventBus.emit('game:over', {
       score: this.score,
       duration,
-      jumps: this.merges,
+      merges: this.merges,
     });
   }
 
@@ -481,7 +480,6 @@ export class GameplayScene extends Phaser.Scene {
       if (!this.sys.isActive()) return;
       this.scene.start('GameOver', {
         score: this.score,
-        jumps: this.merges,
         returnTo: this.returnTo,
         isNewRecord,
       });

@@ -2,13 +2,9 @@ import '@fontsource/fredoka/400.css';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
 import '@fontsource/fredoka/700.css';
-import '@fontsource/nunito-sans/400.css';
-import '@fontsource/nunito-sans/500.css';
-import '@fontsource/nunito-sans/600.css';
-import '@fontsource/nunito-sans/700.css';
 
 const FONT_WEIGHTS = [400, 500, 600, 700] as const;
-const FONT_FAMILIES = ['Fredoka', 'Nunito Sans'] as const;
+const FONT_FAMILIES = ['Fredoka'] as const;
 
 /**
  * iOS WKWebView only exposes web fonts to canvas after they are used in the DOM.

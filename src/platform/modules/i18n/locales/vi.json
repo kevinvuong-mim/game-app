@@ -5,7 +5,6 @@
   },
   "home": {
     "play": "Chơi",
-    "playBadge": "MỚI",
     "shop": "Cửa hàng",
     "settings": "Cài đặt",
     "leaderboard": "Xếp hạng",
@@ -41,16 +40,9 @@
   "shop": {
     "title": "Cửa hàng",
     "buy": "Mua",
-    "equip": "Mặc",
-    "equipped": "Đang mặc",
-    "owned": "Đã sở hữu",
-    "restore": "Khôi phục mua hàng",
     "purchaseSuccess": "Đã mua {{name}}!",
-    "equipSuccess": "Đã mặc {{name}}!",
     "purchaseFailed": "Mua thất bại",
     "notEnoughCoins": "Không đủ xu!",
-    "restoreSuccess": "Đã khôi phục {{count}} giao dịch",
-    "restoreEmpty": "Không có giao dịch để khôi phục",
     "getCoins": {
       "missions": "Nhiệm vụ",
       "dailyReward": "Quà hàng ngày",
@@ -140,9 +132,7 @@
     "mergeFruit15": "Hợp 15 lần trái cây",
     "watchAd2": "Xem 2 video quảng cáo",
     "playGames5": "Chơi 5 ván bất kỳ",
-    "dailyLogin": "Đăng nhập mỗi ngày",
-    "watchAd3": "Xem 3 quảng cáo thưởng",
-    "watchAd": "Xem quảng cáo"
+    "dailyLogin": "Đăng nhập mỗi ngày"
   },
   "dailyReward": {
     "title": "Quà hàng ngày",

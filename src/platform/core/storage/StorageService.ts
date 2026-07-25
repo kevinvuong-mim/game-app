@@ -27,10 +27,6 @@ class StorageService {
     return resolveDurableProviderType();
   }
 
-  setPrimary(type: StorageProviderType): void {
-    this.primary = type;
-  }
-
   getProvider(type?: StorageProviderType): StorageProvider {
     return this.providers.get(type ?? this.primary) ?? this.providers.get('memory')!;
   }

@@ -6,7 +6,6 @@ import { leaderboard, type LeaderboardService } from './leaderboard.service';
  * from data fetching:
  *
  * - `leaderboard:refresh` → force a network refresh.
- * - `leaderboard:page`    → load a specific page.
  */
 class LeaderboardController {
   constructor(private readonly service: LeaderboardService = leaderboard) {}
@@ -15,10 +14,6 @@ class LeaderboardController {
     const unsubs = [
       events.on('leaderboard:refresh', (payload) => {
         void this.service.refreshLeaderboard(payload?.page).catch(() => undefined);
-      }),
-
-      events.on('leaderboard:page', ({ page }) => {
-        void this.service.fetchLeaderboard({ page, force: true }).catch(() => undefined);
       }),
 
       events.on('app:resume', () => {
