@@ -97,6 +97,29 @@ export class RevenueCatAdapter implements IAPProvider {
     return extractKnownEntitlements(customerInfo);
   }
 
+  async findRecentPurchase(productId: string, withinMs: number): Promise<ProviderPurchase | null> {
+    await this.ensureConfigured();
+
+    try {
+      await Purchases.invalidateCustomerInfoCache();
+      const { customerInfo } = await Purchases.getCustomerInfo();
+      const now = Date.now();
+      let latest: ProviderPurchase | null = null;
+
+      for (const purchase of mapNonSubscriptionPurchases(customerInfo)) {
+        if (purchase.productId !== productId) continue;
+        if (now - purchase.purchaseTime > withinMs) continue;
+        if (!latest || purchase.purchaseTime > latest.purchaseTime) {
+          latest = purchase;
+        }
+      }
+
+      return latest;
+    } catch (error) {
+      throw mapRevenueCatError(error);
+    }
+  }
+
   async linkAppUser(appUserId: string): Promise<void> {
     await this.ensureConfigured();
     if (!appUserId) return;
@@ -203,6 +226,41 @@ function mapCustomerInfoToPurchases(customerInfo: CustomerInfo): ProviderPurchas
     });
   }
 
+  return purchases;
+}
+
+type NonSubscriptionTx = {
+  productIdentifier?: string;
+  transactionIdentifier?: string;
+  purchaseDate?: string;
+  purchaseDateMillis?: number;
+};
+
+/** Consumable / non-renewing history from CustomerInfo (field may vary by SDK version). */
+function mapNonSubscriptionPurchases(customerInfo: CustomerInfo): ProviderPurchase[] {
+  const raw = (customerInfo as CustomerInfo & {
+    nonSubscriptionTransactions?: NonSubscriptionTx[];
+  }).nonSubscriptionTransactions;
+
+  if (!Array.isArray(raw)) return [];
+
+  const purchases: ProviderPurchase[] = [];
+  for (const tx of raw) {
+    const productId = tx.productIdentifier;
+    if (!productId || !getProductById(productId)) continue;
+    const purchaseTime =
+      typeof tx.purchaseDateMillis === 'number'
+        ? tx.purchaseDateMillis
+        : Date.parse(tx.purchaseDate ?? '');
+    if (!Number.isFinite(purchaseTime)) continue;
+
+    purchases.push({
+      productId,
+      transactionId: tx.transactionIdentifier ?? `${productId}-${purchaseTime}`,
+      receipt: tx.transactionIdentifier ?? productId,
+      purchaseTime,
+    });
+  }
   return purchases;
 }
 

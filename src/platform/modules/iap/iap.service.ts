@@ -175,13 +175,32 @@ class IapService {
     }
   }
 
-  /** After a client timeout, re-check store entitlements in case the charge succeeded. */
+  /** After a client timeout, re-check the store in case the charge succeeded. */
   private async tryRecoverTimedOutPurchase(product: ProductDefinition): Promise<boolean> {
     if (!this.provider) return false;
-    // Consumables are not restored as entitlements — cannot recover after timeout.
-    if (product.type === 'consumable') return false;
 
     try {
+      if (product.type === 'consumable') {
+        const withinMs = IAP_PURCHASE_TIMEOUT_MS + 60_000;
+        const recent = await this.provider.findRecentPurchase?.(product.id, withinMs);
+        if (!recent) {
+          logger.warn('[IAP] Timeout recovery: no recent consumable purchase', {
+            productId: product.id,
+          });
+          return false;
+        }
+
+        this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+          productId: product.id,
+          entitlement: product.entitlement,
+        });
+        logger.info('[IAP] Recovered consumable after purchase timeout', {
+          productId: product.id,
+          transactionId: recent.transactionId,
+        });
+        return true;
+      }
+
       const remote = await this.provider.fetchEntitlements();
       if (!remote.includes(product.entitlement)) {
         logger.warn('[IAP] Timeout recovery: entitlement not present yet', {

@@ -56,7 +56,7 @@ export function buildDeepLinkSceneData(payload: DeepLinkPayload): Record<string,
       url: payload.url,
       path: payload.path,
       source: payload.source,
+      params: payload.params,
     },
-    ...payload.params,
   };
 }

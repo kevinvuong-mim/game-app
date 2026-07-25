@@ -96,6 +96,11 @@ export class BannerStateMachine {
     this.state = 'DESTROYED';
   }
 
+  /** Leave DESTROYED so banners can load again after ads are re-enabled. */
+  forceReset(): void {
+    this.state = 'IDLE';
+  }
+
   reset(): void {
     if (this.state !== 'DESTROYED') {
       this.state = 'IDLE';

@@ -31,6 +31,7 @@ export interface RecordResultParams {
  */
 export class GameSyncService {
   private flushing = false;
+  private dirty = false;
 
   constructor(
     private readonly repository: GameSyncRepository = gameSyncRepository,
@@ -65,7 +66,10 @@ export class GameSyncService {
   }
 
   async flush(): Promise<void> {
-    if (this.flushing) return;
+    if (this.flushing) {
+      this.dirty = true;
+      return;
+    }
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
 
     const gameId = getConfig().gameId;
@@ -77,7 +81,10 @@ export class GameSyncService {
 
     this.flushing = true;
     try {
-      await this.flushForGuest(gameId, guestId);
+      do {
+        this.dirty = false;
+        await this.flushForGuest(gameId, guestId);
+      } while (this.dirty);
     } finally {
       this.flushing = false;
     }

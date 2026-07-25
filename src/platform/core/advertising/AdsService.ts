@@ -91,6 +91,12 @@ class AdsService {
     if (!enabled && this.provider) {
       void this.hideBanner();
       this.destroyBanner();
+      return;
+    }
+
+    if (enabled) {
+      this.bannerState.forceReset();
+      this.activeBannerPlacement = null;
     }
   }
 
@@ -100,6 +106,13 @@ class AdsService {
     if (removed && this.provider) {
       void this.hideBanner();
       this.destroyBanner();
+      return;
+    }
+
+    // Re-enable: leave DESTROYED so the next context can load a banner again.
+    if (!removed) {
+      this.bannerState.forceReset();
+      this.activeBannerPlacement = null;
     }
   }
 

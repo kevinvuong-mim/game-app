@@ -3,6 +3,11 @@ import { Capacitor } from '@capacitor/core';
 import { logger } from '../../error';
 import type { AdFormat, AdShowResult, IAdsProvider, AdsProviderConfig } from '../types';
 
+type AdMobRewardItem = {
+  type?: string;
+  amount?: number;
+};
+
 type AdMobModule = {
   BannerAdSize: { BANNER: string };
   BannerAdPosition: { BOTTOM_CENTER: string };
@@ -20,9 +25,9 @@ type AdMobModule = {
     showInterstitial: () => Promise<void>;
     addListener: (
       event: string,
-      handler: (event: { type?: string }) => void
+      handler: (event: AdMobRewardItem) => void
     ) => Promise<{ remove: () => void }>;
-    showRewardVideoAd: () => Promise<{ type?: string }>;
+    showRewardVideoAd: () => Promise<AdMobRewardItem>;
     prepareAppOpenAd: (opts: { adId: string }) => Promise<void>;
     prepareInterstitial: (opts: { adId: string }) => Promise<void>;
     prepareRewardVideoAd: (opts: { adId: string }) => Promise<void>;
@@ -78,15 +83,53 @@ export class AdMobAdsProvider implements IAdsProvider {
       return { shown: false, error: 'Rewarded ad not ready' };
     }
 
-    let rewarded = false;
     const transactionId = `admob-${Date.now()}-${placement}`;
+    let rewardItem: AdMobRewardItem | null = null;
+    let dismissed = false;
+    let failed = false;
+
+    // Attach listeners BEFORE show — Rewarded can fire (and Android may resolve
+    // showRewardVideoAd early) before we would otherwise subscribe.
+    const rewardHandle = await this.admob!.AdMob.addListener(
+      this.admob!.RewardAdPluginEvents.Rewarded,
+      (reward) => {
+        rewardItem = reward;
+      }
+    );
+    const dismissHandle = await this.admob!.AdMob.addListener(
+      this.admob!.RewardAdPluginEvents.Dismissed,
+      () => {
+        dismissed = true;
+      }
+    );
+    const failHandle = await this.admob!.AdMob.addListener(
+      this.admob!.RewardAdPluginEvents.FailedToLoad,
+      () => {
+        failed = true;
+      }
+    );
 
     try {
-      const result = await this.admob!.AdMob.showRewardVideoAd();
-      rewarded = result?.type === 'rewarded' || result?.type === 'Rewarded';
+      const showResult = await this.admob!.AdMob.showRewardVideoAd();
+      // `type` is the reward *name* (e.g. "coins"), not the string "rewarded".
+      if (!rewardItem && isRewardItem(showResult)) {
+        rewardItem = showResult;
+      }
+
+      // Wait until the ad finishes (Rewarded / Dismissed). show() may resolve early on Android.
+      const deadline = Date.now() + 5 * 60_000;
+      while (!rewardItem && !dismissed && !failed && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
       this.ready.delete('rewarded');
       this.cached.delete('rewarded');
 
+      if (failed && !rewardItem) {
+        return { shown: false, error: 'Rewarded ad failed' };
+      }
+
+      const rewarded = rewardItem != null;
       return {
         shown: true,
         rewarded,
@@ -96,11 +139,19 @@ export class AdMobAdsProvider implements IAdsProvider {
           rewarded,
           transactionId,
           placement,
+          rewardType: rewardItem?.type,
+          rewardAmount: rewardItem?.amount,
         },
       };
     } catch (error) {
       logger.warn('[Ads] AdMob rewarded show failed', error);
       return { shown: false, error: 'Rewarded ad failed' };
+    } finally {
+      await Promise.allSettled([
+        rewardHandle.remove(),
+        dismissHandle.remove(),
+        failHandle.remove(),
+      ]);
     }
   }
 
@@ -234,4 +285,11 @@ export class AdMobAdsProvider implements IAdsProvider {
     }
     return adId;
   }
+}
+
+/** True when the payload looks like a real AdMob reward item (name + amount). */
+function isRewardItem(value: AdMobRewardItem | null | undefined): value is AdMobRewardItem {
+  if (!value || typeof value !== 'object') return false;
+  if (typeof value.amount === 'number' && value.amount > 0) return true;
+  return typeof value.type === 'string' && value.type.length > 0;
 }

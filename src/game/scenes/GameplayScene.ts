@@ -300,6 +300,10 @@ export class GameplayScene extends Phaser.Scene {
   }
 
   private captureRun(): GameRunSnapshot {
+    // Matter collision can mark isMerging before flushMergeQueue runs — finish
+    // pending merges first so pause/save never drops both parents without the child.
+    this.mergeSystem.flushMergeQueue();
+
     const fruits = [...this.fruits]
       .filter((fruit) => fruit.active && !fruit.isMerging)
       .map((fruit) => {
@@ -370,6 +374,9 @@ export class GameplayScene extends Phaser.Scene {
       spawned.setVelocity(fruit.vx, fruit.vy);
       spawned.setAngularVelocity(fruit.angularVelocity);
     }
+
+    // Pile may still be settling after restore/undo — avoid instant false game-over.
+    this.dangerLine.armGrace(1000);
   }
 
   private addBackgroundImage(width: number, height: number): void {

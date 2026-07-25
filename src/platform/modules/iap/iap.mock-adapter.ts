@@ -27,6 +27,7 @@ export class MockIapAdapter implements IAPProvider {
   readonly name = 'mock';
 
   private restoredPurchases: ProviderPurchase[] = [];
+  private recentPurchases: ProviderPurchase[] = [];
 
   async initialize(): Promise<void> {
     logger.info('[IAP] Mock adapter initialized');
@@ -52,6 +53,11 @@ export class MockIapAdapter implements IAPProvider {
       purchaseTime: Date.now(),
     };
 
+    this.recentPurchases = [
+      purchase,
+      ...this.recentPurchases.filter((p) => p.productId !== productId),
+    ].slice(0, 20);
+
     // Only persist non-consumables for restore; coin packs are one-shot grants.
     if (product.type !== 'consumable') {
       this.restoredPurchases = [
@@ -66,6 +72,15 @@ export class MockIapAdapter implements IAPProvider {
   async restore(): Promise<ProviderPurchase[]> {
     logger.info('[IAP] Mock restore', { count: this.restoredPurchases.length });
     return [...this.restoredPurchases];
+  }
+
+  async findRecentPurchase(productId: string, withinMs: number): Promise<ProviderPurchase | null> {
+    const now = Date.now();
+    return (
+      this.recentPurchases.find(
+        (p) => p.productId === productId && now - p.purchaseTime <= withinMs
+      ) ?? null
+    );
   }
 
   async fetchEntitlements(): Promise<string[]> {
