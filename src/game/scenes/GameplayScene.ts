@@ -143,7 +143,7 @@ export class GameplayScene extends Phaser.Scene {
       getSelectedSkillId: () => this.skills.selectedSkillId,
     });
 
-    this.skills = new SkillController(this, this.factory, this.skillBar, {
+    this.skills = new SkillController(this.factory, this.skillBar, {
       isActive: () => this.isGameplayInteractive(),
       canDrop: () => this.canDrop,
       getCurrentLevel: () => this.currentLevel,
@@ -395,9 +395,9 @@ export class GameplayScene extends Phaser.Scene {
         aspect = source.height / source.width;
       }
     }
-    const displayH = displayW * aspect;
+    const displayH = displayW * aspect * 1.2;
     const centerX = width / 2;
-    const centerY = Math.min(height * 0.50, height - 200 - displayH / 2);
+    const centerY = Math.min(height * 0.5, height - 200 - displayH / 2);
 
     const container = this.add.image(centerX, centerY, 'glass-container');
     container.setDisplaySize(displayW, displayH);
@@ -431,10 +431,7 @@ export class GameplayScene extends Phaser.Scene {
       friction: 0.5,
     });
 
-    this.dropController.setupVisuals(
-      { left, right, top, bottom, centerX },
-      top - 28
-    );
+    this.dropController.setupVisuals({ left, right, top, bottom, centerX }, top - 28);
   }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {

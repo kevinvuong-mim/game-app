@@ -136,7 +136,7 @@ this.add.circle(120, height - 160, 24, getEquippedPlayerColor());
 | leaderboard   | **API**  | Offline cache, TTL, Top 100 REST (`LEADERBOARD_LIMIT` = 100/page)          |
 | notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)            |
 | i18n          | Local    | Runtime language switch (`en` / `vi`), lazy-loaded locale JSON             |
-| shop          | Local    | Catalog skins/boosts/IAP; equip skin + timed `boost_double`                |
+| shop          | Local    | Catalog skins/boosts/IAP; equip skin                                       |
 | missions      | Local    | Daily missions (`missions.json`); WATCH_AD via rewarded ads                |
 | daily-reward  | Local    | 7-day streak; anti-tamper recovers when clock is consistent again          |
 | save          | Local    | Single `game-save` key — hydrates Zustand store on boot                    |

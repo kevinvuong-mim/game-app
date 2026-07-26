@@ -9,7 +9,6 @@ export type FruitBody = Phaser.Physics.Matter.Image & {
 export type ActiveSkill =
   | { kind: 'hammer' }
   | { kind: 'swap'; selected?: FruitBody }
-  | { kind: 'double' }
   | { kind: 'size' }
   | null;
 

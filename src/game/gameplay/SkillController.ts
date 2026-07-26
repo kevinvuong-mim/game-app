@@ -25,7 +25,6 @@ export class SkillController {
   private activeSkill: ActiveSkill = null;
 
   constructor(
-    private readonly scene: Phaser.Scene,
     private readonly factory: FruitFactory,
     private readonly skillBar: SkillBarView,
     private readonly callbacks: SkillControllerCallbacks
@@ -93,14 +92,11 @@ export class SkillController {
         ? { kind: 'hammer' }
         : id === 'boost_swap'
           ? { kind: 'swap' }
-          : id === 'boost_double'
-            ? { kind: 'double' }
-            : { kind: 'size' };
+          : { kind: 'size' };
 
     const hints: Record<Exclude<ActiveSkill, null>['kind'], string> = {
       hammer: t('game.skillHintHammer'),
       swap: t('game.skillHintSwap'),
-      double: t('game.skillHintDouble'),
       size: t('game.skillHintSize'),
     };
     this.skillBar.setHint(hints[this.activeSkill.kind]);
@@ -120,22 +116,6 @@ export class SkillController {
       if (!consumeSkill(skillId)) return;
       this.callbacks.pushUndoCheckpoint();
       this.factory.burst(fruit);
-      this.skillBar.refreshInventory(skillId);
-      this.clear();
-      return;
-    }
-
-    if (this.activeSkill.kind === 'double') {
-      if (!consumeSkill(skillId)) return;
-      this.callbacks.pushUndoCheckpoint();
-      fruit.scoreMultiplier = 2;
-      this.scene.tweens.add({
-        targets: fruit,
-        alpha: { from: 0.5, to: 1 },
-        duration: 200,
-        yoyo: true,
-        repeat: 2,
-      });
       this.skillBar.refreshInventory(skillId);
       this.clear();
       return;
@@ -220,8 +200,6 @@ export class SkillController {
         return 'boost_hammer';
       case 'swap':
         return 'boost_swap';
-      case 'double':
-        return 'boost_double';
       case 'size':
         return 'boost_size';
     }

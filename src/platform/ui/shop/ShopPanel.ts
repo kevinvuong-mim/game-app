@@ -18,7 +18,7 @@ import { usePlatformStore } from '@platform/core/state';
 import { drawRoundedRect, measureTextWidth } from '../panel/graphics';
 import { shop, type ShopItem } from '@platform/modules/shop';
 
-const ITEM_ROW_HEIGHT = 120;
+const ITEM_ROW_HEIGHT = 146;
 
 const PRICE_BTN_GAP = 6;
 const PRICE_BTN_PAD_X = 14;

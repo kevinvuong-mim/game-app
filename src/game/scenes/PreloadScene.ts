@@ -38,7 +38,6 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'shop-item-3', path: '/assets/images/shop-item-3.png' },
   { key: 'shop-item-4', path: '/assets/images/shop-item-4.png' },
   { key: 'shop-item-5', path: '/assets/images/shop-item-5.png' },
-  { key: 'shop-item-6', path: '/assets/images/shop-item-6.png' },
   { key: 'checked-icon', path: '/assets/images/checked-icon.png' },
   { key: 'missions-icon', path: '/assets/images/missions-icon.png' },
   { key: 'mission-item-1', path: '/assets/images/mission-item-1.png' },
@@ -60,6 +59,7 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'musical-note-icon', path: '/assets/images/musical-note-icon.png' },
   { key: 'speaker-icon', path: '/assets/images/speaker-icon.png' },
   { key: 'language-globe-icon', path: '/assets/images/language-globe-icon.png' },
+  { key: 'no-ads-icon', path: '/assets/images/no-ads-icon.png' },
   { key: 'golden-crown-icon', path: '/assets/images/golden-crown-icon.png' },
   { key: 'silver-crown-icon', path: '/assets/images/silver-crown-icon.png' },
   { key: 'bronze-crown-icon', path: '/assets/images/bronze-crown-icon.png' },
@@ -77,7 +77,6 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'shop-item-3', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-item-4', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-item-5', width: 96, height: 96, color: 0xffd700 },
-  { key: 'shop-item-6', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-banner', width: 360, height: 80, color: 0xc62828 },
   { key: 'missions-icon', width: 80, height: 82, color: 0x4a90d9 },
   { key: 'mission-item-1', width: 96, height: 96, color: 0xffd700 },
@@ -102,6 +101,7 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'musical-note-icon', width: 81, height: 95, color: 0x3cb043 },
   { key: 'speaker-icon', width: 75, height: 72, color: 0x3cb043 },
   { key: 'language-globe-icon', width: 64, height: 64, color: 0x3cb043 },
+  { key: 'no-ads-icon', width: 126, height: 129, color: 0xc62828 },
   { key: 'golden-crown-icon', width: 48, height: 48, color: 0xf5c518 },
   { key: 'silver-crown-icon', width: 48, height: 48, color: 0xc0c7d1 },
   { key: 'bronze-crown-icon', width: 48, height: 48, color: 0xd4894a },
@@ -111,6 +111,7 @@ const BAR_WIDTH = 420;
 const BAR_HEIGHT = 28;
 const BAR_RADIUS = 14;
 const TRACK_PAD = 5;
+const PRELOAD_DELAY_MS = 0;
 const FILL_COLORS = {
   rim: 0xfff6d8,
   rimEdge: 0xc9a227,
@@ -158,13 +159,15 @@ export class PreloadScene extends Phaser.Scene {
 
     this.setProgress(1);
 
-    const target = getBootNavigationTarget();
+    this.time.delayedCall(PRELOAD_DELAY_MS, () => {
+      const target = getBootNavigationTarget();
 
-    eventBus.emit('boot:preload-complete', undefined);
-    soundManager.syncMusic();
+      eventBus.emit('boot:preload-complete', undefined);
+      soundManager.syncMusic();
 
-    // Must transition from this scene — game.scene.start() would leave Preload visible.
-    this.scene.start(target.sceneKey, target.data);
+      // Must transition from this scene — game.scene.start() would leave Preload visible.
+      this.scene.start(target.sceneKey, target.data);
+    });
   }
 
   private buildLoadingUi(): void {
@@ -178,7 +181,7 @@ export class PreloadScene extends Phaser.Scene {
     wash.fillStyle(0x1a2e10, 0.28);
     wash.fillEllipse(centerX, height * 0.78, width * 0.92, height * 0.28);
 
-    const barCenterY = height * 0.72;
+    const barCenterY = height * 0.77;
     const shell = this.add.container(centerX, barCenterY).setDepth(2).setAlpha(0).setScale(0.92);
 
     const rim = this.add.graphics();

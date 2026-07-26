@@ -4,24 +4,15 @@ import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import type { UIButton } from '@platform/ui/types';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
-import {
-  PANEL_BG,
-  PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
-} from '@platform/ui/panel/panelTheme';
-import {
-  SKILL_IDS,
-  type SkillId,
-  getSkillQuantity,
-} from '@game/skills/skillInventory';
+import { PANEL_BG, PANEL_BORDER, PANEL_CORNER_RADIUS } from '@platform/ui/panel/panelTheme';
+import { SKILL_IDS, type SkillId, getSkillQuantity } from '@game/skills/skillInventory';
 
 const SKILL_ICONS: Record<SkillId, string> = {
   boost_hammer: 'shop-item-1',
   boost_change: 'shop-item-2',
   boost_swap: 'shop-item-3',
-  boost_double: 'shop-item-4',
-  boost_size: 'shop-item-5',
-  boost_undo: 'shop-item-6',
+  boost_size: 'shop-item-4',
+  boost_undo: 'shop-item-5',
 };
 
 export type SkillBarViewCallbacks = {
@@ -92,14 +83,14 @@ export class SkillBarView {
     const arrowPad = 36;
     const panelPadTop = 16;
     const panelPadBottom = 18;
-    const panelWidth = Math.min(width * 0.88, 520);
+    const panelWidth = Math.min(width * 0.78, 460);
     const panelLeft = width / 2 - panelWidth / 2;
     const innerWidth = panelWidth - arrowPad * 2;
     const spacing = innerWidth / visible;
     this.skillSlotSpacing = spacing;
 
     const panelHeight = panelPadTop + slotHeight + panelPadBottom;
-    const panelTop = height - panelHeight - 140;
+    const panelTop = height - panelHeight - 110;
     this.skillBarTop = panelTop;
     this.skillBarBottom = panelTop + panelHeight;
 
@@ -162,7 +153,7 @@ export class SkillBarView {
     this.applyScroll(false);
 
     this.skillHint = this.scene.add
-      .text(width / 2, this.skillBarBottom + 12, '', {
+      .text(width / 2, this.skillBarTop - 12, '', {
         color: '#ffffff',
         fontSize: '18px',
         fontStyle: 'bold',
@@ -170,7 +161,7 @@ export class SkillBarView {
         stroke: '#000000',
         strokeThickness: 3,
       })
-      .setOrigin(0.5, 0)
+      .setOrigin(0.5, 1)
       .setDepth(520);
   }
 

@@ -31,18 +31,9 @@
       "price": 3500,
       "type": "boost",
       "currency": "coins",
-      "id": "boost_double",
-      "name": "Double",
-      "icon": "shop-item-4",
-      "description": "Double the score of the fruit!"
-    },
-    {
-      "price": 3500,
-      "type": "boost",
-      "currency": "coins",
       "id": "boost_size",
       "name": "Size Increase",
-      "icon": "shop-item-5",
+      "icon": "shop-item-4",
       "description": "Increase the size of the fruit!"
     },
     {
@@ -51,7 +42,7 @@
       "currency": "coins",
       "id": "boost_undo",
       "name": "Undo",
-      "icon": "shop-item-6",
+      "icon": "shop-item-5",
       "description": "Undo your last move!"
     },
     {
@@ -61,7 +52,7 @@
       "productKey": "REMOVE_ADS",
       "id": "remove_ads",
       "name": "Remove Ads",
-      "icon": "shop-item-1",
+      "icon": "coin-icon",
       "description": "Remove all ads permanently"
     },
     {

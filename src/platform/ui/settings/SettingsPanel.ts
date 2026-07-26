@@ -19,6 +19,7 @@ import { shop } from '@platform/modules/shop';
 import { ads } from '@platform/core/advertising';
 import { REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
 const LANGUAGE_GLOBE_KEY = 'language-globe-icon';
+const NO_ADS_ICON_KEY = 'no-ads-icon';
 
 const SECTION_TITLE_COLOR = '#1c1b18';
 const LABEL_COLOR = '#3a372f';
@@ -564,9 +565,13 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     const rowHeight = 48;
     const centerY = y + rowHeight / 2;
 
+    const icon = this.scene.add.image(left + ROW_ICON_SIZE / 2, centerY, NO_ADS_ICON_KEY);
+    icon.setDisplaySize(ROW_ICON_SIZE, ROW_ICON_SIZE);
+    this.add(icon);
+
     this.add(
       this.scene.add
-        .text(left, centerY, t('settings.hideAds'), {
+        .text(left + ROW_ICON_SIZE + 12, centerY, t('settings.hideAds'), {
           fontSize: '20px',
           fontStyle: 'bold',
           color: TEXT_COLOR,

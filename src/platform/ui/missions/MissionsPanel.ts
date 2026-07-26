@@ -21,7 +21,7 @@ import { missions } from '@platform/modules/missions/mission.service';
 
 const ACTION_BTN_WIDTH = 88;
 const REWARD_ICON_SIZE = 36;
-const ITEM_ROW_HEIGHT = 110;
+const ITEM_ROW_HEIGHT = 140;
 const ACTION_BTN_HEIGHT = 52;
 const PROGRESS_BAR_HEIGHT = 22;
 const PROGRESS_BAR_COLOR = 0x3cb043;

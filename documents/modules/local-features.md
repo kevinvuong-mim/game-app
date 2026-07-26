@@ -4,9 +4,8 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 
 ## Shop
 
-- Catalog: `src/platform/modules/shop/catalog.json` (skins, boosts, remove-ads IAP).
-- **Skins**: mua bằng coins → `equipSkin()`; demo player đọc màu qua `getEquippedPlayerColor()` từ `@platform/ui` (game layer không import `@platform/modules`).
-- **Boost** `boost_double`: `activateBoost()` ghi `expiresAt` trên inventory; `coin:add` nhân `getActiveCoinMultiplier()` (2× trong thời hạn).
+- Catalog: `src/platform/modules/shop/catalog.json` (boosts, remove-ads IAP, coin packs).
+- **Boosts**: mua bằng coins → quantity trong inventory; dùng trong gameplay skill bar (`boost_hammer`, `boost_change`, `boost_swap`, `boost_size`, `boost_undo`).
 - **Remove ads**: IAP entitlement — client-authoritative trong starter kit (xem README IAP warning).
 
 ## Daily reward

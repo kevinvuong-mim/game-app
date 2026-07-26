@@ -28,7 +28,6 @@
     "skillHintHammer": "Chọn trái để phá hủy",
     "skillHintSwap": "Chọn 2 trái để hoán đổi",
     "skillHintSwapSecond": "Chọn trái thứ hai",
-    "skillHintDouble": "Chọn trái để nhân đôi điểm ghép",
     "skillHintSize": "Chọn trái để tăng cấp",
     "skillUndoNothing": "Không có gì để hoàn tác",
     "quitConfirmTitle": "Thoát ván chơi?",
@@ -66,10 +65,6 @@
       "boost_swap": {
         "name": "Hoán Đổi",
         "description": "Hoán đổi vị trí các trái cây bất kỳ!"
-      },
-      "boost_double": {
-        "name": "Nhân Đôi",
-        "description": "Nhân đôi điểm số của trái cây!"
       },
       "boost_size": {
         "name": "Tăng Kích Cỡ",

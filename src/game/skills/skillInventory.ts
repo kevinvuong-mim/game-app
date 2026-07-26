@@ -4,7 +4,6 @@ export const SKILL_IDS = [
   'boost_hammer',
   'boost_change',
   'boost_swap',
-  'boost_double',
   'boost_size',
   'boost_undo',
 ] as const;

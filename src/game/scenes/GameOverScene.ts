@@ -16,8 +16,8 @@ import {
 const BUTTON_WIDTH = 300;
 const BUTTON_HEIGHT = 96;
 const NEW_RECORD_GAP = 36;
-const NEW_RECORD_WIDTH = 250;
-const NEW_RECORD_HEIGHT = 76;
+const NEW_RECORD_WIDTH = 200;
+const NEW_RECORD_HEIGHT = 58;
 
 export class GameOverScene extends Phaser.Scene {
   private returnTo = 'Home';
@@ -28,9 +28,7 @@ export class GameOverScene extends Phaser.Scene {
     super({ key: 'GameOver' });
   }
 
-  create(
-    data: { score?: number; returnTo?: string; isNewRecord?: boolean } = {}
-  ): void {
+  create(data: { score?: number; returnTo?: string; isNewRecord?: boolean } = {}): void {
     this.cleanupEventListeners();
     this.events.once('shutdown', this.shutdown, this);
 
@@ -205,25 +203,25 @@ export class GameOverScene extends Phaser.Scene {
       .setDepth(3);
 
     this.add
-      .text(centerX - 18, y - 2, t('game.newRecord'), {
+      .text(centerX - 14, y, t('game.newRecord'), {
         color: '#ffffff',
-        fontSize: '22px',
+        fontSize: '17px',
         fontStyle: 'bold',
         fontFamily: FREDOKA_FONT,
         stroke: '#000000',
-        strokeThickness: 3,
+        strokeThickness: 2,
       })
       .setOrigin(0.5)
       .setDepth(4);
 
     this.add
       .image(centerX + NEW_RECORD_WIDTH * 0.32, y - 2, 'firework-icon')
-      .setDisplaySize(42, 40)
+      .setDisplaySize(30, 28)
       .setDepth(4);
   }
 
   private getButtonsStartY(contentTop: number, isNewRecord: boolean): number {
-    return contentTop + (isNewRecord ? 170 : 210);
+    return contentTop + (isNewRecord ? 190 : 240);
   }
 
   private async handleShareScore(score: number): Promise<void> {

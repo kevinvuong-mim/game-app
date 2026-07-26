@@ -28,7 +28,6 @@
     "skillHintHammer": "Tap a fruit to destroy it",
     "skillHintSwap": "Tap two fruits to swap them",
     "skillHintSwapSecond": "Tap the second fruit",
-    "skillHintDouble": "Tap a fruit to double its merge score",
     "skillHintSize": "Tap a fruit to grow it",
     "skillUndoNothing": "Nothing to undo",
     "quitConfirmTitle": "Quit this run?",
@@ -66,10 +65,6 @@
       "boost_swap": {
         "name": "Swap",
         "description": "Swap the positions of any fruits!"
-      },
-      "boost_double": {
-        "name": "Double",
-        "description": "Double the score of the fruit!"
       },
       "boost_size": {
         "name": "Size Increase",
