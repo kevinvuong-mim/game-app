@@ -73,7 +73,7 @@ export interface AdsRemoteConfig {
 export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
   cooldowns: {
     app_open: 0,
-    rewarded: 30,
+    rewarded: 10,
     interstitial: 90,
   },
   bannerEnabled: true,
