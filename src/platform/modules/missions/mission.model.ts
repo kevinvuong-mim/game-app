@@ -9,7 +9,7 @@ export type MissionBehaviorType =
 
 type MissionStatus = 'active' | 'completed' | 'claimed';
 
-export type MissionResetPolicy = 'daily' | 'never';
+export type MissionResetPolicy = 'daily' | 'never' | 'onClaim';
 
 interface MissionReward {
   type: 'coins';

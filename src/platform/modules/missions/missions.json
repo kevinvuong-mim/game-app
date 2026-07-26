@@ -20,22 +20,22 @@
     "reward": { "type": "coins", "amount": 200 }
   },
   {
-    "id": "watch_ad_2",
+    "id": "watch_ad",
     "type": "WATCH_AD",
-    "target": 2,
+    "target": 1,
     "icon": "mission-item-3",
-    "resetPolicy": "daily",
-    "titleKey": "missions.watchAd2",
+    "resetPolicy": "onClaim",
+    "titleKey": "missions.watchAd",
     "reward": { "type": "coins", "amount": 300 }
   },
   {
-    "id": "play_games_5",
+    "id": "play_games_3",
     "type": "PLAY_GAME",
-    "target": 5,
+    "target": 3,
     "icon": "mission-item-4",
     "goScene": "Gameplay",
     "resetPolicy": "daily",
-    "titleKey": "missions.playGames5",
+    "titleKey": "missions.playGames3",
     "reward": { "type": "coins", "amount": 200 }
   },
   {

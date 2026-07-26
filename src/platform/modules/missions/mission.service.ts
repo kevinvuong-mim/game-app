@@ -115,6 +115,25 @@ export class MissionService {
     }
 
     store.claimMission(id);
+
+    if ((def?.resetPolicy ?? 'never') === 'onClaim') {
+      const { missions: all, setMissions } = usePlatformStore.getState();
+      const current = all.missions[id];
+      if (current) {
+        setMissions({
+          ...all.missions,
+          [id]: {
+            ...current,
+            progress: 0,
+            status: 'active',
+            completedAt: undefined,
+            claimedAt: undefined,
+          },
+        });
+        eventBus.emit('mission:update', { missionId: id, progress: 0 });
+      }
+    }
+
     logger.info('mission_claimed', { missionId: id });
     return true;
   }
