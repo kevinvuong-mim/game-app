@@ -3,6 +3,8 @@ export { toast } from './toast/ToastManager';
 export { shareService } from '@platform/modules/share';
 export { t, i18n } from '@platform/modules/i18n/i18n.service';
 export { getHighScore } from './progress';
+export { canClaimDailyReward } from './dailyReward';
+export { getClaimableMissionCount } from './missionsStatus';
 export { ShopPanel } from './shop/ShopPanel';
 export { SettingsPanel } from './settings/SettingsPanel';
 export { MissionsPanel } from './missions/MissionsPanel';

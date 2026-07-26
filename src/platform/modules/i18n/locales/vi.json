@@ -42,6 +42,7 @@
     "purchaseSuccess": "Đã mua {{name}}!",
     "purchaseFailed": "Mua thất bại",
     "notEnoughCoins": "Không đủ xu!",
+    "ownedQuantity": "Đang có: {{quantity}}",
     "getCoins": {
       "missions": "Nhiệm vụ",
       "dailyReward": "Quà hàng ngày",

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { t } from '@platform/ui/index';
+import { t, canClaimDailyReward, getClaimableMissionCount } from '@platform/ui/index';
 import { eventBus } from '@platform/core/events';
 import { createUIButton } from '@platform/ui/button/UIButton';
 
@@ -70,6 +70,8 @@ export class HomeScene extends Phaser.Scene {
       onClick: () => this.openScreen('Shop'),
     });
 
+    const claimableMissions = getClaimableMissionCount();
+
     createUIButton({
       scene: this,
       position: { x: width / 2, y: height * 0.86 },
@@ -79,6 +81,20 @@ export class HomeScene extends Phaser.Scene {
         offset: { x: 60, y: 110 },
         content: t('home.missions'),
         style: { fontSize: 24, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+      },
+      badge: {
+        content: String(claimableMissions),
+        visible: claimableMissions > 0,
+        position: { x: 82, y: 2 },
+        minSize: { width: 36, height: 36 },
+        padding: { horizontal: 5, vertical: 3 },
+        background: { color: '#e53935', radius: 18 },
+        textStyle: {
+          fontSize: 20,
+          fontStyle: 'bold',
+          color: '#ffffff',
+          border: { width: 3, color: '#000000' },
+        },
       },
       onClick: () => this.openScreen('Missions'),
     });
@@ -92,6 +108,20 @@ export class HomeScene extends Phaser.Scene {
         offset: { x: 60, y: 110 },
         content: t('home.dailyReward'),
         style: { fontSize: 24, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+      },
+      badge: {
+        content: '!',
+        visible: canClaimDailyReward(),
+        position: { x: 82, y: 2 },
+        minSize: { width: 36, height: 36 },
+        padding: { horizontal: 5, vertical: 3 },
+        background: { color: '#e53935', radius: 18 },
+        textStyle: {
+          fontSize: 20,
+          fontStyle: 'bold',
+          color: '#ffffff',
+          border: { width: 3, color: '#000000' },
+        },
       },
       onClick: () => this.openScreen('DailyReward'),
     });

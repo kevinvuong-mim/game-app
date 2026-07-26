@@ -42,6 +42,7 @@
     "purchaseSuccess": "Purchased {{name}}!",
     "purchaseFailed": "Purchase failed",
     "notEnoughCoins": "Not enough coins!",
+    "ownedQuantity": "Owned: {{quantity}}",
     "getCoins": {
       "missions": "Missions",
       "dailyReward": "Daily Reward",

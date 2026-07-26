@@ -146,7 +146,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
 
     const textX = iconX + iconSize / 2 + 12;
     container.add(
-      this.scene.add.text(textX, -14, t(`shop.items.${item.id}.name`), {
+      this.scene.add.text(textX, -38, t(`shop.items.${item.id}.name`), {
         fontSize: '20px',
         fontStyle: 'bold',
         color: TEXT_COLOR,
@@ -154,12 +154,25 @@ export class ShopPanel extends Phaser.GameObjects.Container {
       })
     );
     container.add(
-      this.scene.add.text(textX, 10, t(`shop.items.${item.id}.description`), {
+      this.scene.add.text(textX, -12, t(`shop.items.${item.id}.description`), {
         fontSize: '13px',
         color: TEXT_COLOR,
         fontFamily: FREDOKA_FONT,
         wordWrap: { width: rowWidth * 0.42 },
       })
+    );
+    container.add(
+      this.scene.add.text(
+        textX,
+        24,
+        t('shop.ownedQuantity', { quantity: formatNumber(shop.getQuantity(item.id)) }),
+        {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: '#b45309',
+          fontFamily: FREDOKA_FONT,
+        }
+      )
     );
 
     container.add(this.createPriceButton(item, rowHalf));
