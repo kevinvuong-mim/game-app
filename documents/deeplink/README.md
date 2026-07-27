@@ -39,16 +39,17 @@ Default scheme: `gamestarterkit://`
 
 Supported paths (`src/platform/modules/deep-link/deep-link.model.ts`):
 
-| Path | Scene |
-| ---- | ----- |
-| `/`, `/home` | `Home` |
-| `/shop` | `Shop` |
-| `/legal` | `Legal` |
-| `/play`, `/gameplay` | `Gameplay` |
-| `/missions` | `Missions` |
-| `/settings` | `Settings` |
-| `/leaderboard` | `Leaderboard` |
-| `/daily-reward` | `DailyReward` |
+| Path                 | Scene         |
+| -------------------- | ------------- |
+| `/`, `/home`         | `Home`        |
+| `/shop`              | `Shop`        |
+| `/legal`             | `Legal`       |
+| `/play`, `/gameplay` | `Gameplay`    |
+| `/missions`          | `Missions`    |
+| `/settings`          | `Settings`    |
+| `/leaderboard`       | `Leaderboard` |
+| `/daily-reward`      | `DailyReward` |
+| `/how-to-play`       | `HowToPlay`   |
 
 Examples:
 
