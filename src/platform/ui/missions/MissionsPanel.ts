@@ -297,6 +297,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
             border: { width: 3, color: '#000000' },
           },
         },
+        sound: 'coin-drop',
         onClick: () => this.handleClaim(mission.id),
       });
     }
@@ -341,14 +342,8 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
   }
 
   private handleClaim(missionId: string): void {
-    const def = missions.getDefinition(missionId);
-    const coins = def?.reward.type === 'coins' ? def.reward.amount : 0;
     const success = missions.claimMission(missionId);
     if (success) {
-      toast.show({
-        message: t('missions.claimSuccess', { coins }),
-        type: 'success',
-      });
       void saveService.saveLocal();
       this.renderMissions();
     } else {
