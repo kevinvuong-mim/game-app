@@ -5,7 +5,7 @@ import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { t, toast, shareService, i18n, rateService, RateAppModal } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
-import { drawRoundedRect } from '@platform/ui/panel/graphics';
+import { drawRoundedRect, measureTextWidth } from '@platform/ui/panel/graphics';
 import {
   PANEL_BG,
   PANEL_BORDER,
@@ -18,7 +18,33 @@ const BUTTON_HEIGHT = 96;
 const NEW_RECORD_GAP = 36;
 const NEW_RECORD_WIDTH = 200;
 const NEW_RECORD_HEIGHT = 58;
-const PANEL_BOTTOM_PADDING = 52;
+const PANEL_BOTTOM_PADDING = 48;
+
+const COIN_ICON_SIZE = 36;
+const COINS_PILL_HEIGHT = 52;
+const COINS_PILL_PAD_X = 18;
+const COINS_PILL_GAP = 10;
+const COINS_PILL_FILL = 0xfff0d4;
+const COINS_PILL_STROKE = 0xd4a84b;
+const COINS_AMOUNT_COLOR = '#8a5a00';
+
+/** Vertical layout offsets from contentTop — keep sections from overlapping. */
+const LAYOUT = {
+  scoreLabel: 44,
+  scoreValue: 98,
+  /** Gap below score number before coins section. */
+  coinsLabel: 152,
+  /** Label → pill center (must clear label height + gap). */
+  coinsPillFromLabel: 52,
+  /** Pill bottom → rank. */
+  rankAfterPill: 28,
+  /**
+   * Rank center → first control center.
+   * Play Again is taller (96) than the New Record badge (58), so gaps differ.
+   */
+  afterRankToPlayAgain: 78,
+  afterRankToNewRecord: 52,
+} as const;
 
 export class GameOverScene extends Phaser.Scene {
   private returnTo = 'Home';
@@ -38,6 +64,7 @@ export class GameOverScene extends Phaser.Scene {
     eventBus.emit('ad:context:change', { context: 'GAME_OVER' });
 
     const score = data.score ?? 0;
+    const coinsEarned = Math.max(0, Math.floor(score));
     const { width, height } = this.cameras.main;
     const centerX = width / 2;
     const isNewRecord = data.isNewRecord === true;
@@ -46,10 +73,18 @@ export class GameOverScene extends Phaser.Scene {
 
     const panelWidth = Math.min(width * 0.88, 420);
     const contentTop = height * 0.36;
-    const buttonsStartY = this.getButtonsStartY(contentTop, isNewRecord);
+
+    const scoreLabelY = contentTop + LAYOUT.scoreLabel;
+    const scoreValueY = contentTop + LAYOUT.scoreValue;
+    const coinsLabelY = contentTop + LAYOUT.coinsLabel;
+    const coinsPillY = coinsLabelY + LAYOUT.coinsPillFromLabel;
+    const rankY = coinsPillY + COINS_PILL_HEIGHT / 2 + LAYOUT.rankAfterPill;
+    const buttonsStartY =
+      rankY + (isNewRecord ? LAYOUT.afterRankToNewRecord : LAYOUT.afterRankToPlayAgain);
+
     const lastButtonY = isNewRecord
-      ? buttonsStartY + NEW_RECORD_HEIGHT + NEW_RECORD_GAP + 3 * BUTTON_HEIGHT
-      : buttonsStartY + 3 * BUTTON_HEIGHT;
+      ? buttonsStartY + NEW_RECORD_HEIGHT + NEW_RECORD_GAP + 2 * BUTTON_HEIGHT
+      : buttonsStartY + 2 * BUTTON_HEIGHT;
     const panelBottom = lastButtonY + BUTTON_HEIGHT / 2 + PANEL_BOTTOM_PADDING;
     const panelTop = contentTop - 28;
     const panelHeight = panelBottom - panelTop;
@@ -69,9 +104,9 @@ export class GameOverScene extends Phaser.Scene {
     this.addBanner(centerX, panelTop);
 
     this.add
-      .text(centerX, contentTop + 60, t('game.yourScore'), {
+      .text(centerX, scoreLabelY, t('game.yourScore'), {
         color: TEXT_COLOR,
-        fontSize: '26px',
+        fontSize: '24px',
         fontStyle: 'bold',
         fontFamily: FREDOKA_FONT,
       })
@@ -79,17 +114,19 @@ export class GameOverScene extends Phaser.Scene {
       .setDepth(2);
 
     this.add
-      .text(centerX, contentTop + 112, formatScore(score), {
+      .text(centerX, scoreValueY, formatScore(score), {
         color: TEXT_COLOR,
-        fontSize: '64px',
+        fontSize: '60px',
         fontStyle: 'bold',
         fontFamily: FREDOKA_FONT,
       })
       .setOrigin(0.5)
       .setDepth(2);
 
+    this.addCoinsEarned(centerX, coinsLabelY, coinsPillY, coinsEarned);
+
     this.rankText = this.add
-      .text(centerX, contentTop + 158, '', {
+      .text(centerX, rankY, '', {
         color: '#8a7a5a',
         fontSize: '20px',
         fontFamily: FREDOKA_FONT,
@@ -102,7 +139,7 @@ export class GameOverScene extends Phaser.Scene {
       this.showRank(rank);
     });
 
-    let buttonY = buttonsStartY + 12;
+    let buttonY = buttonsStartY;
 
     if (isNewRecord) {
       this.addNewRecordBadge(centerX, buttonY);
@@ -137,24 +174,6 @@ export class GameOverScene extends Phaser.Scene {
         eventBus.emit('game:destroy', undefined);
         this.scene.start(this.returnTo);
       },
-    });
-    buttonY += BUTTON_HEIGHT;
-
-    createUIButton({
-      scene: this,
-      position: { x: centerX, y: buttonY },
-      size: { width: BUTTON_WIDTH, height: BUTTON_HEIGHT },
-      background: { key: 'leaderboard-button-background' },
-      depth: 3,
-      text: {
-        content: t('game.leaderboard'),
-        style: { fontSize: 32, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
-      },
-      onClick: () =>
-        this.scene.start('Leaderboard', {
-          returnTo: 'GameOver',
-          returnData: { score, returnTo: this.returnTo, isNewRecord },
-        }),
     });
     buttonY += BUTTON_HEIGHT;
 
@@ -202,6 +221,67 @@ export class GameOverScene extends Phaser.Scene {
       .setDepth(5);
   }
 
+  /** Coins section: label above pill with explicit positions (no overlap). */
+  private addCoinsEarned(centerX: number, labelY: number, pillY: number, coins: number): void {
+    this.add
+      .text(centerX, labelY, t('game.coinsEarned'), {
+        color: '#8a7a5a',
+        fontSize: '18px',
+        fontStyle: 'bold',
+        fontFamily: FREDOKA_FONT,
+      })
+      .setOrigin(0.5)
+      .setDepth(2);
+
+    const amountLabel = `+${formatScore(coins)}`;
+    const amountStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+      color: COINS_AMOUNT_COLOR,
+      fontSize: '28px',
+      fontStyle: 'bold',
+      fontFamily: FREDOKA_FONT,
+    };
+    const amountWidth = measureTextWidth(this, amountLabel, amountStyle);
+    const pillWidth = Math.max(
+      140,
+      COINS_PILL_PAD_X + COIN_ICON_SIZE + COINS_PILL_GAP + amountWidth + COINS_PILL_PAD_X
+    );
+
+    const pill = this.add.graphics().setDepth(2);
+    drawRoundedRect(
+      pill,
+      centerX - pillWidth / 2,
+      pillY - COINS_PILL_HEIGHT / 2,
+      pillWidth,
+      COINS_PILL_HEIGHT,
+      COINS_PILL_HEIGHT / 2,
+      COINS_PILL_FILL,
+      COINS_PILL_STROKE,
+      2
+    );
+
+    const contentWidth = COIN_ICON_SIZE + COINS_PILL_GAP + amountWidth;
+    const contentLeft = centerX - contentWidth / 2;
+
+    const coin = this.add.image(contentLeft + COIN_ICON_SIZE / 2, pillY, 'coin-icon');
+    const targetScaleX = COIN_ICON_SIZE / Math.max(coin.width, 1);
+    const targetScaleY = COIN_ICON_SIZE / Math.max(coin.height, 1);
+    coin.setScale(0).setDepth(3);
+
+    this.add
+      .text(contentLeft + COIN_ICON_SIZE + COINS_PILL_GAP, pillY, amountLabel, amountStyle)
+      .setOrigin(0, 0.5)
+      .setDepth(3);
+
+    this.tweens.add({
+      targets: coin,
+      scaleX: targetScaleX,
+      scaleY: targetScaleY,
+      duration: 380,
+      ease: 'Back.Out',
+      delay: 120,
+    });
+  }
+
   private addNewRecordBadge(centerX: number, y: number): void {
     this.add
       .image(centerX, y, 'best-score-background-image')
@@ -224,10 +304,6 @@ export class GameOverScene extends Phaser.Scene {
       .image(centerX + NEW_RECORD_WIDTH * 0.32, y - 2, 'firework-icon')
       .setDisplaySize(30, 28)
       .setDepth(4);
-  }
-
-  private getButtonsStartY(contentTop: number, isNewRecord: boolean): number {
-    return contentTop + (isNewRecord ? 190 : 240);
   }
 
   private async handleShareScore(score: number): Promise<void> {

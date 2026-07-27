@@ -23,10 +23,10 @@ const REWARD_CYCLE: CycleRewardDefinition[] = [
   { day: 1, type: 'coins', coins: 100 },
   { day: 2, type: 'coins', coins: 200 },
   { day: 3, type: 'coins', coins: 300 },
-  { day: 4, type: 'coins', coins: 400 },
-  { day: 5, type: 'coins', coins: 500 },
-  { day: 6, type: 'coins', coins: 600 },
-  { day: 7, type: 'coins', coins: 1000 },
+  { day: 4, type: 'coins', coins: 500 },
+  { day: 5, type: 'coins', coins: 800 },
+  { day: 6, type: 'coins', coins: 1300 },
+  { day: 7, type: 'coins', coins: 2100 },
 ];
 
 export class RewardResolver {

@@ -30,6 +30,7 @@
     "score": "Score: {{score}}",
     "scoreLabel": "SCORE",
     "yourScore": "YOUR SCORE",
+    "coinsEarned": "COINS EARNED",
     "gameOver": "GAME OVER",
     "newRecord": "NEW RECORD",
     "retry": "PLAY AGAIN",

@@ -4,10 +4,10 @@ import type { IAPProvider, ProviderProduct, ProviderPurchase } from './iap.types
 
 const MOCK_PRODUCTS: ProviderProduct[] = [
   {
-    price: '$4.99',
+    price: '$3.99',
     currency: 'USD',
     id: 'remove_ads',
-    priceAmount: 4.99,
+    priceAmount: 3.99,
     title: 'Remove Ads',
     type: 'non_consumable',
     description: 'Permanent ad removal',

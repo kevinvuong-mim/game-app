@@ -20,7 +20,7 @@ export const PRODUCTS = {
 export type ProductKey = keyof typeof PRODUCTS;
 
 export const ENTITLEMENT_REMOVE_ADS = PRODUCTS.REMOVE_ADS.entitlement;
-export const REMOVE_ADS_PRICE = '$4.99';
+export const REMOVE_ADS_PRICE = '$3.99';
 export const COINS_10000_AMOUNT = 10_000;
 export const COINS_10000_PRICE = '$0.99';
 

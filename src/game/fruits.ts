@@ -11,15 +11,15 @@ export interface FruitType {
 
 export const FRUIT_TYPES: FruitType[] = [
   { id: 'grapes', radius: 18, color: 0x8e24aa, mergeScore: 1 },
-  { id: 'cherry', radius: 24, color: 0xe53935, mergeScore: 3 },
-  { id: 'strawberry', radius: 30, color: 0xff7043, mergeScore: 6 },
-  { id: 'peach', radius: 36, color: 0xffab91, mergeScore: 10 },
-  { id: 'kiwi', radius: 44, color: 0x9ccc65, mergeScore: 15 },
-  { id: 'tomato', radius: 52, color: 0xf44336, mergeScore: 21 },
-  { id: 'orange', radius: 62, color: 0xff9800, mergeScore: 28 },
-  { id: 'apple', radius: 74, color: 0xc62828, mergeScore: 36 },
-  { id: 'pineapple', radius: 88, color: 0xffc107, mergeScore: 45 },
-  { id: 'watermelon', radius: 104, color: 0x43a047, mergeScore: 55 },
+  { id: 'cherry', radius: 24, color: 0xe53935, mergeScore: 2 },
+  { id: 'strawberry', radius: 30, color: 0xff7043, mergeScore: 3 },
+  { id: 'peach', radius: 36, color: 0xffab91, mergeScore: 5 },
+  { id: 'kiwi', radius: 44, color: 0x9ccc65, mergeScore: 8 },
+  { id: 'tomato', radius: 52, color: 0xf44336, mergeScore: 13 },
+  { id: 'orange', radius: 62, color: 0xff9800, mergeScore: 21 },
+  { id: 'apple', radius: 74, color: 0xc62828, mergeScore: 34 },
+  { id: 'pineapple', radius: 88, color: 0xffc107, mergeScore: 55 },
+  { id: 'watermelon', radius: 104, color: 0x43a047, mergeScore: 89 },
 ];
 
 /** Only the smallest fruits can appear as the next drop. */

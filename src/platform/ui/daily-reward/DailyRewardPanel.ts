@@ -343,7 +343,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     );
 
     const rewardY = height / 2 - 22;
-    const amount = formatRewardAmount(entry.coins ?? 1000);
+    const amount = formatRewardAmount(entry.coins ?? 2100);
     const amountText = this.scene.add.text(0, rewardY, amount, {
       fontSize: '22px',
       fontStyle: 'bold',

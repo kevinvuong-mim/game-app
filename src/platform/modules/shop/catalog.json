@@ -1,7 +1,7 @@
 {
   "items": [
     {
-      "price": 2000,
+      "price": 1000,
       "type": "boost",
       "currency": "coins",
       "id": "boost_hammer",
@@ -10,7 +10,7 @@
       "description": "Destroy the fruit you choose!"
     },
     {
-      "price": 2000,
+      "price": 500,
       "type": "boost",
       "currency": "coins",
       "id": "boost_change",
@@ -19,7 +19,7 @@
       "description": "Swap the current fruit with the next one!"
     },
     {
-      "price": 2500,
+      "price": 1500,
       "type": "boost",
       "currency": "coins",
       "id": "boost_swap",
@@ -28,7 +28,7 @@
       "description": "Swap the positions of any fruits!"
     },
     {
-      "price": 3500,
+      "price": 500,
       "type": "boost",
       "currency": "coins",
       "id": "boost_size",
@@ -37,7 +37,7 @@
       "description": "Increase the size of the fruit!"
     },
     {
-      "price": 3000,
+      "price": 300,
       "type": "boost",
       "currency": "coins",
       "id": "boost_undo",
@@ -46,7 +46,7 @@
       "description": "Undo your last move!"
     },
     {
-      "price": 4.99,
+      "price": 3.99,
       "type": "entitlement",
       "currency": "iap",
       "productKey": "REMOVE_ADS",
