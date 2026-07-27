@@ -23,7 +23,7 @@ export class HomeScene extends Phaser.Scene {
 
     createUIButton({
       scene: this,
-      position: { x: width * 0.8, y: height * 0.04 },
+      position: { x: width * 0.83, y: height * 0.04 },
       size: { width: 80, height: 80 },
       background: { key: 'how-to-play-icon' },
       onClick: () => this.openScreen('HowToPlay'),
