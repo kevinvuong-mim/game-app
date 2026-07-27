@@ -47,6 +47,7 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'mission-item-5', path: '/assets/images/mission-item-5.png' },
   { key: 'daily-reward-icon', path: '/assets/images/daily-reward-icon.png' },
   { key: 'how-to-play-icon', path: '/assets/images/how-to-play.png' },
+  { key: 'watermelon-character', path: '/assets/images/watermelon-character.png' },
   // home-background-image is loaded in BootScene for the preload UI.
   { key: 'play-button-background', path: '/assets/images/play-button-background.png' },
   { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
@@ -87,6 +88,7 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'mission-item-5', width: 96, height: 96, color: 0xffc107 },
   { key: 'daily-reward-icon', width: 80, height: 82, color: 0x4a90d9 },
   { key: 'how-to-play-icon', width: 80, height: 80, color: 0x3cb043 },
+  { key: 'watermelon-character', width: 255, height: 168, color: 0x3cb043 },
   { key: 'checked-icon', width: 48, height: 48, color: 0x3cb043 },
   { key: 'chest-icon', width: 256, height: 160, color: 0xc62828 },
   { key: 'home-background-image', width: 16, height: 16, color: 0x7cbc3a },

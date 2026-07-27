@@ -13,3 +13,4 @@ export { notificationController } from './notifications';
 export { navigationService, bindNavigationEvents } from './navigation';
 export { leaderboard, leaderboardController } from './leaderboard';
 export { dailyRewards, dailyRewardController } from './daily-reward';
+export { rateService } from './rate';

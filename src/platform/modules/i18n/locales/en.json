@@ -195,6 +195,15 @@
     "rewardIncomplete": "Ad was not completed",
     "useRequestReward": "Use requestReward for rewarded placements"
   },
+  "rateApp": {
+    "title": "RATE THE GAME",
+    "message": "Please rate us to help improve the game!",
+    "rateNow": "RATE NOW",
+    "later": "LATER",
+    "selectStars": "Please select a star rating",
+    "thanks": "Thanks for your rating!",
+    "thanksFeedback": "Thanks for your feedback!"
+  },
   "notifications": {
     "dailyReward": {
       "title": "Daily Reward Ready",

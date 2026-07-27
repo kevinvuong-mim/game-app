@@ -19,6 +19,14 @@ export interface PlatformStore extends PlatformState {
   incrementGamesPlayed: () => void;
   setHighScore: (score: number) => void;
   setCurrentLevel: (level: number) => void;
+  setRatePromptProgress: (
+    update: Partial<
+      Pick<
+        PlatformState['progress'],
+        'hasRatedApp' | 'lastRatePromptGamesPlayed' | 'lastAppRating'
+      >
+    >
+  ) => void;
 
   // Settings
   updateSettings: (settings: Partial<PlatformState['settings']>) => void;
@@ -106,6 +114,14 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
 
   setCurrentLevel: (level) => set((s) => ({ progress: { ...s.progress, currentLevel: level } })),
 
+  setRatePromptProgress: (update) =>
+    set((s) => ({
+      progress: {
+        ...s.progress,
+        ...update,
+      },
+    })),
+
   updateSettings: (settings) => set((s) => ({ settings: { ...s.settings, ...settings } })),
 
   updateMissionProgress: (id, progress) =>
@@ -175,6 +191,11 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
     set((s) => ({
       ...s,
       ...state,
+      progress: {
+        ...DEFAULT_STATE.progress,
+        ...s.progress,
+        ...(state.progress ?? {}),
+      },
       settings: { ...DEFAULT_STATE.settings, ...s.settings, ...(state.settings ?? {}) },
       dailyRewards: {
         ...DEFAULT_STATE.dailyRewards,

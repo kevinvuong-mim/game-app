@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { gameConfig } from '@game/config';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { t, toast, shareService, i18n } from '@platform/ui';
+import { t, toast, shareService, i18n, rateService, RateAppModal } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import {
@@ -23,6 +23,7 @@ export class GameOverScene extends Phaser.Scene {
   private returnTo = 'Home';
   private rankText?: Phaser.GameObjects.Text;
   private unsubscribeSyncCompleted?: () => void;
+  private rateModal?: RateAppModal;
 
   constructor() {
     super({ key: 'GameOver' });
@@ -168,6 +169,10 @@ export class GameOverScene extends Phaser.Scene {
       },
       onClick: () => void this.handleShareScore(score),
     });
+
+    if (rateService.shouldPrompt()) {
+      this.rateModal = new RateAppModal(this);
+    }
   }
 
   private addBackgroundImage(width: number, height: number): void {
@@ -237,6 +242,8 @@ export class GameOverScene extends Phaser.Scene {
 
   shutdown(): void {
     this.cleanupEventListeners();
+    this.rateModal?.destroy();
+    this.rateModal = undefined;
     this.rankText = undefined;
   }
 

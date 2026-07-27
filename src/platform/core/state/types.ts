@@ -24,6 +24,12 @@ interface ProgressState {
   currentLevel: number;
   totalGamesPlayed: number;
   unlockedFeatures: string[];
+  /** User already submitted an in-app rating (stop further prompts). */
+  hasRatedApp: boolean;
+  /** Last `totalGamesPlayed` value when the rate modal was shown or deferred. */
+  lastRatePromptGamesPlayed: number;
+  /** Last star rating submitted in-app (1–5), if any. */
+  lastAppRating?: number;
 }
 
 export interface SettingsState {
@@ -78,6 +84,8 @@ export const DEFAULT_STATE: PlatformState = {
     currentLevel: 1,
     totalGamesPlayed: 0,
     unlockedFeatures: [],
+    hasRatedApp: false,
+    lastRatePromptGamesPlayed: 0,
   },
   currency: { coins: 0 },
   inventory: { items: {} },

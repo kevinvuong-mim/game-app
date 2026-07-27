@@ -13,3 +13,5 @@ export { LeaderboardPanel } from './leaderboard/LeaderboardPanel';
 export { LegalPanel } from './legal/LegalPanel';
 export type { LegalTab } from './legal/LegalPanel';
 export { HowToPlayPanel } from './how-to-play/HowToPlayPanel';
+export { RateAppModal } from './rate/RateAppModal';
+export { rateService } from '@platform/modules/rate';
