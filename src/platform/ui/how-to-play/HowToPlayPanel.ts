@@ -47,11 +47,6 @@ const STEPS: HowToPlayStep[] = [
     bodyKey: 'howToPlay.step4Body',
     iconKey: 'shop-item-1',
   },
-  {
-    titleKey: 'howToPlay.step5Title',
-    bodyKey: 'howToPlay.step5Body',
-    iconKey: 'coin-icon',
-  },
 ];
 
 /**
