@@ -9,7 +9,22 @@
     "settings": "Cài đặt",
     "leaderboard": "Xếp hạng",
     "dailyReward": "Quà hàng ngày",
-    "missions": "Nhiệm vụ"
+    "missions": "Nhiệm vụ",
+    "howToPlay": "Hướng dẫn"
+  },
+  "howToPlay": {
+    "title": "Hướng dẫn chơi",
+    "prev": "Trước",
+    "next": "Tiếp",
+    "done": "Đã hiểu",
+    "step1Title": "Ngắm & Thả",
+    "step1Body": "Kéo trái/phải để ngắm, rồi thả tay để rơi trái cây vào cốc.",
+    "step2Title": "Gộp trái giống nhau",
+    "step2Body": "Hai trái cùng loại chạm nhau sẽ gộp thành trái lớn hơn và nhận điểm.",
+    "step3Title": "Tránh vượt vạch nguy hiểm",
+    "step3Body": "Đừng để trái đã ổn định nằm trên vạch đỏ — nếu không ván chơi sẽ kết thúc!",
+    "step4Title": "Dùng vật phẩm",
+    "step4Body": "Mua vật phẩm ở Cửa hàng — búa, đổi chỗ, tăng cấp… — để cứu những stack khó."
   },
   "game": {
     "score": "Điểm: {{score}}",
@@ -100,6 +115,7 @@
     "privacy": "Quyền riêng tư",
     "termsPrivacy": "Điều khoản & Quyền riêng tư",
     "helpAndLegal": "Trợ giúp & Pháp lý",
+    "howToPlay": "Hướng dẫn chơi",
     "back": "Quay lại",
     "playerName": "Tên người chơi",
     "playerNamePlaceholder": "Nhập tên của bạn",

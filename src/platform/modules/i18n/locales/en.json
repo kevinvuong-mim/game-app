@@ -9,7 +9,22 @@
     "settings": "Settings",
     "leaderboard": "Leaderboard",
     "dailyReward": "Daily Reward",
-    "missions": "Missions"
+    "missions": "Missions",
+    "howToPlay": "How to Play"
+  },
+  "howToPlay": {
+    "title": "How to Play",
+    "prev": "Back",
+    "next": "Next",
+    "done": "Got it",
+    "step1Title": "Aim & Drop",
+    "step1Body": "Drag left or right to aim, then release to drop the fruit into the glass.",
+    "step2Title": "Merge Same Fruits",
+    "step2Body": "When two identical fruits touch, they merge into the next larger fruit and earn points.",
+    "step3Title": "Watch the Danger Line",
+    "step3Body": "Don't let settled fruits stay above the danger line — or the round ends!",
+    "step4Title": "Use Boosts",
+    "step4Body": "Buy boosts in the Shop — hammer, swap, grow, and more — to save tough stacks."
   },
   "game": {
     "score": "Score: {{score}}",
@@ -100,6 +115,7 @@
     "privacy": "Privacy",
     "termsPrivacy": "Terms & Privacy",
     "helpAndLegal": "Help & Legal",
+    "howToPlay": "How to Play",
     "back": "Back",
     "playerName": "Player name",
     "playerNamePlaceholder": "Enter your name",

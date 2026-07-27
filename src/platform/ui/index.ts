@@ -12,3 +12,4 @@ export { DailyRewardPanel } from './daily-reward/DailyRewardPanel';
 export { LeaderboardPanel } from './leaderboard/LeaderboardPanel';
 export { LegalPanel } from './legal/LegalPanel';
 export type { LegalTab } from './legal/LegalPanel';
+export { HowToPlayPanel } from './how-to-play/HowToPlayPanel';
