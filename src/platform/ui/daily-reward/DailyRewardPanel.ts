@@ -101,13 +101,8 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
       eventBus.on('daily:progress', (progress) => {
         this.render(progress);
       }),
-      eventBus.on('daily:claim:result', ({ success, coins, message }) => {
-        if (success) {
-          toast.show({
-            message: this.getClaimToastMessage(coins),
-            type: 'success',
-          });
-        } else if (message === 'time_manipulated') {
+      eventBus.on('daily:claim:result', ({ success, message }) => {
+        if (!success && message === 'time_manipulated') {
           toast.show({ message: t('dailyReward.timeManipulated'), type: 'error' });
         }
         eventBus.emit('daily:progress:request', undefined);
@@ -413,9 +408,5 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
       duration: 700,
       ease: 'Sine.easeInOut',
     });
-  }
-
-  private getClaimToastMessage(coins?: number): string {
-    return t('dailyReward.claimSuccess', { coins: coins ?? 0 });
   }
 }
