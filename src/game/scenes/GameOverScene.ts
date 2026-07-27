@@ -18,6 +18,7 @@ const BUTTON_HEIGHT = 96;
 const NEW_RECORD_GAP = 36;
 const NEW_RECORD_WIDTH = 200;
 const NEW_RECORD_HEIGHT = 58;
+const PANEL_BOTTOM_PADDING = 52;
 
 export class GameOverScene extends Phaser.Scene {
   private returnTo = 'Home';
@@ -44,12 +45,12 @@ export class GameOverScene extends Phaser.Scene {
     this.addBackgroundImage(width, height);
 
     const panelWidth = Math.min(width * 0.88, 420);
-    const contentTop = height * 0.38;
+    const contentTop = height * 0.36;
     const buttonsStartY = this.getButtonsStartY(contentTop, isNewRecord);
     const lastButtonY = isNewRecord
       ? buttonsStartY + NEW_RECORD_HEIGHT + NEW_RECORD_GAP + 3 * BUTTON_HEIGHT
       : buttonsStartY + 3 * BUTTON_HEIGHT;
-    const panelBottom = lastButtonY + BUTTON_HEIGHT / 2 + 36;
+    const panelBottom = lastButtonY + BUTTON_HEIGHT / 2 + PANEL_BOTTOM_PADDING;
     const panelTop = contentTop - 28;
     const panelHeight = panelBottom - panelTop;
 

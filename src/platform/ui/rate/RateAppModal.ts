@@ -46,7 +46,7 @@ export class RateAppModal {
     const panelWidth = Math.min(420, width * 0.9);
     const panelHeight = Math.min(640, height * 0.8);
     const panelX = width / 2 - panelWidth / 2;
-    const panelY = height / 2 - panelHeight / 2 + 10;
+    const panelY = height / 2 - panelHeight / 2;
     const centerX = width / 2;
     const contentWidth = panelWidth - padX * 2;
 

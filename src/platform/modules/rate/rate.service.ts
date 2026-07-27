@@ -11,8 +11,15 @@ import { isRatePromptGamesPlayed } from './rate.fibonacci';
 /** Stars at or above this threshold open the store / native review prompt. */
 const STORE_REVIEW_MIN_STARS = 4;
 
+/** TEMP: always show rate modal on GameOver for QA — set false before ship. */
+const FORCE_RATE_PROMPT = false;
+
 class RateService {
   shouldPrompt(): boolean {
+    if (FORCE_RATE_PROMPT) {
+      return true;
+    }
+
     const { progress } = usePlatformStore.getState();
 
     if (progress.hasRatedApp) {
