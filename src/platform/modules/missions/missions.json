@@ -5,7 +5,7 @@
     "target": 2000,
     "icon": "mission-item-1",
     "goScene": "Gameplay",
-    "resetPolicy": "never",
+    "resetPolicy": "daily",
     "titleKey": "missions.reachScore2000",
     "reward": { "type": "coins", "amount": 200 }
   },
