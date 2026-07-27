@@ -24,7 +24,9 @@
     "step3Title": "Watch the Danger Line",
     "step3Body": "Don't let settled fruits stay above the danger line — or the round ends!",
     "step4Title": "Use Boosts",
-    "step4Body": "Buy boosts in the Shop — hammer, swap, grow, and more — to save tough stacks."
+    "step4Body": "Buy boosts in the Shop — hammer, swap, grow, and more — to save tough stacks.",
+    "step5Title": "Earn Coins",
+    "step5Body": "When a round ends, you earn coins equal to your score — 1 point = 1 coin."
   },
   "game": {
     "score": "Score: {{score}}",

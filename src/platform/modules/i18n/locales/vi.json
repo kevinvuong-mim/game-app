@@ -24,7 +24,9 @@
     "step3Title": "Tránh vượt vạch nguy hiểm",
     "step3Body": "Đừng để trái đã ổn định nằm trên vạch đỏ — nếu không ván chơi sẽ kết thúc!",
     "step4Title": "Dùng vật phẩm",
-    "step4Body": "Mua vật phẩm ở Cửa hàng — búa, đổi chỗ, tăng cấp… — để cứu những stack khó."
+    "step4Body": "Mua vật phẩm ở Cửa hàng — búa, đổi chỗ, tăng cấp… — để cứu những stack khó.",
+    "step5Title": "Nhận xu",
+    "step5Body": "Khi kết thúc ván chơi, bạn nhận số xu bằng đúng số điểm — 1 điểm = 1 xu."
   },
   "game": {
     "score": "Điểm: {{score}}",
