@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const platform = process.argv[2];
 
@@ -10,7 +11,7 @@ if (platform !== 'android' && platform !== 'ios') {
 }
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const defaultUrl = platform === 'android' ? 'http://10.0.2.2:5173' : 'http://localhost:5173';
+const defaultUrl = 'http://localhost:5173';
 const liveReloadUrl = process.env.CAP_SERVER_URL || defaultUrl;
 
 let parsedUrl;
@@ -33,6 +34,22 @@ let nativeProcess;
 
 function log(message) {
   console.log(`[dev:native] ${message}`);
+}
+
+function setupAndroidPortReverse(currentPort) {
+  if (platform !== 'android') return;
+
+  try {
+    execFileSync('adb', ['reverse', `tcp:${currentPort}`, `tcp:${currentPort}`], {
+      stdio: 'ignore',
+    });
+    log(`Configured adb reverse tcp:${currentPort} -> tcp:${currentPort}`);
+  } catch {
+    log(
+      `Could not configure adb reverse for port ${currentPort}. ` +
+        'If running on a physical device, set CAP_SERVER_URL to your LAN IP.'
+    );
+  }
 }
 
 async function serverIsReady() {
@@ -73,6 +90,8 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
 }
 
 async function main() {
+  setupAndroidPortReverse(port);
+
   if (await serverIsReady()) {
     log(`Reusing the dev server at ${localServerUrl}`);
   } else {
