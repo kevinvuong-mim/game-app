@@ -3,6 +3,7 @@ import type Phaser from 'phaser';
 export type UIButton = Phaser.GameObjects.Container & {
   setText(content: string): void;
   setEnabled(enabled: boolean): void;
+  setLoading(loading: boolean): void;
   setBadgeContent(content: string): void;
   setBadgeVisible(visible: boolean): void;
 };
