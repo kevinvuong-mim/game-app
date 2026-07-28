@@ -11,6 +11,7 @@ import { toast } from '../toast/ToastManager';
 import { guest } from '@platform/modules/guest';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { drawRoundedRect } from '../panel/graphics';
+import type { UIButton, ToastOptions } from '../types';
 import { createUIButton } from '../button/UIButton';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
@@ -70,6 +71,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
   private languageMenu?: Phaser.GameObjects.Container;
   private languageLabel?: Phaser.GameObjects.Text;
   private purchaseModal?: Phaser.GameObjects.Container;
+  private buyAdsButton?: UIButton;
 
   constructor(
     scene: Phaser.Scene,
@@ -105,6 +107,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     this.languageMenu = undefined;
     this.languageOpen = false;
     this.purchaseModal = undefined;
+    this.buyAdsButton = undefined;
     this.nameFieldText = undefined;
     this.nameCaret = undefined;
     this.languageLabel = undefined;
@@ -125,6 +128,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     this.languageOpen = false;
     this.scheduleDestroy(this.purchaseModal);
     this.purchaseModal = undefined;
+    this.buyAdsButton = undefined;
 
     scene.time.delayedCall(0, () => {
       if (!scene.sys.isActive()) return;
@@ -138,6 +142,30 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
 
   private navigateTo(sceneKey: string, data?: Record<string, unknown>): void {
     this.deferSceneAction(() => this.onNavigate(sceneKey, data));
+  }
+
+  /**
+   * Phaser queues `scene.restart()` for the next step — a toast shown in the same tick
+   * still lands on the old scene and is destroyed by SHUTDOWN. Wait for CREATE instead.
+   */
+  private restartThenShowToast(options: ToastOptions): void {
+    const scene = this.scene;
+    if (!scene?.sys?.isActive() || scene.scene.key !== 'Settings') {
+      toast.show(options);
+      return;
+    }
+
+    this.deferSceneAction(() => {
+      if (!scene.sys.isActive() || scene.scene.key !== 'Settings') {
+        toast.show(options);
+        return;
+      }
+
+      scene.events.once(Phaser.Scenes.Events.CREATE, () => {
+        toast.show(options);
+      });
+      scene.scene.restart();
+    });
   }
 
   /** Destroy after the current input/render tick so hit targets aren't torn down mid-event. */
@@ -158,8 +186,10 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
   }
 
   hidePurchaseModal(): void {
+    if (this.purchasingAds) return;
     const modal = this.purchaseModal;
     this.purchaseModal = undefined;
+    this.buyAdsButton = undefined;
     this.scheduleDestroy(modal);
   }
 
@@ -612,12 +642,12 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
       }
 
       const restoredSomething = result.restoredEntitlements.length > 0;
-      toast.show({
+      const restoreToast: ToastOptions = {
         type: restoredSomething ? 'success' : 'info',
         message: restoredSomething
           ? t('settings.restorePurchasesSuccess')
           : t('settings.restorePurchasesEmpty'),
-      });
+      };
 
       if (
         restoredSomething &&
@@ -625,11 +655,9 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
         this.scene.sys.isActive() &&
         this.scene.scene.key === 'Settings'
       ) {
-        this.deferSceneAction(() => {
-          if (this.scene.sys.isActive() && this.scene.scene.key === 'Settings') {
-            this.scene.scene.restart();
-          }
-        });
+        this.restartThenShowToast(restoreToast);
+      } else {
+        toast.show(restoreToast);
       }
     } finally {
       this.restoringPurchases = false;
@@ -718,26 +746,24 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
 
     const buyWidth = Math.min(220, panelWidth * 0.7);
     const buyY = showRestore ? panelY + panelHeight - 88 : panelY + panelHeight - 52;
-    modal.add(
-      createUIButton({
-        scene: this.scene,
-        position: { x: width / 2, y: buyY },
-        size: { width: buyWidth, height: 64 },
-        background: { key: 'leaderboard-button-background' },
-        text: {
-          content: t('shop.buy').toUpperCase(),
-          style: {
-            fontSize: 22,
-            fontStyle: 'bold',
-            border: { width: 3, color: '#000000' },
-          },
+    this.buyAdsButton = createUIButton({
+      scene: this.scene,
+      position: { x: width / 2, y: buyY },
+      size: { width: buyWidth, height: 64 },
+      background: { key: 'leaderboard-button-background' },
+      text: {
+        content: t('shop.buy').toUpperCase(),
+        style: {
+          fontSize: 22,
+          fontStyle: 'bold',
+          border: { width: 3, color: '#000000' },
         },
-        onClick: () => {
-          this.hidePurchaseModal();
-          void this.purchaseRemoveAds();
-        },
-      })
-    );
+      },
+      onClick: () => {
+        void this.purchaseRemoveAds();
+      },
+    });
+    modal.add(this.buyAdsButton);
 
     if (showRestore) {
       const restoreY = panelY + panelHeight - 28;
@@ -750,6 +776,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
       hint.on('pointerdown', () => {
+        if (this.purchasingAds) return;
         this.hidePurchaseModal();
         void this.restorePurchases();
       });
@@ -763,32 +790,38 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
   private async purchaseRemoveAds(): Promise<void> {
     if (this.purchasingAds || shop.isOwned(REMOVE_ADS_ITEM_ID)) return;
     this.purchasingAds = true;
+    this.buyAdsButton?.setLoading(true);
 
-    toast.show({ message: t('settings.purchasingAds'), type: 'info', duration: 2500 });
-
+    let success = false;
     try {
-      const success = await shop.purchase(REMOVE_ADS_ITEM_ID);
-      const itemName = t('shop.items.remove_ads.name');
-      toast.show(
-        success
-          ? { type: 'success', message: t('shop.purchaseSuccess', { name: itemName }) }
-          : { message: t('shop.purchaseFailed'), type: 'error' }
-      );
-      // Only refresh Settings if the user is still on this scene after the async IAP sheet.
+      success = await shop.purchase(REMOVE_ADS_ITEM_ID);
+      if (!success) {
+        toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
+        return;
+      }
+
+      const successToast: ToastOptions = {
+        type: 'success',
+        message: t('shop.purchaseSuccess', { name: t('shop.items.remove_ads.name') }),
+      };
+
+      // Toast is scene-owned; Phaser queues restart so we must wait for CREATE.
       if (
-        success &&
         !this.disposed &&
         this.scene.sys.isActive() &&
         this.scene.scene.key === 'Settings'
       ) {
-        this.deferSceneAction(() => {
-          if (this.scene.sys.isActive() && this.scene.scene.key === 'Settings') {
-            this.scene.scene.restart();
-          }
-        });
+        this.restartThenShowToast(successToast);
+      } else {
+        toast.show(successToast);
       }
     } finally {
       this.purchasingAds = false;
+      this.buyAdsButton?.setLoading(false);
+    }
+
+    if (success) {
+      this.hidePurchaseModal();
     }
   }
 
@@ -960,12 +993,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
           if (active || this.disposed) return;
           await settings.setLanguage(lang.code);
           if (this.disposed || !this.scene.sys.isActive()) return;
-          toast.show({ message: label, type: 'success', duration: 1500 });
-          this.deferSceneAction(() => {
-            if (this.scene.sys.isActive()) {
-              this.scene.scene.restart();
-            }
-          });
+          this.restartThenShowToast({ message: label, type: 'success', duration: 1500 });
         })();
       });
     });

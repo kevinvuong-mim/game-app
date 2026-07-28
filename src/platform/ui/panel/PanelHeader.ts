@@ -5,6 +5,7 @@ import { drawRoundedRect } from './graphics';
 import { toast } from '../toast/ToastManager';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '../button/UIButton';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 import { formatNumber } from '@platform/core/utils';
 import { shop } from '@platform/modules/shop';
 import { t } from '@platform/modules/i18n/i18n.service';
@@ -60,6 +61,7 @@ export class PanelHeader extends Phaser.GameObjects.Container {
   private coinIcon?: Phaser.GameObjects.Image;
   private coinBar?: Phaser.GameObjects.Graphics;
   private getCoinsModal?: Phaser.GameObjects.Container;
+  private buyCoinsButton?: UIButton;
   private purchasingCoins = false;
 
   constructor(scene: Phaser.Scene, options: PanelHeaderOptions) {
@@ -86,6 +88,7 @@ export class PanelHeader extends Phaser.GameObjects.Container {
     this.storeUnsubscribe = undefined;
     this.getCoinsModal?.destroy(true);
     this.getCoinsModal = undefined;
+    this.buyCoinsButton = undefined;
     super.destroy(fromScene);
   }
 
@@ -117,6 +120,7 @@ export class PanelHeader extends Phaser.GameObjects.Container {
       fontSize: 22,
       backgroundKey: 'leaderboard-button-background',
       onClick: () => {
+        if (this.purchasingCoins) return;
         this.hideGetCoinsModal();
         this.onNavigate(action.sceneKey);
       },
@@ -210,28 +214,28 @@ export class PanelHeader extends Phaser.GameObjects.Container {
       cursorY += GET_COINS_DIVIDER_THICKNESS + GET_COINS_SECTION_GAP;
     }
 
-    modal.add(
-      createUIButton({
-        scene: this.scene,
-        position: { x: width / 2, y: cursorY + GET_COINS_BTN_HEIGHT / 2 },
-        size: { width: buttonWidth, height: GET_COINS_BTN_HEIGHT },
-        background: { key: iapSection.backgroundKey },
-        text: {
-          content: iapSection.label,
-          style: {
-            fontSize: iapSection.fontSize,
-            fontStyle: 'bold',
-            border: { width: 3, color: '#000000' },
-          },
+    this.buyCoinsButton = createUIButton({
+      scene: this.scene,
+      position: { x: width / 2, y: cursorY + GET_COINS_BTN_HEIGHT / 2 },
+      size: { width: buttonWidth, height: GET_COINS_BTN_HEIGHT },
+      background: { key: iapSection.backgroundKey },
+      text: {
+        content: iapSection.label,
+        style: {
+          fontSize: iapSection.fontSize,
+          fontStyle: 'bold',
+          border: { width: 3, color: '#000000' },
         },
-        onClick: iapSection.onClick,
-      })
-    );
+      },
+      onClick: iapSection.onClick,
+    });
+    modal.add(this.buyCoinsButton);
 
     this.getCoinsModal = modal;
   }
 
   hideGetCoinsModal(): void {
+    if (this.purchasingCoins) return;
     this.getCoinsModal?.setVisible(false);
   }
 
@@ -252,25 +256,29 @@ export class PanelHeader extends Phaser.GameObjects.Container {
   private async purchaseCoinPack(): Promise<void> {
     if (this.purchasingCoins) return;
     this.purchasingCoins = true;
+    this.buyCoinsButton?.setLoading(true);
 
-    toast.show({ message: t('shop.getCoins.purchasing'), type: 'info', duration: 2500 });
-
+    let success = false;
     try {
-      const success = await shop.purchase(COINS_PACK_ITEM_ID);
+      success = await shop.purchase(COINS_PACK_ITEM_ID);
       if (success) {
+        soundManager.playCoinDrop();
         toast.show({
           type: 'success',
           message: t('shop.getCoins.purchaseSuccess', {
             coins: formatNumber(COINS_10000_AMOUNT),
           }),
         });
-        this.hideGetCoinsModal();
-        return;
+      } else {
+        toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
       }
-
-      toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
     } finally {
       this.purchasingCoins = false;
+      this.buyCoinsButton?.setLoading(false);
+    }
+
+    if (success) {
+      this.hideGetCoinsModal();
     }
   }
 
