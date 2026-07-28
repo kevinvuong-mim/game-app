@@ -16,10 +16,13 @@ import { soundManager } from '@platform/ui/audio/SoundManager';
 export const UIButtonBackgroundKey = {
   Primary: '__ui-button-primary',
   Rounded: '__ui-button-rounded',
+  Spinner: '__ui-button-spinner',
 } as const;
 
 const PRESS_SCALE = 0.95;
 const DEFAULT_SIZE: UIButtonSize = { height: 50, width: 200 };
+const SPINNER_SIZE = 28;
+const SPINNER_ROTATE_MS = 750;
 
 function applyTextStyle(textObject: Phaser.GameObjects.Text, style?: UIButtonTextStyle): void {
   const fontSize = style?.fontSize !== undefined ? `${style.fontSize}px` : '20px';
@@ -66,6 +69,26 @@ function ensureDefaultButtonTextures(scene: Phaser.Scene): void {
     graphics.fillStyle(0x4a90d9, 1);
     graphics.fillRoundedRect(2, 2, width - 4, height - 4, radius - 2);
     graphics.generateTexture(UIButtonBackgroundKey.Rounded, width, height);
+    graphics.destroy();
+  }
+
+  if (!scene.textures.exists(UIButtonBackgroundKey.Spinner)) {
+    const size = SPINNER_SIZE;
+    const center = size / 2;
+    const radius = size / 2 - 3;
+    const graphics = scene.add.graphics();
+
+    graphics.lineStyle(4, 0x000000, 0.35);
+    graphics.beginPath();
+    graphics.arc(center, center, radius, 0, Math.PI * 2);
+    graphics.strokePath();
+
+    graphics.lineStyle(4, 0xffffff, 1);
+    graphics.beginPath();
+    graphics.arc(center, center, radius, -Math.PI * 0.15, Math.PI * 1.15);
+    graphics.strokePath();
+
+    graphics.generateTexture(UIButtonBackgroundKey.Spinner, size, size);
     graphics.destroy();
   }
 }
@@ -119,7 +142,7 @@ function addButtonIcon(
   offsetY: number,
   width: number,
   height: number
-): void {
+): Phaser.GameObjects.Image {
   const x = offsetX + (icon.offset?.x ?? width / 2);
   const y = offsetY + (icon.offset?.y ?? height / 2);
   const iconObject = scene.add.image(x, y, icon.key);
@@ -130,6 +153,7 @@ function addButtonIcon(
 
   iconObject.setOrigin(0.5);
   container.add(iconObject);
+  return iconObject;
 }
 
 function measureBadge(
@@ -305,14 +329,17 @@ export function createUIButton(options: UIButtonOptions): UIButton {
     ? addButtonText(scene, container, text, offsetX, offsetY, width, height)
     : undefined;
 
-  if (icon) {
-    addButtonIcon(scene, container, icon, offsetX, offsetY, width, height);
-  }
+  const iconObject = icon
+    ? addButtonIcon(scene, container, icon, offsetX, offsetY, width, height)
+    : undefined;
 
   const badgeParts = badge ? addButtonBadge(scene, container, badge, offsetX, offsetY) : undefined;
 
   let hitZone: Phaser.GameObjects.Zone | undefined;
   let enabled = !disabled;
+  let loading = false;
+  let spinner: Phaser.GameObjects.Image | undefined;
+  let spinnerTween: Phaser.Tweens.Tween | undefined;
 
   const ensureInteractive = () => {
     if (!hitZone) {
@@ -329,6 +356,32 @@ export function createUIButton(options: UIButtonOptions): UIButton {
     container.setScale(1);
   };
 
+  const ensureSpinner = () => {
+    if (spinner) return spinner;
+
+    spinner = scene.add.image(
+      offsetX + width / 2,
+      offsetY + height / 2,
+      UIButtonBackgroundKey.Spinner
+    );
+    spinner.setDisplaySize(SPINNER_SIZE, SPINNER_SIZE);
+    spinner.setVisible(false);
+    container.add(spinner);
+    return spinner;
+  };
+
+  const stopSpinner = () => {
+    if (spinnerTween) {
+      spinnerTween.stop();
+      spinnerTween = undefined;
+    }
+    if (spinner) {
+      scene.tweens.killTweensOf(spinner);
+      spinner.setAngle(0);
+      spinner.setVisible(false);
+    }
+  };
+
   if (enabled) {
     ensureInteractive();
   } else {
@@ -339,6 +392,8 @@ export function createUIButton(options: UIButtonOptions): UIButton {
     if (nextEnabled === enabled) return;
     enabled = nextEnabled;
 
+    if (loading) return;
+
     if (enabled) {
       container.setAlpha(1);
       ensureInteractive();
@@ -346,6 +401,43 @@ export function createUIButton(options: UIButtonOptions): UIButton {
     }
 
     disableInteractive();
+    container.setAlpha(0.5);
+  };
+
+  container.setLoading = (nextLoading: boolean) => {
+    if (nextLoading === loading) return;
+    loading = nextLoading;
+
+    if (loading) {
+      textObject?.setVisible(false);
+      iconObject?.setVisible(false);
+      disableInteractive();
+      container.setAlpha(1);
+
+      const spinnerImage = ensureSpinner();
+      spinnerImage.setAngle(0);
+      spinnerImage.setVisible(true);
+      scene.tweens.killTweensOf(spinnerImage);
+      spinnerTween = scene.tweens.add({
+        targets: spinnerImage,
+        angle: '+=360',
+        duration: SPINNER_ROTATE_MS,
+        repeat: -1,
+        ease: 'Linear',
+      });
+      return;
+    }
+
+    stopSpinner();
+    textObject?.setVisible(true);
+    iconObject?.setVisible(true);
+
+    if (enabled) {
+      container.setAlpha(1);
+      ensureInteractive();
+      return;
+    }
+
     container.setAlpha(0.5);
   };
 
