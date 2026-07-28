@@ -4,7 +4,6 @@ import { gameConfig } from '@game/config';
 import { eventBus } from '@platform/core/events';
 import { getHighScore } from '@platform/ui';
 import { randomSpawnLevel } from '@game/fruits';
-import { SKILL_IDS, getSkillQuantity } from '@game/skills/skillInventory';
 import { GameplayHUD } from '@game/ui/GameplayHUD';
 import {
   CONTAINER_INSET,
@@ -399,11 +398,7 @@ export class GameplayScene extends Phaser.Scene {
     }
     const displayH = displayW * aspect * 1.2;
     const centerX = width / 2;
-    // When skillbar is hidden, free bottom space and nudge the glass down a bit.
-    const hasSkillBar = SKILL_IDS.some((id) => getSkillQuantity(id) > 0);
-    const bottomReserve = hasSkillBar ? 200 : 120;
-    const centerBias = hasSkillBar ? 0.5 : 0.55;
-    const centerY = Math.min(height * centerBias, height - bottomReserve - displayH / 2);
+    const centerY = Math.min(height * 0.5, height - 200 - displayH / 2);
 
     const container = this.add.image(centerX, centerY, 'glass-container');
     container.setDisplaySize(displayW, displayH);
