@@ -214,16 +214,26 @@ function mapMakePurchaseResult(
 
 function mapCustomerInfoToPurchases(customerInfo: CustomerInfo): ProviderPurchase[] {
   const purchases: ProviderPurchase[] = [];
+  const seenTx = new Set<string>();
 
   for (const entitlement of Object.values(customerInfo.entitlements.active)) {
     if (!getProductById(entitlement.productIdentifier)) continue;
 
+    const transactionId = entitlement.identifier;
+    seenTx.add(transactionId);
     purchases.push({
       productId: entitlement.productIdentifier,
-      transactionId: entitlement.identifier,
+      transactionId,
       receipt: entitlement.productIdentifier,
       purchaseTime: entitlement.latestPurchaseDateMillis,
     });
+  }
+
+  // Consumables / non-renewing purchases live here, not in entitlements.active.
+  for (const purchase of mapNonSubscriptionPurchases(customerInfo)) {
+    if (seenTx.has(purchase.transactionId)) continue;
+    seenTx.add(purchase.transactionId);
+    purchases.push(purchase);
   }
 
   return purchases;

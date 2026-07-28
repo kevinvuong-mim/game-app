@@ -17,6 +17,7 @@ import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import { settings } from '@platform/modules/settings';
 import { shop } from '@platform/modules/shop';
 import { ads } from '@platform/core/advertising';
+import { iap } from '@platform/modules/iap';
 import { REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
 const LANGUAGE_GLOBE_KEY = 'language-globe-icon';
 const NO_ADS_ICON_KEY = 'no-ads-icon';
@@ -57,6 +58,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
   private disposed = false;
   private saving = false;
   private purchasingAds = false;
+  private restoringPurchases = false;
   private languageOpen = false;
   private nameEditing = false;
   private draftName = '';
@@ -596,6 +598,44 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     return y + rowHeight + 8;
   }
 
+  private async restorePurchases(): Promise<void> {
+    if (this.disposed || this.restoringPurchases || !iap.isEnabled()) return;
+    this.restoringPurchases = true;
+
+    toast.show({ message: t('settings.restoringPurchases'), type: 'info', duration: 2500 });
+
+    try {
+      const result = await iap.restore();
+      if (!result.success) {
+        toast.show({ message: t('settings.restorePurchasesFailed'), type: 'error' });
+        return;
+      }
+
+      const restoredSomething = result.restoredEntitlements.length > 0;
+      toast.show({
+        type: restoredSomething ? 'success' : 'info',
+        message: restoredSomething
+          ? t('settings.restorePurchasesSuccess')
+          : t('settings.restorePurchasesEmpty'),
+      });
+
+      if (
+        restoredSomething &&
+        !this.disposed &&
+        this.scene.sys.isActive() &&
+        this.scene.scene.key === 'Settings'
+      ) {
+        this.deferSceneAction(() => {
+          if (this.scene.sys.isActive() && this.scene.scene.key === 'Settings') {
+            this.scene.scene.restart();
+          }
+        });
+      }
+    } finally {
+      this.restoringPurchases = false;
+    }
+  }
+
   private showRemoveAdsPurchaseModal(): void {
     if (
       this.disposed ||
@@ -611,7 +651,8 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
 
     const { width, height } = this.scene.cameras.main;
     const panelWidth = Math.min(340, width * 0.82);
-    const panelHeight = 280;
+    const showRestore = iap.isEnabled();
+    const panelHeight = showRestore ? 318 : 280;
     const panelX = width / 2 - panelWidth / 2;
     const panelY = height / 2 - panelHeight / 2;
     const modal = this.scene.add.container(0, 0).setDepth(200);
@@ -676,10 +717,11 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     );
 
     const buyWidth = Math.min(220, panelWidth * 0.7);
+    const buyY = showRestore ? panelY + panelHeight - 88 : panelY + panelHeight - 52;
     modal.add(
       createUIButton({
         scene: this.scene,
-        position: { x: width / 2, y: panelY + panelHeight - 52 },
+        position: { x: width / 2, y: buyY },
         size: { width: buyWidth, height: 64 },
         background: { key: 'leaderboard-button-background' },
         text: {
@@ -696,6 +738,23 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
         },
       })
     );
+
+    if (showRestore) {
+      const restoreY = panelY + panelHeight - 28;
+      const hint = this.scene.add
+        .text(width / 2, restoreY, t('settings.restorePurchasesHint'), {
+          fontSize: '14px',
+          color: LABEL_COLOR,
+          fontFamily: FREDOKA_FONT,
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      hint.on('pointerdown', () => {
+        this.hidePurchaseModal();
+        void this.restorePurchases();
+      });
+      modal.add(hint);
+    }
 
     this.purchaseModal = modal;
     this.add(modal);

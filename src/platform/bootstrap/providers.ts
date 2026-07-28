@@ -13,10 +13,24 @@ export function registerAdsProvider(): void {
   const runtime = config();
   if (!runtime.adsEnabled) return;
 
-  const providerName =
-    Capacitor.isNativePlatform() && runtime.ads.provider === 'admob' ? 'admob' : 'mock';
+  const isNative = Capacitor.isNativePlatform();
+  const wantAdmob = runtime.ads.provider === 'admob';
 
-  ads.setProvider(createAdsProvider(providerName));
+  if (isNative && wantAdmob) {
+    ads.setProvider(createAdsProvider('admob'));
+    logger.info('[Ads] AdMob provider registered');
+    return;
+  }
+
+  // Never ship mock ads on production native — rewarded would grant without real ads.
+  if (isNative && getEnvironment() === 'production') {
+    logger.error('[Ads] Mock ads blocked in production native — disabling ads');
+    ads.setEnabled(false);
+    return;
+  }
+
+  ads.setProvider(createAdsProvider('mock'));
+  logger.info('[Ads] Mock provider registered');
 }
 
 /** Registers the analytics provider selected by runtime config. */

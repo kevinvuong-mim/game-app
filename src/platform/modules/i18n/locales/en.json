@@ -116,7 +116,12 @@
     "ads": "Ads",
     "hideAds": "Hide ads",
     "removeAdsPrice": "{{price}}",
-    "purchasingAds": "Processing purchase…"
+    "purchasingAds": "Processing purchase…",
+    "restorePurchasesHint": "Already purchased? Restore",
+    "restoringPurchases": "Restoring purchases…",
+    "restorePurchasesSuccess": "Purchases restored",
+    "restorePurchasesEmpty": "No purchases to restore",
+    "restorePurchasesFailed": "Could not restore purchases"
   },
   "missions": {
     "title": "Missions",

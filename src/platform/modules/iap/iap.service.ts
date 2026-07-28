@@ -173,22 +173,27 @@ class IapService {
     const matched = getProductById(providerPurchase.productId) ?? product;
 
     if (matched.type === 'consumable') {
-      const isNew = await this.storage.recordConsumableTransaction(providerPurchase.transactionId);
-      if (!isNew) {
+      // Grant before recording so a crash mid-fulfillment can still recover via restore.
+      if (await this.storage.hasConsumableTransaction(providerPurchase.transactionId)) {
         logger.info('[IAP] Consumable transaction already granted', {
           productId: matched.id,
           transactionId: providerPurchase.transactionId,
         });
         return { success: true, cancelled: false, entitlement: matched.entitlement };
       }
+
+      this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+        productId: providerPurchase.productId,
+        entitlement: matched.entitlement,
+      });
+      await this.storage.recordConsumableTransaction(providerPurchase.transactionId);
     } else {
       await this.grantEntitlement(matched.entitlement);
+      this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+        productId: providerPurchase.productId,
+        entitlement: matched.entitlement,
+      });
     }
-
-    this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
-      productId: providerPurchase.productId,
-      entitlement: matched.entitlement,
-    });
 
     logger.info('[IAP] Purchase succeeded', {
       productId: matched.id,
@@ -303,17 +308,19 @@ class IapService {
         if (!product?.entitlement) continue;
 
         if (product.type === 'consumable') {
-          const isNew = await this.storage.recordConsumableTransaction(purchase.transactionId);
-          if (isNew) {
-            this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
-              productId: purchase.productId,
-              entitlement: product.entitlement,
-            });
-            logger.info('[IAP] Restored unconsumed consumable', {
-              productId: product.id,
-              transactionId: purchase.transactionId,
-            });
+          if (await this.storage.hasConsumableTransaction(purchase.transactionId)) {
+            continue;
           }
+          this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+            productId: purchase.productId,
+            entitlement: product.entitlement,
+          });
+          await this.storage.recordConsumableTransaction(purchase.transactionId);
+          restoredEntitlements.push(product.entitlement);
+          logger.info('[IAP] Restored unconsumed consumable', {
+            productId: product.id,
+            transactionId: purchase.transactionId,
+          });
           continue;
         }
 

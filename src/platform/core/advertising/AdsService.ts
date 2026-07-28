@@ -6,10 +6,11 @@ import type {
   AdsProviderConfig,
 } from './types';
 import { logger } from '../error';
-import { getConfig } from '../config';
+import { getConfig, getEnvironment } from '../config';
 import { createAdsProvider } from './providers';
 import { AdFormatManager, BannerStateMachine } from './AdStateMachine';
 import { BANNER_ALLOWED_PLACEMENTS, DEFAULT_REMOTE_CONFIG } from './types';
+import { Capacitor } from '@capacitor/core';
 
 class AdsService {
   private readonly formats = {
@@ -26,7 +27,6 @@ class AdsService {
   private appOpenShownThisSession = false;
   private provider: IAdsProvider | null = null;
   private activeBannerPlacement: string | null = null;
-  private fallbackProvider: IAdsProvider | null = null;
   private remoteConfig: AdsRemoteConfig = { ...DEFAULT_REMOTE_CONFIG };
   private online = typeof navigator === 'undefined' ? true : navigator.onLine;
 
@@ -53,18 +53,33 @@ class AdsService {
       this.provider = createAdsProvider(providerName);
     }
 
+    const primaryName = this.provider.name;
+
     try {
       await this.provider.init(providerConfig);
     } catch (error) {
-      logger.warn('[Ads] Primary provider failed, falling back to mock', error);
-      this.fallbackProvider = createAdsProvider('mock');
-      await this.fallbackProvider.init(providerConfig);
-      this.provider = this.fallbackProvider;
+      if (this.shouldFailClosedOnProviderError(primaryName)) {
+        logger.error('[Ads] Primary provider failed — ads disabled (no mock fallback)', error);
+        this.provider = null;
+        this.enabled = false;
+        return;
+      }
+
+      logger.warn('[Ads] Primary provider failed, falling back to mock (non-production)', error);
+      this.provider = createAdsProvider('mock');
+      await this.provider.init(providerConfig);
     }
 
     if (this.enabled) {
       void this.preloadCommonAds();
     }
+  }
+
+  /** Production + AdMob must never silently grant rewards via mock. */
+  private shouldFailClosedOnProviderError(providerName: string): boolean {
+    if (providerName !== 'admob') return false;
+    if (!Capacitor.isNativePlatform()) return false;
+    return getEnvironment() === 'production';
   }
 
   async init(): Promise<void> {
@@ -244,7 +259,13 @@ class AdsService {
   }
 
   async showAppOpen(placement: string): Promise<AdShowResult> {
-    if (this.adsRemoved || !this.remoteConfig.appOpenEnabled || this.appOpenShownThisSession) {
+    if (
+      this.adsRemoved ||
+      !this.enabled ||
+      !this.provider ||
+      !this.remoteConfig.appOpenEnabled ||
+      this.appOpenShownThisSession
+    ) {
       return { shown: false, error: 'App open skipped' };
     }
 
@@ -274,7 +295,7 @@ class AdsService {
   }
 
   canShowRewarded(placement: string): boolean {
-    if (!this.enabled || !this.online) return false;
+    if (!this.enabled || !this.provider || !this.online) return false;
     if (!this.remoteConfig.rewardEnabled) return false;
     if (this.resolveFormat(placement) !== 'rewarded') return false;
 
@@ -284,7 +305,7 @@ class AdsService {
 
   canShowInterstitial(placement: string): boolean {
     if (this.adsRemoved) return false;
-    if (!this.enabled) return false;
+    if (!this.enabled || !this.provider) return false;
     if (!this.remoteConfig.interstitialEnabled) return false;
     if (this.resolveFormat(placement) !== 'interstitial') return false;
 
@@ -294,7 +315,7 @@ class AdsService {
 
   canShowBanner(placement: string): boolean {
     if (this.adsRemoved) return false;
-    if (!this.enabled || !this.remoteConfig.bannerEnabled) return false;
+    if (!this.enabled || !this.provider || !this.remoteConfig.bannerEnabled) return false;
     if (!BANNER_ALLOWED_PLACEMENTS.has(placement)) return false;
     return this.resolveFormat(placement) === 'banner';
   }
@@ -322,12 +343,11 @@ class AdsService {
 
   destroy(): void {
     this.provider?.destroy();
-    this.fallbackProvider?.destroy();
     this.unbindNetworkListeners();
   }
 
   private getProvider(): IAdsProvider {
-    if (!this.provider) {
+    if (!this.provider || !this.enabled) {
       throw new Error('Ads provider not initialized');
     }
     return this.provider;
