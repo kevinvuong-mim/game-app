@@ -28,6 +28,7 @@ export class SkillBarView {
   private skillSlots = new Map<SkillId, Phaser.GameObjects.Container>();
   private ownedSkillIds: SkillId[] = [];
   private skillHint?: Phaser.GameObjects.Text;
+  private skillPanel?: Phaser.GameObjects.Graphics;
   private skillTrack?: Phaser.GameObjects.Container;
   private skillTrackBaseX = 0;
   private skillLeftArrow?: Phaser.GameObjects.Text;
@@ -43,6 +44,7 @@ export class SkillBarView {
   private skillSwipeActive = false;
   private skillDidSwipe = false;
   private skillNavConsumed = false;
+  private visible = false;
   private readonly skillVisibleCount = 4;
   private readonly selectedSkillScale = 1.16;
 
@@ -67,6 +69,7 @@ export class SkillBarView {
     this.skillButtons.clear();
     this.skillSlots.clear();
     this.ownedSkillIds = [];
+    this.skillPanel = undefined;
     this.skillTrack = undefined;
     this.skillLeftArrow = undefined;
     this.skillRightArrow = undefined;
@@ -76,6 +79,7 @@ export class SkillBarView {
     this.skillSwipeActive = false;
     this.skillDidSwipe = false;
     this.skillNavConsumed = false;
+    this.visible = false;
 
     const visible = this.skillVisibleCount;
     const btnSize = 72;
@@ -94,9 +98,9 @@ export class SkillBarView {
     this.skillBarTop = panelTop;
     this.skillBarBottom = panelTop + panelHeight;
 
-    const panelGfx = this.scene.add.graphics().setDepth(400);
+    this.skillPanel = this.scene.add.graphics().setDepth(400);
     drawRoundedRect(
-      panelGfx,
+      this.skillPanel,
       panelLeft,
       panelTop,
       panelWidth,
@@ -163,6 +167,8 @@ export class SkillBarView {
       })
       .setOrigin(0.5, 1)
       .setDepth(520);
+
+    this.updateBarVisibility();
   }
 
   setHint(text: string): void {
@@ -206,7 +212,7 @@ export class SkillBarView {
   }
 
   onPointerDown(pointer: Phaser.Input.Pointer): void {
-    if (!this.isPointerOnBar(pointer)) return;
+    if (!this.visible || !this.isPointerOnBar(pointer)) return;
     this.skillSwipeStartX = pointer.x;
     this.skillSwipeActive = true;
     this.skillDidSwipe = false;
@@ -214,6 +220,7 @@ export class SkillBarView {
 
   /** Returns true if the swipe consumed the pointer (caller should skip drop). */
   onPointerMove(pointer: Phaser.Input.Pointer): boolean {
+    if (!this.visible) return false;
     if (this.skillSwipeActive && pointer.isDown) {
       if (Math.abs(pointer.x - this.skillSwipeStartX) > 14) {
         this.skillDidSwipe = true;
@@ -225,7 +232,7 @@ export class SkillBarView {
 
   /** Returns true if the skill bar handled the pointer up. */
   onPointerUp(pointer: Phaser.Input.Pointer): boolean {
-    if (!this.skillSwipeActive) return false;
+    if (!this.visible || !this.skillSwipeActive) return false;
 
     const dx = pointer.x - this.skillSwipeStartX;
     const didSwipe = this.skillDidSwipe && Math.abs(dx) > 40;
@@ -279,6 +286,29 @@ export class SkillBarView {
     this.skillScrollIndex = Phaser.Math.Clamp(this.skillScrollIndex, 0, this.maxScrollIndex());
     this.applyScroll(false);
     this.updateSelectionVisual(false);
+    this.updateBarVisibility();
+  }
+
+  private updateBarVisibility(): void {
+    const shouldShow = this.ownedSkillIds.length > 0;
+    this.visible = shouldShow;
+
+    this.skillPanel?.setVisible(shouldShow);
+    this.skillTrack?.setVisible(shouldShow);
+    this.skillHint?.setVisible(shouldShow);
+
+    if (!shouldShow) {
+      this.skillSwipeActive = false;
+      this.skillDidSwipe = false;
+      this.skillNavConsumed = false;
+      this.skillLeftArrow?.setVisible(false);
+      this.skillRightArrow?.setVisible(false);
+      this.skillLeftArrowZone?.setVisible(false).setActive(false).disableInteractive();
+      this.skillRightArrowZone?.setVisible(false).setActive(false).disableInteractive();
+      return;
+    }
+
+    this.applyScroll(false);
   }
 
   private createSlot(id: SkillId, btnSize: number): Phaser.GameObjects.Container {
@@ -317,6 +347,7 @@ export class SkillBarView {
   }
 
   private isPointerOnBar(pointer: Phaser.Input.Pointer): boolean {
+    if (!this.visible) return false;
     const { width } = this.scene.cameras.main;
     return (
       pointer.y >= this.skillBarTop &&
