@@ -9,9 +9,7 @@ import { logger } from '../error';
 import { getConfig } from '../config';
 import { createAdsProvider } from './providers';
 import { AdFormatManager, BannerStateMachine } from './AdStateMachine';
-import { AD_ANALYTICS_EVENTS, BANNER_ALLOWED_PLACEMENTS, DEFAULT_REMOTE_CONFIG } from './types';
-
-type AnalyticsHandler = (event: string, metadata?: Record<string, unknown>) => void;
+import { BANNER_ALLOWED_PLACEMENTS, DEFAULT_REMOTE_CONFIG } from './types';
 
 class AdsService {
   private readonly formats = {
@@ -27,10 +25,8 @@ class AdsService {
   private lastInterstitialAt = 0;
   private appOpenShownThisSession = false;
   private provider: IAdsProvider | null = null;
-  private configCacheKey = 'ads_remote_config_v1';
   private activeBannerPlacement: string | null = null;
   private fallbackProvider: IAdsProvider | null = null;
-  private analyticsHandler: AnalyticsHandler | null = null;
   private remoteConfig: AdsRemoteConfig = { ...DEFAULT_REMOTE_CONFIG };
   private online = typeof navigator === 'undefined' ? true : navigator.onLine;
 
@@ -38,16 +34,8 @@ class AdsService {
     this.provider = provider;
   }
 
-  setAnalyticsHandler(handler: AnalyticsHandler): void {
-    this.analyticsHandler = handler;
-  }
-
   setRemoteConfig(config: AdsRemoteConfig): void {
     this.remoteConfig = config;
-  }
-
-  getRemoteConfig(): AdsRemoteConfig {
-    return this.remoteConfig;
   }
 
   async initialize(): Promise<void> {
@@ -67,13 +55,11 @@ class AdsService {
 
     try {
       await this.provider.init(providerConfig);
-      this.track(AD_ANALYTICS_EVENTS.LOADED, { provider: this.provider.name });
     } catch (error) {
       logger.warn('[Ads] Primary provider failed, falling back to mock', error);
       this.fallbackProvider = createAdsProvider('mock');
       await this.fallbackProvider.init(providerConfig);
       this.provider = this.fallbackProvider;
-      this.track(AD_ANALYTICS_EVENTS.FAILED, { provider: providerName, fallback: 'mock' });
     }
 
     if (this.enabled) {
@@ -120,25 +106,6 @@ class AdsService {
     return this.adsRemoved;
   }
 
-  canShow(format: AdFormat, placement?: string): boolean {
-    if (this.adsRemoved && format !== 'rewarded') return false;
-
-    switch (format) {
-      case 'rewarded':
-        return placement ? this.canShowRewarded(placement) : false;
-      case 'interstitial':
-        return placement ? this.canShowInterstitial(placement) : false;
-      case 'banner':
-        return placement ? this.canShowBanner(placement) : false;
-      case 'app_open':
-        return (
-          !this.adsRemoved && this.remoteConfig.appOpenEnabled && !this.appOpenShownThisSession
-        );
-      default:
-        return false;
-    }
-  }
-
   isOnline(): boolean {
     return this.online;
   }
@@ -164,21 +131,22 @@ class AdsService {
       return { shown: false, error: 'Rewarded ad busy' };
     }
 
-    const result = await this.getProvider().showRewarded(placement);
-    manager.state.markCompleted();
-    if (result.shown) {
-      this.lastRewardedAt = Date.now();
+    try {
+      const result = await this.getProvider().showRewarded(placement);
+      if (result.shown) {
+        this.lastRewardedAt = Date.now();
+      }
+      return result;
+    } catch (error) {
+      manager.state.markError();
+      logger.warn('[Ads] Rewarded show failed', error);
+      return { shown: false, error: 'Rewarded ad failed' };
+    } finally {
+      if (manager.state.getState() === 'SHOWING') {
+        manager.state.markCompleted();
+      }
+      void this.loadRewarded();
     }
-
-    if (result.shown && result.rewarded) {
-      this.track(AD_ANALYTICS_EVENTS.REWARD_EARNED, {
-        placement,
-        provider: this.getProvider().name,
-      });
-    }
-
-    void this.loadRewarded();
-    return result;
   }
 
   async loadInterstitial(): Promise<void> {
@@ -195,13 +163,7 @@ class AdsService {
     const cacheHit = provider.isCached('interstitial');
 
     if (!this.online && !cacheHit) {
-      this.track(AD_ANALYTICS_EVENTS.OFFLINE_ATTEMPT, { placement, format: 'interstitial' });
-      this.track(AD_ANALYTICS_EVENTS.CACHE_MISS, { placement, format: 'interstitial' });
       return { shown: false, error: 'Offline without cached interstitial' };
-    }
-
-    if (cacheHit) {
-      this.track(AD_ANALYTICS_EVENTS.CACHE_HIT, { placement, format: 'interstitial' });
     }
 
     if (!manager.state.canShow() && provider.isReady('interstitial')) {
@@ -211,15 +173,22 @@ class AdsService {
       return { shown: false, error: 'Interstitial busy' };
     }
 
-    const result = await provider.showInterstitial(placement);
-    manager.state.markCompleted();
-    if (result.shown) {
-      this.lastInterstitialAt = Date.now();
-      this.track(AD_ANALYTICS_EVENTS.IMPRESSION, { placement, format: 'interstitial' });
+    try {
+      const result = await provider.showInterstitial(placement);
+      if (result.shown) {
+        this.lastInterstitialAt = Date.now();
+      }
+      return result;
+    } catch (error) {
+      manager.state.markError();
+      logger.warn('[Ads] Interstitial show failed', error);
+      return { shown: false, error: 'Interstitial failed' };
+    } finally {
+      if (manager.state.getState() === 'SHOWING') {
+        manager.state.markCompleted();
+      }
+      void this.loadInterstitial();
     }
-
-    void this.loadInterstitial();
-    return result;
   }
 
   async loadBanner(): Promise<void> {
@@ -229,11 +198,9 @@ class AdsService {
     try {
       await this.getProvider().loadBanner();
       this.bannerState.markVisible();
-      this.track(AD_ANALYTICS_EVENTS.BANNER_LOADED, {});
     } catch (error) {
       logger.warn('[Ads] Banner load failed', error);
       this.bannerState.reset();
-      this.track(AD_ANALYTICS_EVENTS.FAILED, { format: 'banner' });
     }
   }
 
@@ -263,7 +230,6 @@ class AdsService {
     this.provider.hideBanner();
     this.bannerState.markHidden();
     this.activeBannerPlacement = null;
-    this.track(AD_ANALYTICS_EVENTS.BANNER_HIDDEN, {});
   }
 
   destroyBanner(): void {
@@ -290,12 +256,21 @@ class AdsService {
       return { shown: false, error: 'App open busy' };
     }
 
-    const result = await this.getProvider().showAppOpen(placement);
-    manager.state.markCompleted();
-    if (result.shown) {
-      this.appOpenShownThisSession = true;
+    try {
+      const result = await this.getProvider().showAppOpen(placement);
+      if (result.shown) {
+        this.appOpenShownThisSession = true;
+      }
+      return result;
+    } catch (error) {
+      manager.state.markError();
+      logger.warn('[Ads] App open show failed', error);
+      return { shown: false, error: 'App open failed' };
+    } finally {
+      if (manager.state.getState() === 'SHOWING') {
+        manager.state.markCompleted();
+      }
     }
-    return result;
   }
 
   canShowRewarded(placement: string): boolean {
@@ -351,14 +326,6 @@ class AdsService {
     this.unbindNetworkListeners();
   }
 
-  getProviderName(): string {
-    return this.getProvider().name;
-  }
-
-  getConfigCacheKey(): string {
-    return this.configCacheKey;
-  }
-
   private getProvider(): IAdsProvider {
     if (!this.provider) {
       throw new Error('Ads provider not initialized');
@@ -381,21 +348,14 @@ class AdsService {
     try {
       await loader();
       manager.state.markReady();
-      this.track(AD_ANALYTICS_EVENTS.LOADED, { format });
     } catch (error) {
       manager.state.markError();
-      this.track(AD_ANALYTICS_EVENTS.FAILED, { format });
       logger.warn(`[Ads] Failed to preload ${format}`, error);
     }
   }
 
-  private track(event: string, metadata?: Record<string, unknown>): void {
-    this.analyticsHandler?.(event, metadata);
-  }
-
   private onOnline = (): void => {
     this.online = true;
-    this.track(AD_ANALYTICS_EVENTS.ONLINE_RESTORE, {});
     void this.preloadCommonAds();
   };
 

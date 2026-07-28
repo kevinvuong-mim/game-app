@@ -1,12 +1,4 @@
-import type {
-  IApiClient,
-  ApiResponse,
-  RequestConfig,
-  ErrorInterceptor,
-  RequestInterceptor,
-  ResponseInterceptor,
-  AuthRecoveryHandler,
-} from './types';
+import type { IApiClient, ApiResponse, RequestConfig, AuthRecoveryHandler } from './types';
 import { ApiError as ApiErrorClass } from './types';
 
 const DEFAULT_RETRIES = 2;
@@ -17,9 +9,6 @@ const DEFAULT_RETRYABLE_STATUSES = [429, 500, 502, 503, 504];
 class ApiClient implements IApiClient {
   private baseUrl: string;
   private authToken: string | null = null;
-  private errorInterceptors: ErrorInterceptor[] = [];
-  private requestInterceptors: RequestInterceptor[] = [];
-  private responseInterceptors: ResponseInterceptor[] = [];
   private authRecoveryHandler: AuthRecoveryHandler | null = null;
 
   constructor(baseUrl?: string) {
@@ -38,40 +27,12 @@ class ApiClient implements IApiClient {
     this.authRecoveryHandler = handler;
   }
 
-  addRequestInterceptor(interceptor: RequestInterceptor): () => void {
-    this.requestInterceptors.push(interceptor);
-    return () => {
-      const idx = this.requestInterceptors.indexOf(interceptor);
-      if (idx >= 0) this.requestInterceptors.splice(idx, 1);
-    };
-  }
-
-  addResponseInterceptor(interceptor: ResponseInterceptor): () => void {
-    this.responseInterceptors.push(interceptor);
-    return () => {
-      const idx = this.responseInterceptors.indexOf(interceptor);
-      if (idx >= 0) this.responseInterceptors.splice(idx, 1);
-    };
-  }
-
-  addErrorInterceptor(interceptor: ErrorInterceptor): () => void {
-    this.errorInterceptors.push(interceptor);
-    return () => {
-      const idx = this.errorInterceptors.indexOf(interceptor);
-      if (idx >= 0) this.errorInterceptors.splice(idx, 1);
-    };
-  }
-
   async get<T>(path: string, config?: RequestConfig): Promise<T> {
     return this.request<T>(path, { ...config, method: 'GET' });
   }
 
   async post<T>(path: string, body?: unknown, config?: RequestConfig): Promise<T> {
     return this.request<T>(path, { ...config, method: 'POST', body });
-  }
-
-  async put<T>(path: string, body?: unknown, config?: RequestConfig): Promise<T> {
-    return this.request<T>(path, { ...config, method: 'PUT', body });
   }
 
   async patch<T>(path: string, body?: unknown, config?: RequestConfig): Promise<T> {
@@ -83,33 +44,26 @@ class ApiClient implements IApiClient {
   }
 
   private async request<T>(path: string, config: RequestConfig): Promise<T> {
-    let finalConfig = { ...config };
-    for (const interceptor of this.requestInterceptors) {
-      finalConfig = await interceptor(path, finalConfig);
-    }
-
+    const finalConfig = { ...config };
     const retries = finalConfig.retries ?? DEFAULT_RETRIES;
     let lastError: Error | null = null;
+    let attemptConfig = finalConfig;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const response = await this.executeRequest<T>(path, finalConfig);
-        let result = response;
-        for (const interceptor of this.responseInterceptors) {
-          result = await interceptor(result);
-        }
-        return result.data;
+        const response = await this.executeRequest<T>(path, attemptConfig);
+        return response.data;
       } catch (error) {
         lastError = error as Error;
 
         if (
           error instanceof ApiErrorClass &&
           error.status === 401 &&
-          finalConfig.auth !== false &&
-          !finalConfig._retried401 &&
+          attemptConfig.auth !== false &&
+          !attemptConfig._retried401 &&
           this.authRecoveryHandler
         ) {
-          finalConfig = { ...finalConfig, _retried401: true };
+          attemptConfig = { ...attemptConfig, _retried401: true };
           const recovered = await this.authRecoveryHandler();
           if (recovered) {
             // Identity changed — do not replay the original body/HMAC.
@@ -118,18 +72,13 @@ class ApiClient implements IApiClient {
           }
         }
 
-        if (error instanceof ApiErrorClass && !this.shouldRetry(error, finalConfig)) break;
+        if (error instanceof ApiErrorClass && !this.shouldRetry(error, attemptConfig)) break;
         if (attempt < retries) {
-          await this.delay(this.getRetryDelay(error, finalConfig, attempt));
+          await this.delay(this.getRetryDelay(error, attemptConfig, attempt));
         }
       }
     }
 
-    if (lastError instanceof ApiErrorClass) {
-      for (const interceptor of this.errorInterceptors) {
-        await interceptor(lastError);
-      }
-    }
     throw lastError;
   }
 

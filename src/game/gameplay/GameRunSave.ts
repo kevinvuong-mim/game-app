@@ -37,19 +37,13 @@ function isFiniteNumber(value: unknown): value is number {
 
 function isValidSpawnLevel(level: unknown): level is number {
   return (
-    typeof level === 'number' &&
-    Number.isInteger(level) &&
-    level >= 0 &&
-    level <= SPAWN_MAX_LEVEL
+    typeof level === 'number' && Number.isInteger(level) && level >= 0 && level <= SPAWN_MAX_LEVEL
   );
 }
 
 function isValidFruitLevel(level: unknown): level is number {
   return (
-    typeof level === 'number' &&
-    Number.isInteger(level) &&
-    level >= 0 &&
-    level < FRUIT_TYPES.length
+    typeof level === 'number' && Number.isInteger(level) && level >= 0 && level < FRUIT_TYPES.length
   );
 }
 

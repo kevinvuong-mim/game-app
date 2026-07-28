@@ -1,5 +1,4 @@
 import {
-  deviceSyncNeeded,
   NOTIFICATION_TYPES,
   resolveNotificationRoute,
   type PushNotificationPayload,
@@ -13,8 +12,6 @@ import { deviceSyncService } from './device-sync.service';
 import { pushNotificationService } from './push-notification.service';
 import { localNotificationService } from './local-notification.service';
 import { navigationService } from '@platform/modules/navigation';
-
-type NotificationStatus = 'off' | 'active' | 'denied' | 'pending';
 
 class NotificationService {
   private pushInitialized = false;
@@ -101,41 +98,6 @@ class NotificationService {
     }
 
     await localNotificationService.reconcileDailyRewardSchedule(canClaim);
-  }
-
-  async getNotificationStatus(): Promise<NotificationStatus> {
-    const config = getConfig();
-
-    if (!config.pushNotificationsEnabled && !config.localNotificationsEnabled) {
-      return 'off';
-    }
-
-    if (config.pushNotificationsEnabled) {
-      const pushGranted = await pushNotificationService.hasPermission();
-      if (!pushGranted) {
-        return 'denied';
-      }
-    }
-
-    if (config.localNotificationsEnabled) {
-      const localGranted = await localNotificationService.hasPermission();
-      if (!localGranted) {
-        return 'denied';
-      }
-    }
-
-    if (config.pushNotificationsEnabled) {
-      const state = await deviceSyncService.loadState();
-      if (deviceSyncNeeded(state) || state.unregisterPending) {
-        return 'pending';
-      }
-
-      if (!state.lastSyncedToken) {
-        return 'pending';
-      }
-    }
-
-    return 'active';
   }
 
   async onAppResume(canClaimDailyReward: boolean): Promise<void> {

@@ -9,8 +9,7 @@
     "settings": "Cài đặt",
     "leaderboard": "Xếp hạng",
     "dailyReward": "Quà hàng ngày",
-    "missions": "Nhiệm vụ",
-    "howToPlay": "Hướng dẫn"
+    "missions": "Nhiệm vụ"
   },
   "howToPlay": {
     "title": "Hướng dẫn chơi",
@@ -27,14 +26,12 @@
     "step4Body": "Mua vật phẩm ở Cửa hàng — búa, đổi chỗ, tăng cấp… — để cứu những stack khó."
   },
   "game": {
-    "score": "Điểm: {{score}}",
     "scoreLabel": "ĐIỂM",
     "yourScore": "ĐIỂM CỦA BẠN",
     "coinsEarned": "XU NHẬN ĐƯỢC",
     "gameOver": "KẾT THÚC",
     "newRecord": "KỶ LỤC MỚI",
     "retry": "CHƠI LẠI",
-    "leaderboard": "XẾP HẠNG",
     "home": "TRANG CHỦ",
     "shareScore": "CHIA SẺ",
     "shareScoreTitle": "Điểm của tôi trong {{gameName}}",
@@ -51,7 +48,6 @@
     "quitConfirm": "Thoát",
     "quitCancel": "Hủy"
   },
-
   "shop": {
     "title": "Cửa hàng",
     "buy": "Mua",
@@ -65,10 +61,6 @@
       "buyCoins": "{{coins}} xu · {{price}}",
       "purchasing": "Đang xử lý mua hàng…",
       "purchaseSuccess": "Nhận {{coins}} xu!"
-    },
-    "currency": {
-      "coins": "xu",
-      "iap": "USD"
     },
     "items": {
       "boost_hammer": {
@@ -110,14 +102,9 @@
     "sound": "Âm thanh",
     "music": "Nhạc nền",
     "soundEffects": "Hiệu ứng",
-    "soundOn": "Bật",
-    "soundOff": "Tắt",
     "terms": "Điều khoản",
     "privacy": "Quyền riêng tư",
     "termsPrivacy": "Điều khoản & Quyền riêng tư",
-    "helpAndLegal": "Trợ giúp & Pháp lý",
-    "howToPlay": "Hướng dẫn chơi",
-    "back": "Quay lại",
     "playerName": "Tên người chơi",
     "playerNamePlaceholder": "Nhập tên của bạn",
     "playerNameSave": "Lưu",
@@ -137,10 +124,7 @@
     "go": "ĐI",
     "claimed": "Đã nhận",
     "progress": "{{current}}/{{target}}",
-    "reward": "{{coins}} xu",
-    "claimSuccess": "Đã nhận {{coins}} xu!",
     "claimFailed": "Chưa thể nhận thưởng",
-    "dailyMission": "Nhiệm vụ hàng ngày",
     "reachScore2000": "Đạt 2.000 điểm",
     "mergeFruit15": "Hợp 15 lần trái cây",
     "watchAd": "Xem video quảng cáo",
@@ -151,36 +135,21 @@
     "title": "Quà hàng ngày",
     "claim": "Nhận",
     "day": "Ngày {{day}}",
-    "coins": "{{coins}} xu",
-    "random": "Ngẫu nhiên",
-    "chest": "Rương hiếm",
-    "claimed": "Đã nhận",
     "comeBack": "Quay lại vào ngày mai!",
-    "claimSuccess": "+{{coins}} xu!",
-    "chestSuccess": "Đã nhận {{item}}!",
     "timeManipulated": "Quà hàng ngày không khả dụng do thay đổi thời gian thiết bị."
   },
   "leaderboard": {
     "title": "Xếp hạng",
     "top100": "Top 100",
     "yourRank": "Hạng của bạn",
-    "refresh": "Làm mới",
-    "refreshing": "Đang cập nhật…",
     "retry": "Thử lại",
     "rank": "Hạng của bạn: #{{rank}}",
     "empty": "Chưa có điểm nào. Chơi một ván để lên bảng!",
-    "you": "(Bạn)",
     "anonymous": "Người chơi",
     "rankUnavailable": "Chưa có hạng của bạn",
     "error": "Không tải được bảng xếp hạng. Kiểm tra kết nối và thử lại.",
     "offlineLocalBest": "Bạn đang ngoại tuyến — điểm chơi được lưu trên máy.",
-    "cached": "Đã lưu",
-    "stale": "Có thể đã cũ",
-    "localBest": "Điểm cao nhất: {{score}}",
-    "updatedAgo": "Cập nhật {{seconds}}s trước",
-    "pageInfo": "Trang {{page}} / {{totalPages}}",
-    "prevPage": "Trước",
-    "nextPage": "Sau"
+    "localBest": "Điểm cao nhất: {{score}}"
   },
   "legal": {
     "title": "Điều khoản & Quyền riêng tư",
@@ -211,11 +180,9 @@
       "body": "Quà hàng ngày đã sẵn sàng. Quay lại và nhận thưởng nhé!"
     },
     "top100Exited": {
-      "title": "Top 100",
       "body": "Bạn đã rời Top 100. Hãy quay lại để cải thiện thứ hạng."
     },
     "rankPush": {
-      "title": "Cập nhật thứ hạng",
       "body": "Hiện bạn đang đứng hạng #{{rank}}.",
       "bodyFallback": "Xem thứ hạng leaderboard hiện tại của bạn."
     }

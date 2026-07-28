@@ -1,5 +1,6 @@
 import { iap } from './iap.service';
 import { IAP_EVENTS } from './iap.events';
+import { shop } from '@platform/modules/shop';
 import { services } from '@platform/core/services';
 import { ENTITLEMENT_REMOVE_ADS } from './iap.config';
 import type { IEventBus } from '@platform/core/events';
@@ -17,7 +18,7 @@ function syncAdsWithEntitlements(): void {
 }
 
 /**
- * Wires IAP entitlements to ads and analytics. Call once during App.init().
+ * Wires IAP entitlements to ads and shop grants. Call once during App.init().
  */
 export function bindIapController(events: IEventBus): () => void {
   syncAdsWithEntitlements();
@@ -25,6 +26,10 @@ export function bindIapController(events: IEventBus): () => void {
   const unsubscribers = [
     events.on(IAP_EVENTS.ENTITLEMENT_CHANGED, () => {
       syncAdsWithEntitlements();
+    }),
+
+    events.on(IAP_EVENTS.PURCHASE_SUCCESS, ({ productId }) => {
+      shop.fulfillIapProduct(productId);
     }),
 
     events.on(IAP_EVENTS.PURCHASE_RESTORED, () => {

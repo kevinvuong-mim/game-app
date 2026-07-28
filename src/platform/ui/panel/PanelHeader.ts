@@ -137,9 +137,7 @@ export class PanelHeader extends Phaser.GameObjects.Container {
     const hasDivider = navSections.length > 0;
     const panelWidth = Math.min(340, width * 0.82);
     const navGapTotal = Math.max(0, navSections.length - 1) * GET_COINS_ACTION_GAP;
-    const dividerBlock = hasDivider
-      ? GET_COINS_SECTION_GAP * 2 + GET_COINS_DIVIDER_THICKNESS
-      : 0;
+    const dividerBlock = hasDivider ? GET_COINS_SECTION_GAP * 2 + GET_COINS_DIVIDER_THICKNESS : 0;
     const panelHeight =
       GET_COINS_PAD_TOP +
       navSections.length * GET_COINS_BTN_HEIGHT +

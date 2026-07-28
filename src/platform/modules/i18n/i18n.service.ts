@@ -129,14 +129,6 @@ class LocalizationService {
   getCurrentLanguage(): SupportedLanguage {
     return this.currentLanguage;
   }
-
-  getSupportedLanguages(): SupportedLanguage[] {
-    return [...SUPPORTED_LANGUAGES];
-  }
-
-  getFallbackLanguage(): SupportedLanguage {
-    return this.fallbackLanguage;
-  }
 }
 
 export const i18n = new LocalizationService();

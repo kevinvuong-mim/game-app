@@ -9,8 +9,7 @@
     "settings": "Settings",
     "leaderboard": "Leaderboard",
     "dailyReward": "Daily Reward",
-    "missions": "Missions",
-    "howToPlay": "How to Play"
+    "missions": "Missions"
   },
   "howToPlay": {
     "title": "How to Play",
@@ -27,14 +26,12 @@
     "step4Body": "Buy boosts in the Shop — hammer, swap, grow, and more — to save tough stacks."
   },
   "game": {
-    "score": "Score: {{score}}",
     "scoreLabel": "SCORE",
     "yourScore": "YOUR SCORE",
     "coinsEarned": "COINS EARNED",
     "gameOver": "GAME OVER",
     "newRecord": "NEW RECORD",
     "retry": "PLAY AGAIN",
-    "leaderboard": "LEADERBOARD",
     "home": "HOME",
     "shareScore": "SHARE",
     "shareScoreTitle": "My score in {{gameName}}",
@@ -51,7 +48,6 @@
     "quitConfirm": "Quit",
     "quitCancel": "Cancel"
   },
-
   "shop": {
     "title": "Shop",
     "buy": "Buy",
@@ -65,10 +61,6 @@
       "buyCoins": "{{coins}} Coins · {{price}}",
       "purchasing": "Processing purchase…",
       "purchaseSuccess": "Got {{coins}} coins!"
-    },
-    "currency": {
-      "coins": "coins",
-      "iap": "USD"
     },
     "items": {
       "boost_hammer": {
@@ -110,14 +102,9 @@
     "sound": "Sound",
     "music": "Music",
     "soundEffects": "Effects",
-    "soundOn": "On",
-    "soundOff": "Off",
     "terms": "Terms",
     "privacy": "Privacy",
     "termsPrivacy": "Terms & Privacy",
-    "helpAndLegal": "Help & Legal",
-    "howToPlay": "How to Play",
-    "back": "Back",
     "playerName": "Player name",
     "playerNamePlaceholder": "Enter your name",
     "playerNameSave": "Save",
@@ -137,10 +124,7 @@
     "go": "GO",
     "claimed": "Claimed",
     "progress": "{{current}}/{{target}}",
-    "reward": "{{coins}} coins",
-    "claimSuccess": "Claimed {{coins}} coins!",
     "claimFailed": "Cannot claim yet",
-    "dailyMission": "Daily mission",
     "reachScore2000": "Reach 2,000 points",
     "mergeFruit15": "Merge fruits 15 times",
     "watchAd": "Watch an ad video",
@@ -151,36 +135,21 @@
     "title": "Daily Reward",
     "claim": "Claim",
     "day": "Day {{day}}",
-    "coins": "{{coins}} coins",
-    "random": "Random",
-    "chest": "Rare Chest",
-    "claimed": "Claimed",
     "comeBack": "Come back tomorrow!",
-    "claimSuccess": "+{{coins}} coins!",
-    "chestSuccess": "{{item}} received!",
     "timeManipulated": "Daily rewards are unavailable due to a clock change."
   },
   "leaderboard": {
     "title": "Leaderboard",
     "top100": "Top 100",
     "yourRank": "Your Rank",
-    "refresh": "Refresh",
-    "refreshing": "Updating…",
     "retry": "Retry",
     "rank": "Your Rank: #{{rank}}",
     "empty": "No scores yet. Play a game to get on the board!",
-    "you": "(You)",
     "anonymous": "Player",
     "rankUnavailable": "Your rank is not available yet",
     "error": "Couldn't load the leaderboard. Check your connection and try again.",
     "offlineLocalBest": "You're offline — play scores are saved locally.",
-    "cached": "Cached",
-    "stale": "May be outdated",
-    "localBest": "Your best: {{score}}",
-    "updatedAgo": "Updated {{seconds}}s ago",
-    "pageInfo": "Page {{page}} / {{totalPages}}",
-    "prevPage": "Prev",
-    "nextPage": "Next"
+    "localBest": "Your best: {{score}}"
   },
   "legal": {
     "title": "Terms & Privacy",
@@ -211,11 +180,9 @@
       "body": "Your daily reward is waiting. Come back and claim it!"
     },
     "top100Exited": {
-      "title": "Top 100",
       "body": "You left Top 100. Come back to improve your rank."
     },
     "rankPush": {
-      "title": "Weekly Rank Update",
       "body": "You are currently ranked #{{rank}}.",
       "bodyFallback": "Tap to view your current leaderboard rank."
     }

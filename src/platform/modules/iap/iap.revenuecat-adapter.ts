@@ -238,9 +238,11 @@ type NonSubscriptionTx = {
 
 /** Consumable / non-renewing history from CustomerInfo (field may vary by SDK version). */
 function mapNonSubscriptionPurchases(customerInfo: CustomerInfo): ProviderPurchase[] {
-  const raw = (customerInfo as CustomerInfo & {
-    nonSubscriptionTransactions?: NonSubscriptionTx[];
-  }).nonSubscriptionTransactions;
+  const raw = (
+    customerInfo as CustomerInfo & {
+      nonSubscriptionTransactions?: NonSubscriptionTx[];
+    }
+  ).nonSubscriptionTransactions;
 
   if (!Array.isArray(raw)) return [];
 

@@ -27,8 +27,14 @@ export const COINS_10000_PRICE = '$0.99';
 /** Default purchase timeout (ms). */
 export const IAP_PURCHASE_TIMEOUT_MS = 60_000;
 
+/** Extra window after client timeout to poll / await the store purchase. */
+export const IAP_TIMEOUT_RECOVERY_MS = 90_000;
+
 /** Dedicated storage key for entitlement persistence. */
 export const IAP_STORAGE_KEY = 'iap-entitlements';
+
+/** Durable set of consumable transaction ids already granted (prevents double-grant). */
+export const IAP_CONSUMABLE_TX_KEY = 'iap-consumable-tx-v1';
 
 export function getProductById(productId: string): ProductDefinition | undefined {
   return Object.values(PRODUCTS).find((product) => product.id === productId);

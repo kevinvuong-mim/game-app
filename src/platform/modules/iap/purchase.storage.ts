@@ -1,12 +1,19 @@
 import { logger } from '@platform/core/error';
-import { IAP_STORAGE_KEY } from './iap.config';
+import { IAP_STORAGE_KEY, IAP_CONSUMABLE_TX_KEY } from './iap.config';
 import { storage } from '@platform/core/storage';
 import type { StoredEntitlements } from './iap.types';
 
 const STORAGE_VERSION = 1;
 
+interface ConsumableTxStore {
+  version: number;
+  transactionIds: string[];
+  updatedAt: number;
+}
+
 export class PurchaseStorage {
   private cache: StoredEntitlements | null = null;
+  private consumableTxIds: Set<string> | null = null;
 
   async load(): Promise<string[]> {
     if (this.cache) {
@@ -54,8 +61,35 @@ export class PurchaseStorage {
     await this.save(entitlements);
   }
 
-  getCached(): string[] {
-    return this.cache ? [...this.cache.entitlements] : [];
+  async hasConsumableTransaction(transactionId: string): Promise<boolean> {
+    const ids = await this.loadConsumableTxIds();
+    return ids.has(transactionId);
+  }
+
+  /** Returns false if this transaction was already recorded. */
+  async recordConsumableTransaction(transactionId: string): Promise<boolean> {
+    const ids = await this.loadConsumableTxIds();
+    if (ids.has(transactionId)) return false;
+    ids.add(transactionId);
+    this.consumableTxIds = ids;
+
+    const durable = storage.getDurableProviderType();
+    const payload: ConsumableTxStore = {
+      version: STORAGE_VERSION,
+      transactionIds: [...ids],
+      updatedAt: Date.now(),
+    };
+    await storage.save(IAP_CONSUMABLE_TX_KEY, payload, durable);
+    return true;
+  }
+
+  private async loadConsumableTxIds(): Promise<Set<string>> {
+    if (this.consumableTxIds) return this.consumableTxIds;
+
+    const durable = storage.getDurableProviderType();
+    const data = await storage.load<ConsumableTxStore>(IAP_CONSUMABLE_TX_KEY, durable);
+    this.consumableTxIds = new Set(data?.transactionIds ?? []);
+    return this.consumableTxIds;
   }
 }
 

@@ -45,10 +45,6 @@ export class LeaderboardService {
     logger.info('[Leaderboard] Initialized');
   }
 
-  getView(): LeaderboardView {
-    return this.view;
-  }
-
   async fetchLeaderboard(options: FetchOptions = {}): Promise<LeaderboardView> {
     if (options.page) {
       this.currentPage = options.page;

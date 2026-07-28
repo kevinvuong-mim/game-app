@@ -1,6 +1,7 @@
 import { adsModule } from './ads.service';
 import type { IEventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
+import { saveService } from '@platform/modules/save';
 
 export function bindAdsController(events: IEventBus): () => void {
   const unsubs = [
@@ -16,6 +17,7 @@ export function bindAdsController(events: IEventBus): () => void {
       if (result.success && result.reward) {
         if (result.reward.type === 'coins') {
           usePlatformStore.getState().addCoins(result.reward.amount);
+          await saveService.saveLocal();
         }
         events.emit('ad:reward', { placement, reward: result.reward });
       }

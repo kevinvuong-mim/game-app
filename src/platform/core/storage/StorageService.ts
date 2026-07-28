@@ -42,14 +42,6 @@ class StorageService {
   async remove(key: string, provider?: StorageProviderType): Promise<void> {
     await this.getProvider(provider).remove(key);
   }
-
-  async clear(provider?: StorageProviderType): Promise<void> {
-    await this.getProvider(provider).clear();
-  }
-
-  async keys(provider?: StorageProviderType): Promise<string[]> {
-    return this.getProvider(provider).keys();
-  }
 }
 
 export const storage = new StorageService();

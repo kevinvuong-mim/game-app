@@ -22,7 +22,6 @@ export interface IAnalyticsProvider {
   readonly name: string;
   init(): Promise<void>;
   flush(): Promise<void>;
-  reset?(): Promise<void>;
   shutdown?(): Promise<void>;
   setUserId(userId: string): void;
   setUserProperty(key: string, value: string): void;

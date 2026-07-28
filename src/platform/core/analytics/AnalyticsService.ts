@@ -74,19 +74,6 @@ class AnalyticsService {
     );
   }
 
-  async reset(): Promise<void> {
-    await Promise.all(
-      this.providers.map(async (provider) => {
-        if (!provider.reset) return;
-        try {
-          await provider.reset();
-        } catch (error) {
-          logger.error(`[Analytics] Provider "${provider.name}" reset failed`, error);
-        }
-      })
-    );
-  }
-
   async shutdown(): Promise<void> {
     await Promise.all(
       this.providers.map(async (provider) => {

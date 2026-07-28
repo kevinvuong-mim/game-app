@@ -1,5 +1,5 @@
 /** True when `n` is a positive Fibonacci number (1, 1, 2, 3, 5, 8, …). */
-export function isFibonacci(n: number): boolean {
+function isFibonacci(n: number): boolean {
   if (!Number.isInteger(n) || n < 1) {
     return false;
   }

@@ -42,10 +42,8 @@ export interface PlatformEventMap {
   'daily:claim:result': {
     day?: number;
     coins?: number;
-    itemId?: string;
     success: boolean;
     message?: string;
-    rewardType?: 'coins' | 'chest';
   };
   'leaderboard:update': LeaderboardView;
   'ad:show:request': { placement: string };
@@ -81,8 +79,6 @@ export interface PlatformEventMap {
 }
 
 export interface IEventBus {
-  clear(): void;
-  off<T extends PlatformEvent>(event: T, handler: EventHandler<T>): void;
   emit<T extends PlatformEvent>(event: T, payload: PlatformEventMap[T]): void;
   on<T extends PlatformEvent>(event: T, handler: EventHandler<T>): () => void;
 }

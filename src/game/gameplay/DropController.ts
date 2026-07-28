@@ -62,7 +62,11 @@ export class DropController {
   updateGuide(): void {
     if (!this.dropGuide) return;
     this.dropGuide.clear();
-    if (!this.callbacks.canDrop() || !this.callbacks.isActive() || this.callbacks.hasActiveSkill()) {
+    if (
+      !this.callbacks.canDrop() ||
+      !this.callbacks.isActive() ||
+      this.callbacks.hasActiveSkill()
+    ) {
       return;
     }
 
@@ -99,7 +103,11 @@ export class DropController {
   }
 
   handlePointerMove(pointer: Phaser.Input.Pointer): void {
-    if (!this.callbacks.isActive() || !this.callbacks.canDrop() || this.callbacks.hasActiveSkill()) {
+    if (
+      !this.callbacks.isActive() ||
+      !this.callbacks.canDrop() ||
+      this.callbacks.hasActiveSkill()
+    ) {
       return;
     }
     if (pointer.y > this.bounds.bottom + 20) return;
@@ -136,7 +144,9 @@ export class DropController {
     this.callbacks.advanceLevels();
 
     this.scene.time.delayedCall(600, () => {
-      if (!this.callbacks.isActive()) return;
+      // Restore drop arm even if quit modal made isActive() false — otherwise
+      // cancel leaves canDrop stuck and the dropper never comes back.
+      if (!this.scene.sys.isActive()) return;
       this.callbacks.setCanDrop(true);
       this.refreshVisual();
     });

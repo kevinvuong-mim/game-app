@@ -1,5 +1,4 @@
 export { i18n } from './i18n';
-export { shop } from './shop';
 export { bindAdsController } from './ads';
 export { bindIapController } from './iap';
 export { deepLinkController } from './deep-link';
@@ -10,7 +9,5 @@ export { gameRunService } from './game-run';
 export { settings } from './settings';
 export { missions, missionController } from './missions';
 export { notificationController } from './notifications';
-export { navigationService, bindNavigationEvents } from './navigation';
 export { leaderboard, leaderboardController } from './leaderboard';
 export { dailyRewards, dailyRewardController } from './daily-reward';
-export { rateService } from './rate';

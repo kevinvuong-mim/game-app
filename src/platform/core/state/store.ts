@@ -21,10 +21,7 @@ export interface PlatformStore extends PlatformState {
   setCurrentLevel: (level: number) => void;
   setRatePromptProgress: (
     update: Partial<
-      Pick<
-        PlatformState['progress'],
-        'hasRatedApp' | 'lastRatePromptGamesPlayed' | 'lastAppRating'
-      >
+      Pick<PlatformState['progress'], 'hasRatedApp' | 'lastRatePromptGamesPlayed' | 'lastAppRating'>
     >
   ) => void;
 

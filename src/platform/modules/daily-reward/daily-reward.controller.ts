@@ -52,8 +52,6 @@ class DailyRewardController {
     trackDailyClaim({
       day: result.day,
       coins: result.coins,
-      rewardType: result.rewardType,
-      itemId: result.itemId,
     });
 
     await saveService.saveLocal();
@@ -62,8 +60,6 @@ class DailyRewardController {
       success: true,
       day: result.day,
       coins: result.coins,
-      rewardType: result.rewardType,
-      itemId: result.itemId,
     });
 
     this.emitProgress(events);

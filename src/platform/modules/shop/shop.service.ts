@@ -76,9 +76,7 @@ class ShopService {
       const result = await iap.purchase(product);
 
       if (result.success) {
-        if (item.type === 'coins') {
-          this.grantCoins(item);
-        }
+        // Coin packs are fulfilled via iap:purchase:success (also covers timeout recovery).
         eventBus.emit('shop:purchase', { itemId, price: item.price });
         return true;
       }
@@ -98,6 +96,18 @@ class ShopService {
     this.grantItem(item);
     eventBus.emit('shop:purchase', { itemId, price: item.price });
     return true;
+  }
+
+  /** Grant coin packs after IAP success / restore of an unconsumed consumable. */
+  fulfillIapProduct(productId: string): void {
+    const item = this.items.find((entry) => {
+      if (entry.id === productId) return true;
+      if (!entry.productKey) return false;
+      return getProductByKey(entry.productKey).id === productId;
+    });
+    if (item?.type === 'coins') {
+      this.grantCoins(item);
+    }
   }
 
   private grantItem(item: ShopItem): void {

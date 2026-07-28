@@ -34,15 +34,6 @@ function buildPhaserPhysics(): Phaser.Types.Core.PhysicsConfig | undefined {
     };
   }
 
-  if (physics.arcade) {
-    config.arcade = {
-      debug: physics.arcade.debug,
-      gravity: physics.arcade.gravity
-        ? { x: physics.arcade.gravity.x ?? 0, y: physics.arcade.gravity.y ?? 0 }
-        : undefined,
-    };
-  }
-
   return config;
 }
 

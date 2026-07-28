@@ -21,6 +21,7 @@ import { notificationRepository, type NotificationRepository } from './notificat
  */
 class DeviceSyncService {
   private flushing = false;
+  private dirty = false;
 
   constructor(
     private readonly repository: NotificationRepository = notificationRepository,
@@ -70,7 +71,10 @@ class DeviceSyncService {
   }
 
   async flush(): Promise<void> {
-    if (this.flushing) return;
+    if (this.flushing) {
+      this.dirty = true;
+      return;
+    }
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
 
     if (this.guestService.getStatus() !== 'ready' || !this.guestService.getGuestId()) {
@@ -78,23 +82,27 @@ class DeviceSyncService {
       return;
     }
 
-    const state = await this.loadState();
-    if (!this.hasPendingWork(state)) {
-      return;
-    }
-
-    if (state.nextAttemptAt && Date.parse(state.nextAttemptAt) > Date.now()) {
-      return;
-    }
-
-    if (state.syncAttempts >= MAX_DEVICE_SYNC_ATTEMPTS) {
-      logger.warn('[DeviceSync] Max sync attempts reached — giving up until next enqueue');
-      return;
-    }
-
     this.flushing = true;
     try {
-      await this.flushState(state);
+      do {
+        this.dirty = false;
+
+        const state = await this.loadState();
+        if (!this.hasPendingWork(state)) {
+          continue;
+        }
+
+        if (state.nextAttemptAt && Date.parse(state.nextAttemptAt) > Date.now()) {
+          continue;
+        }
+
+        if (state.syncAttempts >= MAX_DEVICE_SYNC_ATTEMPTS) {
+          logger.warn('[DeviceSync] Max sync attempts reached — giving up until next enqueue');
+          continue;
+        }
+
+        await this.flushState(state);
+      } while (this.dirty);
     } finally {
       this.flushing = false;
     }

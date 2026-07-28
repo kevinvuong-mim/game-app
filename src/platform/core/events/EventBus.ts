@@ -35,26 +35,7 @@ class EventBus implements IEventBus {
     return this.addListener(event, handler as EventHandler<PlatformEvent>);
   }
 
-  off<T extends PlatformEvent>(event: T, handler: EventHandler<T>): void {
-    const entries = this.listeners.get(event);
-    if (!entries) return;
-
-    for (const entry of entries) {
-      if (entry.handler === handler) {
-        entries.delete(entry);
-        break;
-      }
-    }
-  }
-
-  clear(): void {
-    this.listeners.clear();
-  }
-
-  private addListener(
-    event: PlatformEvent,
-    handler: EventHandler<PlatformEvent>
-  ): () => void {
+  private addListener(event: PlatformEvent, handler: EventHandler<PlatformEvent>): () => void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }

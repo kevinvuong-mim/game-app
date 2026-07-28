@@ -7,13 +7,9 @@
  */
 export interface GamePhysicsConfig {
   /** Phaser physics system. Omit or set false for no physics. */
-  default?: 'matter' | 'arcade' | false;
+  default?: 'matter' | false;
   matter?: {
     gravity?: { x: number; y: number };
-    debug?: boolean;
-  };
-  arcade?: {
-    gravity?: { x?: number; y?: number };
     debug?: boolean;
   };
 }

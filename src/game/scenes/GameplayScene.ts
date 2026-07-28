@@ -196,6 +196,7 @@ export class GameplayScene extends Phaser.Scene {
         this.dropGestureArmed = false;
         if (this.gameActive && !this.sessionEnded) {
           this.matter.world.resume();
+          this.dropController.refreshVisual();
         }
       },
     });

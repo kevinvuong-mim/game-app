@@ -1,4 +1,4 @@
-type HttpMethod = 'GET' | 'PUT' | 'POST' | 'PATCH' | 'DELETE';
+type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 export interface RequestConfig {
   auth?: boolean;
@@ -18,17 +18,6 @@ export interface ApiResponse<T> {
   headers: Headers;
 }
 
-export type RequestInterceptor = (
-  url: string,
-  config: RequestConfig
-) => RequestConfig | Promise<RequestConfig>;
-
-export type ResponseInterceptor = <T>(
-  response: ApiResponse<T>
-) => ApiResponse<T> | Promise<ApiResponse<T>>;
-
-export type ErrorInterceptor = (error: ApiError) => void | Promise<void>;
-
 export type AuthRecoveryHandler = () => Promise<boolean>;
 
 export class ApiError extends Error {
@@ -47,10 +36,6 @@ export interface IApiClient {
   setAuthToken(token: string | null): void;
   get<T>(path: string, config?: RequestConfig): Promise<T>;
   delete<T>(path: string, config?: RequestConfig): Promise<T>;
-  addErrorInterceptor(interceptor: ErrorInterceptor): () => void;
-  addRequestInterceptor(interceptor: RequestInterceptor): () => void;
-  addResponseInterceptor(interceptor: ResponseInterceptor): () => void;
-  put<T>(path: string, body?: unknown, config?: RequestConfig): Promise<T>;
   post<T>(path: string, body?: unknown, config?: RequestConfig): Promise<T>;
   patch<T>(path: string, body?: unknown, config?: RequestConfig): Promise<T>;
 }

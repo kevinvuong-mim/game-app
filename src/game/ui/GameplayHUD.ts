@@ -4,7 +4,12 @@ import { t } from '@platform/ui';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
-import { PANEL_BG, PANEL_BORDER, PANEL_CORNER_RADIUS, TEXT_COLOR } from '@platform/ui/panel/panelTheme';
+import {
+  PANEL_BG,
+  PANEL_BORDER,
+  PANEL_CORNER_RADIUS,
+  TEXT_COLOR,
+} from '@platform/ui/panel/panelTheme';
 import type { UIButton } from '@platform/ui/types';
 
 const PANEL_FILL = 0xf5e6c8;

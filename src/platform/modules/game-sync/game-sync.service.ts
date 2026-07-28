@@ -101,23 +101,20 @@ export class GameSyncService {
 
     let queue = await this.repository.loadQueue();
 
-    // Never re-attribute results from a previous guest (e.g. after 401 recovery).
+    // Re-bind orphans from a previous guest on this install (e.g. after 401 recovery).
+    // Signatures are recomputed below with the current guestId.
     const orphanCount = queue.filter(
-      (item) =>
-        !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
+      (item) => !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
     ).length;
     if (orphanCount > 0) {
-      logger.warn('[GameSync] Dropping orphaned results from a previous guest', {
+      logger.warn('[GameSync] Rebinding orphaned results to current guest', {
         count: orphanCount,
       });
-      queue = queue.filter(
-        (item) =>
-          item.synced ||
-          item.gameId !== gameId ||
-          !item.guestId ||
-          item.guestId === guestId
+      queue = queue.map((item) =>
+        !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
+          ? { ...item, guestId, syncAttempts: 0, nextAttemptAt: undefined }
+          : item
       );
-      await this.repository.saveQueue(queue);
     }
 
     // Bind unsigned/local rows that never got a guestId to the current identity.

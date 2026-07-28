@@ -27,10 +27,6 @@ export class DangerLineSystem {
     this.graceUntil = Date.now() + ms;
   }
 
-  clearGrace(): void {
-    this.graceUntil = 0;
-  }
-
   check(): void {
     if (!this.callbacks.isActive() || Date.now() < this.graceUntil) return;
 
