@@ -70,41 +70,42 @@ export class AdMobAdsProvider implements IAdsProvider {
       initializeForTesting: config.testing ?? false,
     });
 
-    await this.requestPrivacyConsent();
+    // TODO: re-enable ATT + UMP before production release.
+    // await this.requestPrivacyConsent();
 
     logger.info('[Ads] AdMob provider initialized');
   }
 
-  /**
-   * ATT (iOS) + Google UMP consent before any ad load.
-   * Declining still allows ads (typically non-personalized); failures are non-fatal.
-   */
-  private async requestPrivacyConsent(): Promise<void> {
-    if (!this.admob) return;
-
-    try {
-      if (Capacitor.getPlatform() === 'ios') {
-        const tracking = await this.admob.AdMob.trackingAuthorizationStatus();
-        if (tracking.status === 'notDetermined') {
-          await this.admob.AdMob.requestTrackingAuthorization();
-        }
-      }
-    } catch (error) {
-      logger.warn('[Ads] ATT request failed — continuing', error);
-    }
-
-    try {
-      const consentInfo = await this.admob.AdMob.requestConsentInfo();
-      if (
-        consentInfo.isConsentFormAvailable &&
-        consentInfo.status === this.admob.AdmobConsentStatus.REQUIRED
-      ) {
-        await this.admob.AdMob.showConsentForm();
-      }
-    } catch (error) {
-      logger.warn('[Ads] UMP consent request failed — continuing', error);
-    }
-  }
+  // /**
+  //  * ATT (iOS) + Google UMP consent before any ad load.
+  //  * Declining still allows ads (typically non-personalized); failures are non-fatal.
+  //  */
+  // private async requestPrivacyConsent(): Promise<void> {
+  //   if (!this.admob) return;
+  //
+  //   try {
+  //     if (Capacitor.getPlatform() === 'ios') {
+  //       const tracking = await this.admob.AdMob.trackingAuthorizationStatus();
+  //       if (tracking.status === 'notDetermined') {
+  //         await this.admob.AdMob.requestTrackingAuthorization();
+  //       }
+  //     }
+  //   } catch (error) {
+  //     logger.warn('[Ads] ATT request failed — continuing', error);
+  //   }
+  //
+  //   try {
+  //     const consentInfo = await this.admob.AdMob.requestConsentInfo();
+  //     if (
+  //       consentInfo.isConsentFormAvailable &&
+  //       consentInfo.status === this.admob.AdmobConsentStatus.REQUIRED
+  //     ) {
+  //       await this.admob.AdMob.showConsentForm();
+  //     }
+  //   } catch (error) {
+  //     logger.warn('[Ads] UMP consent request failed — continuing', error);
+  //   }
+  // }
 
   isReady(format: AdFormat): boolean {
     return this.ready.has(format);
