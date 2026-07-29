@@ -1,5 +1,6 @@
 import {
   GUEST_STORAGE_KEY,
+  GUEST_PENDING_NAME_KEY,
   type GuestCredentials,
   type InitGuestPayload,
   isValidGuestCredentials,
@@ -31,6 +32,19 @@ export class GuestRepository {
 
   async clearCredentials(): Promise<void> {
     await storage.remove(GUEST_STORAGE_KEY, guestStorageProvider());
+  }
+
+  async loadPendingName(): Promise<string | null> {
+    const value = await storage.load<string>(GUEST_PENDING_NAME_KEY, guestStorageProvider());
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
+  }
+
+  async savePendingName(name: string): Promise<void> {
+    await storage.save(GUEST_PENDING_NAME_KEY, name.trim(), guestStorageProvider());
+  }
+
+  async clearPendingName(): Promise<void> {
+    await storage.remove(GUEST_PENDING_NAME_KEY, guestStorageProvider());
   }
 
   async initGuest(): Promise<InitGuestPayload> {

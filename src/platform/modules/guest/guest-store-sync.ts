@@ -3,13 +3,12 @@ import { usePlatformStore } from '@platform/core/state';
 
 export function syncGuestToStore(): void {
   const guestId = guest.getGuestId();
-  if (!guestId) return;
-
-  // Only overwrite displayName when guest credentials carry a real name.
-  // Falling back to 'Player' would wipe a hydrated custom name from save data.
   const guestName = guest.getName();
+  if (!guestId && !guestName) return;
+
+  // Prefer guest-held name (including first-install offline pending) over hydrated defaults.
   usePlatformStore.getState().setUser({
-    id: guestId,
+    ...(guestId ? { id: guestId } : {}),
     ...(guestName ? { displayName: guestName } : {}),
   });
 }

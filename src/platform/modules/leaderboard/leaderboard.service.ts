@@ -64,8 +64,14 @@ export class LeaderboardService {
       }
     }
 
-    if (!options.force) {
-      await this.serveCachedPage(this.currentPage);
+    // Always SWR: surface durable cache before waiting on the network.
+    await this.serveCachedPage(this.currentPage);
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      if (this.view.entries.length === 0) {
+        return this.applyFailure(new Error('offline'));
+      }
+      return this.view;
     }
 
     // Reuse in-flight only for the same page and non-forced refresh.
@@ -87,6 +93,7 @@ export class LeaderboardService {
   }
 
   async refreshLeaderboard(page?: number): Promise<LeaderboardView> {
+    // Force bypasses TTL freshness but still serves cache first (see fetchLeaderboard).
     return this.fetchLeaderboard({ force: true, page });
   }
 

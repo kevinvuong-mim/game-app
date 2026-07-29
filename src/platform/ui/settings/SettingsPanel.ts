@@ -806,11 +806,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
       };
 
       // Toast is scene-owned; Phaser queues restart so we must wait for CREATE.
-      if (
-        !this.disposed &&
-        this.scene.sys.isActive() &&
-        this.scene.scene.key === 'Settings'
-      ) {
+      if (!this.disposed && this.scene.sys.isActive() && this.scene.scene.key === 'Settings') {
         this.restartThenShowToast(successToast);
       } else {
         toast.show(successToast);
@@ -1021,11 +1017,6 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     const name = this.draftName.trim();
     if (!name) {
       toast.show({ message: t('settings.playerNameRequired'), type: 'warning' });
-      return;
-    }
-
-    if (guest.getStatus() !== 'ready') {
-      toast.show({ message: t('settings.playerNameOffline'), type: 'warning' });
       return;
     }
 

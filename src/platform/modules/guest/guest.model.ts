@@ -8,6 +8,9 @@
 /** Storage key → persisted as `gsk:guest` by the storage providers. */
 export const GUEST_STORAGE_KEY = 'guest';
 
+/** Pending display name before guest credentials exist (first-install offline). */
+export const GUEST_PENDING_NAME_KEY = 'guest:pending-name';
+
 export interface GuestCredentials {
   guestId: string;
   secretToken: string;

@@ -4,6 +4,7 @@ import {
   toNonNegativeInt,
   MAX_SYNC_ATTEMPTS,
   isValidReplaySecret,
+  isTransientSyncErrorCode,
   type ResultSubmitData,
   computeReplaySignature,
   type PendingGameResult,
@@ -153,7 +154,7 @@ export class GameSyncService {
         !r.synced &&
         r.gameId === gameId &&
         r.guestId === guestId &&
-        r.syncAttempts < MAX_SYNC_ATTEMPTS &&
+        (r.syncAttempts < MAX_SYNC_ATTEMPTS || isTransientSyncErrorCode(r.lastErrorCode)) &&
         (!r.nextAttemptAt || Date.parse(r.nextAttemptAt) <= now)
     );
     if (pending.length === 0) {
@@ -275,7 +276,8 @@ export class GameSyncService {
         continue;
       }
 
-      if (item.syncAttempts >= MAX_SYNC_ATTEMPTS) {
+      // Never drop scores that failed due to transient network / server blips.
+      if (item.syncAttempts >= MAX_SYNC_ATTEMPTS && !isTransientSyncErrorCode(item.lastErrorCode)) {
         eventBus.emit('game:sync:dropped', {
           clientResultId: item.clientResultId,
           attempts: item.syncAttempts,
@@ -299,13 +301,23 @@ export class GameSyncService {
     const errorCode = error instanceof ApiError ? String(error.status) : 'network';
     return queue.map((item) =>
       ids.has(item.localId) && item.gameId === gameId
-        ? this.markAttemptFailed(item, errorCode)
+        ? this.markAttemptFailed(item, errorCode, {
+            countTowardDrop: !isTransientSyncErrorCode(errorCode),
+          })
         : item
     );
   }
 
-  private markAttemptFailed(item: PendingGameResult, errorCode: string): PendingGameResult {
-    const syncAttempts = item.syncAttempts + 1;
+  private markAttemptFailed(
+    item: PendingGameResult,
+    errorCode: string,
+    options: { countTowardDrop?: boolean } = {}
+  ): PendingGameResult {
+    const countTowardDrop = options.countTowardDrop ?? !isTransientSyncErrorCode(errorCode);
+    // Cap below MAX so transient failures stay eligible for flush forever.
+    const syncAttempts = countTowardDrop
+      ? item.syncAttempts + 1
+      : Math.min(item.syncAttempts + 1, MAX_SYNC_ATTEMPTS - 1);
     const backoffMs = Math.min(
       MAX_SYNC_BACKOFF_MS,
       BASE_SYNC_BACKOFF_MS * 2 ** Math.max(0, syncAttempts - 1)

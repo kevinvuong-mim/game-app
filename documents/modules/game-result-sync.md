@@ -74,6 +74,8 @@ Khi sync thành công, `game-sync.service` emit `game:sync:completed` với `ran
 
 `invalid_signature` trong `rejected[]` → **giữ trong queue** + backoff (thường do sai `VITE_REPLAY_SECRET`). Reject reason khác → loại khỏi queue.
 
+Lỗi mạng thoáng qua (`status` 0 / 408 / 429 / 5xx, hoặc `network`) **không** bị drop sau `MAX_SYNC_ATTEMPTS` — queue được bảo toàn và retry với backoff. Chỉ lỗi client/server “cứng” (4xx khác) mới bị drop sau đủ attempt.
+
 Flush **từ chối** chạy nếu `VITE_REPLAY_SECRET` không phải **64-char lowercase hex** (`/^[0-9a-f]{64}$/`) — queue được bảo toàn.
 
 ## Metadata

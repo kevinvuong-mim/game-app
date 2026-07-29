@@ -15,7 +15,8 @@ Hybrid offline-first: đọc all-time leaderboard từ `game-api`, cache theo pa
 ## Offline / fetch behavior
 
 - `init()`: hydrate từ cache local nếu có; đánh dấu `isStale` khi cache hết TTL.
-- `fetchLeaderboard()`: serve cache trước (khi `!force`), rồi revalidate mạng.
+- `fetchLeaderboard()` / `refreshLeaderboard()`: **luôn** serve cache trước (SWR), rồi revalidate mạng. `force` chỉ bỏ qua TTL freshness — không bỏ qua cache.
+- Offline (`navigator.onLine === false`): trả cache ngay; nếu không có cache → `offlineLocalBest` / error view (không chờ timeout mạng).
 - In-flight reuse chỉ khi **cùng page** và `!force`. Mỗi request có `fetchSeq`; response cũ bị discard khi `seq !== fetchSeq` (tránh race khi đổi page / force refresh).
 - `status`: `idle` \| `ready` \| `error` \| `loading` \| `refreshing` — **không** có `'offline'`.
 - Banner UI dựa trên `isStale` + `error` i18n (`leaderboard.offlineLocalBest`, `leaderboard.error`).
