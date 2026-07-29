@@ -409,7 +409,11 @@ export class GameplayScene extends Phaser.Scene {
     const top = centerY - displayH / 2 + displayH * CONTAINER_INSET.top;
     const bottom = centerY + displayH / 2 - displayH * CONTAINER_INSET.bottom;
 
-    this.dangerY = top + 36;
+    // const boundsDebug = this.add.graphics().setDepth(3);
+    // boundsDebug.lineStyle(2, 0xff0000, 1);
+    // boundsDebug.strokeRect(left, top, right - left, bottom - top);
+
+    this.dangerY = top;
     this.dangerLine.setDangerY(this.dangerY);
 
     const wallThickness = 40;
@@ -432,7 +436,7 @@ export class GameplayScene extends Phaser.Scene {
       friction: 0.5,
     });
 
-    this.dropController.setupVisuals({ left, right, top, bottom, centerX }, top - 28);
+    this.dropController.setupVisuals({ left, right, top, bottom, centerX }, top - 60);
   }
 
   private handlePointerMove(pointer: Phaser.Input.Pointer): void {

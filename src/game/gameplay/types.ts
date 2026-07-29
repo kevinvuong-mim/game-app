@@ -14,10 +14,10 @@ export type ActiveSkill =
 
 /** Inner play-area ratios relative to glass-container.png display size. */
 export const CONTAINER_INSET = {
-  left: 0.09,
-  right: 0.09,
-  top: 0.06,
-  bottom: 0.1,
+  left: 0.08,
+  right: 0.08,
+  top: 0.08,
+  bottom: 0.09,
 };
 
 export type ContainerBounds = {
