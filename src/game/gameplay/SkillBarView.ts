@@ -22,6 +22,7 @@ export type SkillBarViewCallbacks = {
 
 /**
  * Scrollable skill inventory bar at the bottom of gameplay.
+ * Panel width grows with owned skills (up to a max), then scrolls.
  */
 export class SkillBarView {
   private skillButtons = new Map<SkillId, UIButton>();
@@ -30,7 +31,9 @@ export class SkillBarView {
   private skillHint?: Phaser.GameObjects.Text;
   private skillPanel?: Phaser.GameObjects.Graphics;
   private skillTrack?: Phaser.GameObjects.Container;
+  private skillTrackMask?: Phaser.GameObjects.Graphics;
   private skillTrackBaseX = 0;
+  private skillTrackCenterY = 0;
   private skillLeftArrow?: Phaser.GameObjects.Text;
   private skillRightArrow?: Phaser.GameObjects.Text;
   private skillLeftArrowZone?: Phaser.GameObjects.Zone;
@@ -40,13 +43,23 @@ export class SkillBarView {
   private skillBtnSize = 72;
   private skillBarTop = 0;
   private skillBarBottom = 0;
+  private skillPanelLeft = 0;
+  private skillPanelWidth = 0;
   private skillSwipeStartX = 0;
   private skillSwipeActive = false;
   private skillDidSwipe = false;
   private skillNavConsumed = false;
   private visible = false;
+  private layoutScreenWidth = 0;
+  private layoutScreenHeight = 0;
   private readonly skillVisibleCount = 4;
   private readonly selectedSkillScale = 1.16;
+  private readonly arrowPad = 36;
+  private readonly panelPadTop = 16;
+  private readonly panelPadBottom = 18;
+  private readonly idealSlotSpacing = 110;
+  private readonly maxPanelWidthPx = 520;
+  private readonly maxPanelWidthRatio = 0.85;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -71,6 +84,7 @@ export class SkillBarView {
     this.ownedSkillIds = [];
     this.skillPanel = undefined;
     this.skillTrack = undefined;
+    this.skillTrackMask = undefined;
     this.skillLeftArrow = undefined;
     this.skillRightArrow = undefined;
     this.skillLeftArrowZone = undefined;
@@ -80,50 +94,28 @@ export class SkillBarView {
     this.skillDidSwipe = false;
     this.skillNavConsumed = false;
     this.visible = false;
+    this.layoutScreenWidth = width;
+    this.layoutScreenHeight = height;
 
-    const visible = this.skillVisibleCount;
     const btnSize = 72;
+    this.skillBtnSize = btnSize;
     const slotHeight = btnSize;
-    const arrowPad = 36;
-    const panelPadTop = 16;
-    const panelPadBottom = 18;
-    const panelWidth = Math.min(width * 0.78, 460);
-    const panelLeft = width / 2 - panelWidth / 2;
-    const innerWidth = panelWidth - arrowPad * 2;
-    const spacing = innerWidth / visible;
-    this.skillSlotSpacing = spacing;
 
-    const panelHeight = panelPadTop + slotHeight + panelPadBottom;
-    const panelTop = height - panelHeight - 110;
-    this.skillBarTop = panelTop;
-    this.skillBarBottom = panelTop + panelHeight;
+    this.ownedSkillIds = this.getOwnedSkillIds();
+    this.layoutPanelMetrics();
 
     this.skillPanel = this.scene.add.graphics().setDepth(400);
-    drawRoundedRect(
-      this.skillPanel,
-      panelLeft,
-      panelTop,
-      panelWidth,
-      panelHeight,
-      PANEL_CORNER_RADIUS,
-      PANEL_BG,
-      PANEL_BORDER
-    );
+    this.redrawPanel();
 
-    const trackCenterY = panelTop + panelPadTop + slotHeight / 2;
     this.skillTrackBaseX = width / 2;
-    this.skillTrack = this.scene.add.container(this.skillTrackBaseX, trackCenterY).setDepth(403);
-    this.skillBtnSize = btnSize;
-    this.rebuildTrack();
+    this.skillTrackCenterY = this.skillBarTop + this.panelPadTop + slotHeight / 2;
+    this.skillTrack = this.scene.add
+      .container(this.skillTrackBaseX, this.skillTrackCenterY)
+      .setDepth(403);
 
-    const windowWidth = spacing * visible;
-    const windowHeight = slotHeight + 8;
-    const maskShape = this.scene.add.graphics();
-    maskShape.setPosition(width / 2, trackCenterY);
-    maskShape.fillStyle(0xffffff, 1);
-    maskShape.fillRect(-windowWidth / 2, -windowHeight / 2, windowWidth, windowHeight);
-    maskShape.setVisible(false);
-    this.skillTrack.setMask(maskShape.createGeometryMask());
+    this.skillTrackMask = this.scene.add.graphics().setVisible(false);
+    this.updateTrackMask();
+    this.skillTrack.setMask(this.skillTrackMask.createGeometryMask());
 
     const arrowStyle = {
       color: '#9e9e9e',
@@ -132,29 +124,34 @@ export class SkillBarView {
       fontFamily: FREDOKA_FONT,
     };
     this.skillLeftArrow = this.scene.add
-      .text(panelLeft + 22, trackCenterY, '‹', arrowStyle)
+      .text(this.skillPanelLeft + 22, this.skillTrackCenterY, '‹', arrowStyle)
       .setOrigin(0.5)
       .setDepth(404);
     this.skillRightArrow = this.scene.add
-      .text(panelLeft + panelWidth - 22, trackCenterY, '›', arrowStyle)
+      .text(this.skillPanelLeft + this.skillPanelWidth - 22, this.skillTrackCenterY, '›', arrowStyle)
       .setOrigin(0.5)
       .setDepth(404);
 
-    const arrowHitW = arrowPad + 8;
+    const arrowHitW = this.arrowPad + 8;
     const arrowHitH = slotHeight + 24;
     this.skillLeftArrowZone = this.scene.add
-      .zone(panelLeft + arrowPad / 2, trackCenterY, arrowHitW, arrowHitH)
+      .zone(this.skillPanelLeft + this.arrowPad / 2, this.skillTrackCenterY, arrowHitW, arrowHitH)
       .setDepth(405)
       .setInteractive({ useHandCursor: true });
     this.skillRightArrowZone = this.scene.add
-      .zone(panelLeft + panelWidth - arrowPad / 2, trackCenterY, arrowHitW, arrowHitH)
+      .zone(
+        this.skillPanelLeft + this.skillPanelWidth - this.arrowPad / 2,
+        this.skillTrackCenterY,
+        arrowHitW,
+        arrowHitH
+      )
       .setDepth(405)
       .setInteractive({ useHandCursor: true });
 
     this.bindNavZone(this.skillLeftArrowZone, -1);
     this.bindNavZone(this.skillRightArrowZone, 1);
 
-    this.applyScroll(false);
+    this.rebuildTrack();
 
     this.skillHint = this.scene.add
       .text(width / 2, this.skillBarTop - 12, '', {
@@ -169,6 +166,75 @@ export class SkillBarView {
       .setDepth(520);
 
     this.updateBarVisibility();
+  }
+
+  /** Visible slots that fit in the panel (owned count, capped at skillVisibleCount). */
+  private displayedSlotCount(): number {
+    return Math.min(Math.max(this.ownedSkillIds.length, 1), this.skillVisibleCount);
+  }
+
+  private maxPanelWidth(): number {
+    return Math.min(this.layoutScreenWidth * this.maxPanelWidthRatio, this.maxPanelWidthPx);
+  }
+
+  private layoutPanelMetrics(): void {
+    const slotCount = this.displayedSlotCount();
+    const idealWidth = slotCount * this.idealSlotSpacing + this.arrowPad * 2;
+    this.skillPanelWidth = Math.min(idealWidth, this.maxPanelWidth());
+    this.skillPanelLeft = this.layoutScreenWidth / 2 - this.skillPanelWidth / 2;
+
+    const innerWidth = this.skillPanelWidth - this.arrowPad * 2;
+    this.skillSlotSpacing = innerWidth / slotCount;
+
+    const panelHeight = this.panelPadTop + this.skillBtnSize + this.panelPadBottom;
+    this.skillBarTop = this.layoutScreenHeight - panelHeight - 110;
+    this.skillBarBottom = this.skillBarTop + panelHeight;
+  }
+
+  private redrawPanel(): void {
+    if (!this.skillPanel) return;
+    this.skillPanel.clear();
+    drawRoundedRect(
+      this.skillPanel,
+      this.skillPanelLeft,
+      this.skillBarTop,
+      this.skillPanelWidth,
+      this.skillBarBottom - this.skillBarTop,
+      PANEL_CORNER_RADIUS,
+      PANEL_BG,
+      PANEL_BORDER
+    );
+  }
+
+  private updateTrackMask(): void {
+    if (!this.skillTrackMask) return;
+    const windowWidth = this.skillSlotSpacing * this.displayedSlotCount();
+    const windowHeight = this.skillBtnSize + 8;
+    this.skillTrackMask.clear();
+    this.skillTrackMask.setPosition(this.layoutScreenWidth / 2, this.skillTrackCenterY);
+    this.skillTrackMask.fillStyle(0xffffff, 1);
+    this.skillTrackMask.fillRect(-windowWidth / 2, -windowHeight / 2, windowWidth, windowHeight);
+  }
+
+  private repositionNav(): void {
+    const leftX = this.skillPanelLeft + 22;
+    const rightX = this.skillPanelLeft + this.skillPanelWidth - 22;
+    const leftZoneX = this.skillPanelLeft + this.arrowPad / 2;
+    const rightZoneX = this.skillPanelLeft + this.skillPanelWidth - this.arrowPad / 2;
+
+    this.skillLeftArrow?.setPosition(leftX, this.skillTrackCenterY);
+    this.skillRightArrow?.setPosition(rightX, this.skillTrackCenterY);
+    this.skillLeftArrowZone?.setPosition(leftZoneX, this.skillTrackCenterY);
+    this.skillRightArrowZone?.setPosition(rightZoneX, this.skillTrackCenterY);
+  }
+
+  private relayoutForContent(): void {
+    if (!this.layoutScreenWidth) return;
+    this.layoutPanelMetrics();
+    this.redrawPanel();
+    this.updateTrackMask();
+    this.repositionNav();
+    this.skillHint?.setPosition(this.layoutScreenWidth / 2, this.skillBarTop - 12);
   }
 
   setHint(text: string): void {
@@ -276,6 +342,7 @@ export class SkillBarView {
     this.skillButtons.clear();
     this.skillSlots.clear();
     this.ownedSkillIds = this.getOwnedSkillIds();
+    this.relayoutForContent();
 
     this.ownedSkillIds.forEach((id, index) => {
       const slot = this.createSlot(id, this.skillBtnSize);
