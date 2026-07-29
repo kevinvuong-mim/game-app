@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { gameConfig } from '@game/config';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { t, toast, shareService, i18n, rateService, RateAppModal } from '@platform/ui';
+import { t, toast, shareService, i18n, rateService, RateAppModal, gameSync } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect, measureTextWidth } from '@platform/ui/panel/graphics';
 import {
@@ -49,8 +49,8 @@ const LAYOUT = {
 export class GameOverScene extends Phaser.Scene {
   private returnTo = 'Home';
   private rankText?: Phaser.GameObjects.Text;
-  private unsubscribeSyncCompleted?: () => void;
   private rateModal?: RateAppModal;
+  private rankRequestId = 0;
 
   constructor() {
     super({ key: 'GameOver' });
@@ -135,9 +135,8 @@ export class GameOverScene extends Phaser.Scene {
       .setDepth(2)
       .setVisible(false);
 
-    this.unsubscribeSyncCompleted = eventBus.on('game:sync:completed', ({ rank }) => {
-      this.showRank(rank);
-    });
+    // Online: take data.rank from /results. Offline / failed sync: leave hidden.
+    void this.resolveRankFromApi();
 
     let buttonY = buttonsStartY;
 
@@ -318,15 +317,27 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   shutdown(): void {
-    this.cleanupEventListeners();
+    this.rankRequestId += 1;
     this.rateModal?.destroy();
     this.rateModal = undefined;
     this.rankText = undefined;
   }
 
   private cleanupEventListeners(): void {
-    this.unsubscribeSyncCompleted?.();
-    this.unsubscribeSyncCompleted = undefined;
+    this.rankRequestId += 1;
+  }
+
+  /** Online → show `data.rank` from `/results`. Offline / error → keep hidden. */
+  private async resolveRankFromApi(): Promise<void> {
+    const requestId = ++this.rankRequestId;
+    try {
+      const rank = await gameSync.flushAndGetRank();
+      if (requestId !== this.rankRequestId) return;
+      if (rank === null) return;
+      this.showRank(rank);
+    } catch {
+      // Network / sync failure — leave rank hidden.
+    }
   }
 
   private showRank(rank: number): void {

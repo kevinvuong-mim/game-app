@@ -25,6 +25,7 @@ class GameSyncController {
         };
         if (typeof merges === 'number') metadata.merges = merges;
 
+        this.service.clearLastApiRank();
         await this.service.recordResult({ score, metadata });
         void this.service.flush().catch(() => undefined);
       }),

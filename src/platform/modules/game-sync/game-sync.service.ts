@@ -30,13 +30,33 @@ export interface RecordResultParams {
  * Offline-first match-result sync.
  */
 export class GameSyncService {
-  private flushing = false;
   private dirty = false;
+  private flushPromise: Promise<number | null> | null = null;
+  /** Last `data.rank` from a successful `/results` response (this process). */
+  private lastApiRank: number | null = null;
 
   constructor(
     private readonly repository: GameSyncRepository = gameSyncRepository,
     private readonly guestService: GuestService = guest
   ) {}
+
+  /** Clears stale rank before a new finished match is queued. */
+  clearLastApiRank(): void {
+    this.lastApiRank = null;
+  }
+
+  /**
+   * Flush pending results and return `data.rank` from `/results` when online.
+   * Returns null when offline, guest not ready, or the API omits rank.
+   */
+  async flushAndGetRank(): Promise<number | null> {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return null;
+    }
+
+    await this.flush();
+    return this.lastApiRank;
+  }
 
   async recordResult(params: RecordResultParams): Promise<void> {
     const { gameId } = getConfig();
@@ -65,29 +85,34 @@ export class GameSyncService {
     logger.debug('[GameSync] Result queued', { clientResultId, score });
   }
 
-  async flush(): Promise<void> {
-    if (this.flushing) {
+  async flush(): Promise<number | null> {
+    if (this.flushPromise) {
       this.dirty = true;
-      return;
+      return this.flushPromise;
     }
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
 
     const gameId = getConfig().gameId;
     const guestId = this.guestService.getGuestId();
     if (!guestId || this.guestService.getStatus() !== 'ready') {
       logger.debug('[GameSync] Flush skipped — guest not ready');
-      return;
+      return null;
     }
 
-    this.flushing = true;
+    this.flushPromise = this.runFlush(gameId, guestId);
     try {
-      do {
-        this.dirty = false;
-        await this.flushForGuest(gameId, guestId);
-      } while (this.dirty);
+      return await this.flushPromise;
     } finally {
-      this.flushing = false;
+      this.flushPromise = null;
     }
+  }
+
+  private async runFlush(gameId: string, guestId: string): Promise<number | null> {
+    do {
+      this.dirty = false;
+      await this.flushForGuest(gameId, guestId);
+    } while (this.dirty);
+    return this.lastApiRank;
   }
 
   private async flushForGuest(gameId: string, guestId: string): Promise<void> {
@@ -166,7 +191,7 @@ export class GameSyncService {
         );
 
         queue = this.applyBatchSyncResults(queue, batch, response, gameId, guestId);
-        this.handleSyncRank(response);
+        this.applyRankFromApi(response);
         queue = this.pruneQueue(queue);
         await this.repository.saveQueue(queue);
       } catch (error) {
@@ -189,16 +214,18 @@ export class GameSyncService {
     }
   }
 
-  private handleSyncRank(response: ResultSubmitData): void {
-    if (typeof response.rank !== 'number' || typeof response.bestScore !== 'number') {
-      return;
-    }
+  /** Prefer `data.rank` from `/results` — coerce number-like values from the wire. */
+  private applyRankFromApi(response: ResultSubmitData): void {
+    const rank = toOptionalFiniteNumber(response.rank);
+    if (rank === null) return;
 
-    leaderboard.updateSelfRank(response.rank, response.bestScore);
-    eventBus.emit('game:sync:completed', {
-      rank: response.rank,
-      bestScore: response.bestScore,
-    });
+    this.lastApiRank = rank;
+
+    const bestScore = toOptionalFiniteNumber(response.bestScore);
+    if (bestScore !== null) {
+      leaderboard.updateSelfRank(rank, bestScore);
+      eventBus.emit('game:sync:completed', { rank, bestScore });
+    }
   }
 
   private applyBatchSyncResults(
@@ -293,6 +320,15 @@ export class GameSyncService {
       nextAttemptAt: new Date(now + backoffMs).toISOString(),
     };
   }
+}
+
+function toOptionalFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
 }
 
 export const gameSync = new GameSyncService();
