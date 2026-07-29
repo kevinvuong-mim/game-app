@@ -86,7 +86,7 @@ export class GameOverScene extends Phaser.Scene {
       ? buttonsStartY + NEW_RECORD_HEIGHT + NEW_RECORD_GAP + 2 * BUTTON_HEIGHT
       : buttonsStartY + 2 * BUTTON_HEIGHT;
     const panelBottom = lastButtonY + BUTTON_HEIGHT / 2 + PANEL_BOTTOM_PADDING;
-    const panelTop = contentTop - 28;
+    const panelTop = contentTop - 40;
     const panelHeight = panelBottom - panelTop;
 
     const panel = this.add.graphics().setDepth(0);
