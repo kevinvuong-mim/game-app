@@ -14,6 +14,17 @@ Dev là subdomain của prod (`dev.*` → `*`), nên **một bộ file** dùng c
 
 Upload **cùng nội dung** lên `.well-known/` của từng domain (HTTPS, không redirect).
 
+## Config (không qua `.env`)
+
+Sửa scheme + hosts tại:
+
+| File | Dùng cho |
+| ---- | -------- |
+| `src/platform/modules/deep-link/deep-link.config.ts` | Runtime (parser / `allowedHosts`) |
+| `scripts/deeplink-config.mjs` | Native apply (`apply-ios-native` / `apply-android-native`) |
+
+Hai file phải khớp nhau. Host active theo `VITE_APP_ENV` (`production` → prod, còn lại → dev).
+
 ## iOS (Universal Links)
 
 1. Replace `TEAM_ID` trong `apple-app-site-association` bằng Apple Team ID.
@@ -22,7 +33,7 @@ Upload **cùng nội dung** lên `.well-known/` của từng domain (HTTPS, khô
    - `https://dev.gamestarterkit.example.com/.well-known/apple-app-site-association`
    - `https://gamestarterkit.example.com/.well-known/apple-app-site-association`
 4. Content-Type: `application/json` (không có extension `.json` trong URL).
-5. Associated Domains entitlement được apply bởi `scripts/apply-ios-native.mjs` (cả hai host).
+5. Associated Domains entitlement được apply bởi `scripts/apply-ios-native.mjs` (cả hai host) — luôn chạy, không phụ thuộc push; khi push tắt script strip `aps-environment`.
 
 ## Android (App Links)
 
@@ -69,15 +80,5 @@ Deeplink URL
 ```
 
 Cold start: `getLaunchUrl()` chạy trước Phaser boot; destination defer qua `navigationService` pending tới `PreloadScene`.
-
-## Defaults (không cần `.env`)
-
-| Setting       | Default                          | Override (khi clone game) |
-| ------------- | -------------------------------- | ------------------------- |
-| Custom scheme | `gamestarterkit`                 | `VITE_DEEPLINK_SCHEME`    |
-| Dev host      | `dev.gamestarterkit.example.com` | `VITE_DEEPLINK_HOST_DEV`  |
-| Prod host     | `gamestarterkit.example.com`     | `VITE_DEEPLINK_HOST_PROD` |
-
-Defaults nằm trong `src/platform/modules/deep-link/deep-link.config.ts` và `scripts/deeplink-config.mjs`. Host active theo `VITE_APP_ENV` (production → prod host, còn lại → dev host).
 
 AASA / `assetlinks.json`: sửa trực tiếp `documents/deeplink/` (`TEAM_ID`, package/bundle id khớp `appId`, SHA-256 fingerprint) rồi upload lên server — không qua `.env`.

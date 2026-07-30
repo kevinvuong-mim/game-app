@@ -17,8 +17,8 @@ class AppReviewService {
     }
 
     try {
-      const { AppReview } = await import('@capawesome/capacitor-app-review');
-      await AppReview.requestReview();
+      const { InAppReview } = await import('@capacitor-community/in-app-review');
+      await InAppReview.requestReview();
       return true;
     } catch (error) {
       logger.warn('[AppReview] requestReview failed', error);
@@ -28,18 +28,6 @@ class AppReviewService {
 
   /** Open the App Store / Play Store listing for this app. */
   async openStoreListing(): Promise<boolean> {
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const { AppReview } = await import('@capawesome/capacitor-app-review');
-        const { iosAppStoreId } = getConfig().appReview;
-        await AppReview.openAppStore(iosAppStoreId ? { appId: iosAppStoreId } : undefined);
-        return true;
-      } catch (error) {
-        logger.warn('[AppReview] openStoreListing failed', error);
-        return false;
-      }
-    }
-
     const url = getStoreListingUrl(getConfig().appReview);
     if (!url) {
       logger.warn('[AppReview] No store listing URL configured');

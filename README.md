@@ -213,11 +213,6 @@ VITE_ANALYTICS_PROVIDER=console # console | firebase
 VITE_IOS_APP_STORE_ID=
 VITE_ANDROID_PACKAGE_ID=com.studio.gamestarterkit
 
-# Deep links (defaults shown)
-VITE_DEEPLINK_SCHEME=gamestarterkit
-VITE_DEEPLINK_HOST_DEV=dev.gamestarterkit.example.com
-VITE_DEEPLINK_HOST_PROD=gamestarterkit.example.com
-
 # Native AdMob (build/release)
 VITE_ADMOB_ANDROID_APP_ID=
 VITE_ADMOB_IOS_APP_ID=
@@ -248,9 +243,8 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 | `VITE_ADMOB_*_*_ID`                                 | Production ad unit IDs per format/platform                                     |
 | `VITE_FIREBASE_*`                                   | Firebase web config (analytics + push gate on native)                          |
 | `VITE_IOS_APP_STORE_ID` / `VITE_ANDROID_PACKAGE_ID` | Store listing IDs used by app review fallback                                  |
-| `VITE_DEEPLINK_*`                                   | Custom scheme plus development/production link hosts                           |
 
-API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` passes `gameConfig.id` and `gameConfig.replaySecret` (from `VITE_GAME_ID` / `VITE_REPLAY_SECRET`) into runtime config. `name`, `width`, `height`, and `version` are edited directly in `src/game/config.ts`.
+API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` passes `gameConfig.id` and `gameConfig.replaySecret` (from `VITE_GAME_ID` / `VITE_REPLAY_SECRET`) into runtime config. `name`, `width`, `height`, and `version` are edited directly in `src/game/config.ts`. Deep-link scheme/hosts live in `src/platform/modules/deep-link/deep-link.config.ts` (keep in sync with `scripts/deeplink-config.mjs`) — not `.env`.
 
 ## Mobile Deployment
 

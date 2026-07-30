@@ -135,10 +135,25 @@ export class AdMobAdsProvider implements IAdsProvider {
         adId,
         adSize: 'BANNER',
         position: 'BOTTOM_CENTER',
-        margin: 0,
+        // iOS pins to safeAreaLayoutGuide; negative margin cancels the
+        // home-indicator inset so the banner sits flush to the screen bottom.
+        margin: this.getBannerBottomMargin(),
       });
       this.bannerVisible = true;
     });
+  }
+
+  /** Bottom margin for AdMob banner. Negative on iOS to clear safe-area gap. */
+  private getBannerBottomMargin(): number {
+    if (Capacitor.getPlatform() !== 'ios') return 0;
+
+    const probe = document.createElement('div');
+    probe.style.cssText =
+      'position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom);visibility:hidden;pointer-events:none';
+    document.body.appendChild(probe);
+    const inset = Math.round(probe.getBoundingClientRect().height);
+    probe.remove();
+    return inset > 0 ? -inset : 0;
   }
 
   async showBanner(_placement = 'default'): Promise<void> {

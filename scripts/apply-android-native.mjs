@@ -47,6 +47,77 @@ function resolveAdMobAppId() {
   return '';
 }
 
+/**
+ * Upstream @capacitor-community/admob BannerExecutor on Android 15+:
+ * 1) uses Gravity.BOTTOM without CENTER_HORIZONTAL → WRAP_CONTENT sticks left
+ * 2) WindowInsets listener overwrites margins to (0,0,0,bottomInset) → left + bottom gap
+ * Re-apply after every `cap sync` / `npm install` (plugin source lives in node_modules).
+ */
+function patchAdMobBannerExecutor() {
+  const bannerPath = join(
+    root,
+    'node_modules/@capacitor-community/admob/android/src/main/java/com/getcapacitor/community/admob/banner/BannerExecutor.java'
+  );
+
+  if (!existsSync(bannerPath)) {
+    console.warn('[android-native] AdMob BannerExecutor not found — skip banner position patch');
+    return 'skipped';
+  }
+
+  let source = readFileSync(bannerPath, 'utf8');
+  const alreadyPatched =
+    source.includes('Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL') &&
+    !source.includes('set Safe Area only for Android 15+');
+
+  if (alreadyPatched) {
+    return 'present';
+  }
+
+  const unpatchedGravity = `switch (adOptions.position) {
+                case "TOP_CENTER":
+                    mAdViewLayoutParams.gravity = Gravity.TOP;
+                    break;
+                case "CENTER":
+                    mAdViewLayoutParams.gravity = Gravity.CENTER;
+                    break;
+                default:
+                    mAdViewLayoutParams.gravity = Gravity.BOTTOM;
+                    break;
+            }`;
+
+  const patchedGravity = `switch (adOptions.position) {
+                case "TOP_CENTER":
+                    mAdViewLayoutParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                    break;
+                case "CENTER":
+                    mAdViewLayoutParams.gravity = Gravity.CENTER;
+                    break;
+                default:
+                    mAdViewLayoutParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+                    break;
+            }`;
+
+  if (source.includes(unpatchedGravity)) {
+    source = source.replace(unpatchedGravity, patchedGravity);
+  } else if (!source.includes('Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL')) {
+    console.warn('[android-native] AdMob BannerExecutor gravity block changed — patch manually');
+    return 'failed';
+  }
+
+  const insetsBlock =
+    /\/\/ set Safe Area only for Android 15\+\s*\n\s*if \(Build\.VERSION\.SDK_INT >= Build\.VERSION_CODES\.VANILLA_ICE_CREAM\) \{\n(?:.*\n)*?\s*\}\n\n/;
+
+  if (insetsBlock.test(source)) {
+    source = source.replace(
+      insetsBlock,
+      '// game-starter-kit: skip Android 15+ inset margin override (left-align + bottom gap).\n\n'
+    );
+  }
+
+  writeFileSync(bannerPath, source);
+  return 'patched';
+}
+
 function injectAdMobManifest(manifestPath, appId) {
   let manifest = readFileSync(manifestPath, 'utf8');
 
@@ -245,6 +316,9 @@ const appId = readCapacitorAppId(root);
 const manifestPath = join(root, 'android/app/src/main/AndroidManifest.xml');
 
 applyMainActivityTemplate(appId);
+
+const bannerPatchResult = patchAdMobBannerExecutor();
+console.log(`[android-native] AdMob banner position patch ${bannerPatchResult}`);
 
 const adsProvider = process.env.VITE_ADS_PROVIDER ?? 'mock';
 const admobAppId = resolveAdMobAppId();

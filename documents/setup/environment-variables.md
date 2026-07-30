@@ -118,18 +118,6 @@ Native config files (`google-services.json`, `GoogleService-Info.plist`): [Fireb
 
 ---
 
-## Deep links
-
-```env
-VITE_DEEPLINK_SCHEME=gamestarterkit
-VITE_DEEPLINK_HOST_DEV=dev.gamestarterkit.example.com
-VITE_DEEPLINK_HOST_PROD=gamestarterkit.example.com
-```
-
-Ba biến đều optional và fallback về các giá trị trên. `production` dùng prod host; `dev` dùng dev host. Native build scripts inject custom URL scheme cùng cả hai HTTPS hosts. Xem [Deep-link setup](../deeplink/README.md).
-
----
-
 ## App review
 
 ```env
@@ -159,11 +147,18 @@ VITE_ADMOB_IOS_APP_ID=
 
 VITE_IOS_APP_STORE_ID=
 VITE_ANDROID_PACKAGE_ID=com.studio.gamestarterkit
-
-VITE_DEEPLINK_SCHEME=gamestarterkit
-VITE_DEEPLINK_HOST_DEV=dev.gamestarterkit.example.com
-VITE_DEEPLINK_HOST_PROD=gamestarterkit.example.com
 ```
+
+---
+
+## Deep links
+
+Không dùng biến `.env`. Scheme + hosts khai báo trong:
+
+- `src/platform/modules/deep-link/deep-link.config.ts` (runtime)
+- `scripts/deeplink-config.mjs` (native apply scripts)
+
+Hai file phải khớp. Chi tiết: [Deep-link setup](../deeplink/README.md).
 
 ---
 

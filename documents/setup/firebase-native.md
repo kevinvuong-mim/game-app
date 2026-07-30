@@ -108,13 +108,15 @@ node scripts/apply-ios-native.mjs
 
 > Android **không cần** `AppDelegate` tương đương. Firebase tự init qua Gradle + `google-services.json`, và Capacitor trả FCM token trực tiếp. Chi tiết Android permissions/channel: xem `scripts/apply-android-native.mjs`.
 
-### iOS — script tự động:
+### iOS — script tự động (khi push enabled):
 
 - Thêm `FirebaseMessaging` pod
 - Copy `AppDelegate.swift` (Firebase init + FCM token bridge)
-- Copy `App.entitlements` (`aps-environment`)
+- Giữ `aps-environment` trong `App.entitlements` (template luôn được copy cho Universal Links; khi push tắt script strip key này)
 - Copy `GoogleService-Info.plist` → `ios/App/App/`
 - Thêm `UIBackgroundModes: remote-notification` vào Info.plist
+
+> `App.entitlements` được apply **luôn** (kể cả khi push tắt) để gắn Associated Domains cho Universal Links. Chi tiết: [Deep-link setup](../deeplink/README.md).
 
 ---
 
@@ -131,9 +133,9 @@ Kiểm tra:
 1. **Signing & Capabilities** → thêm **Push Notifications**
 2. **Signing & Capabilities** → **Background Modes** → bật **Remote notifications**
 3. `GoogleService-Info.plist` có trong target **App** → Build Phases → Copy Bundle Resources
-4. `App.entitlements` được gán trong Build Settings → Code Signing Entitlements
+4. `App.entitlements` được gán trong Build Settings → Code Signing Entitlements (`aps-environment` + Associated Domains)
 
-> Nếu build release, đổi `aps-environment` trong `native/ios/App.entitlements` thành `production` hoặc dùng entitlements riêng cho release.
+> Nếu build release và bật push, đổi `aps-environment` trong `native/ios/App.entitlements` thành `production` hoặc dùng entitlements riêng cho release.
 
 ---
 
@@ -211,13 +213,14 @@ native/
 │   └── MainActivity.java
 └── ios/
     ├── AppDelegate.swift             # Firebase + FCM token bridge
-    ├── App.entitlements              # Push capability
+    ├── App.entitlements              # Associated Domains (+ aps-environment khi push on)
     └── FullscreenBridgeViewController.swift
 ```
 
 ## Related Documentation
 
 - [Notifications module](../modules/notifications.md)
+- [Deep-link setup](../deeplink/README.md)
 - [Environment Variables](./environment-variables.md)
 - [Mobile Build](./mobile-build.md)
 - [game-api Devices API](../../../game-api/documents/apis/devices.md)
