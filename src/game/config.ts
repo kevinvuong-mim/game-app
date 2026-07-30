@@ -29,7 +29,7 @@ export const gameConfig: GameConfig = {
   width: 720,
   height: 1280,
   version: '1.0.0',
-  name: 'Game Starter Kit',
+  name: 'Fruloop',
   id: import.meta.env.VITE_GAME_ID ?? '',
   replaySecret: import.meta.env.VITE_REPLAY_SECRET ?? '',
   // Suika demo uses Matter; replace or remove when cloning a non-physics game.

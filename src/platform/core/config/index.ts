@@ -12,7 +12,7 @@ import notificationEnvConfigs from './notification-env.json';
 
 type IapProvider = 'mock' | 'revenuecat';
 type AnalyticsProvider = 'console' | 'firebase';
-export type Environment = 'dev' | 'staging' | 'production';
+export type Environment = 'dev' | 'production';
 
 interface FirebaseConfig {
   appId: string;
@@ -67,14 +67,6 @@ const ENV_CONFIGS: Record<Environment, Partial<RuntimeConfig>> = {
     iapEnabled: true,
     analyticsEnabled: false,
     apiUrl: 'http://localhost:3000/api',
-  },
-  staging: {
-    ...notificationEnvConfigs.staging,
-    debug: true,
-    adsEnabled: true,
-    iapEnabled: true,
-    analyticsEnabled: true,
-    apiUrl: 'https://game-api-s5kn.onrender.com/api',
   },
   production: {
     ...notificationEnvConfigs.production,

@@ -4,8 +4,8 @@ const liveReloadUrl = process.env.CAP_SERVER_URL;
 
 const config: CapacitorConfig = {
   webDir: 'dist',
-  appName: 'Game Starter Kit',
-  appId: 'com.studio.gamestarterkit',
+  appName: 'Fruloop',
+  appId: 'com.vraxion.fruloop',
   plugins: {
     StatusBar: {
       overlaysWebView: true,

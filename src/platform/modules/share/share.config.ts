@@ -8,7 +8,7 @@ export interface StoreListingConfig {
 export function resolveStoreListingConfig(): StoreListingConfig {
   return {
     iosAppStoreId: import.meta.env.VITE_IOS_APP_STORE_ID ?? '',
-    androidPackageId: import.meta.env.VITE_ANDROID_PACKAGE_ID ?? 'com.studio.gamestarterkit',
+    androidPackageId: import.meta.env.VITE_ANDROID_PACKAGE_ID ?? 'com.vraxion.fruloop',
   };
 }
 

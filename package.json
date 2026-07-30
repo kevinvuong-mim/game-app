@@ -1,7 +1,7 @@
 {
-  "name": "game-starter-kit",
+  "name": "fruloop",
   "version": "1.0.0",
-  "description": "Production-grade starter kit for hyper-casual / casual mobile games",
+  "description": "Fruloop is a mobile game that allows you to play with your friends and family.",
   "type": "module",
   "private": true,
   "scripts": {

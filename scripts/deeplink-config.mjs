@@ -1,21 +1,24 @@
 /**
- * Shared deeplink env resolution for native apply scripts and docs.
+ * Deeplink defaults for native apply scripts.
+ * Keep in sync with `src/platform/modules/deep-link/deep-link.config.ts`.
  */
 
-const DEFAULT_SCHEME = 'gamestarterkit';
-const DEFAULT_HOST_PROD = 'gamestarterkit.example.com';
-const DEFAULT_HOST_DEV = 'dev.gamestarterkit.example.com';
+const DEEP_LINK_CONFIG = {
+  scheme: 'fruloop',
+  hostProd: 'fruloop.example.com',
+  hostDev: 'dev.fruloop.example.com',
+};
 
 export function resolveDeepLinkScheme() {
-  return process.env.VITE_DEEPLINK_SCHEME?.trim() || DEFAULT_SCHEME;
+  return DEEP_LINK_CONFIG.scheme;
 }
 
 export function resolveDeepLinkHostDev() {
-  return process.env.VITE_DEEPLINK_HOST_DEV?.trim() || DEFAULT_HOST_DEV;
+  return DEEP_LINK_CONFIG.hostDev;
 }
 
 export function resolveDeepLinkHostProd() {
-  return process.env.VITE_DEEPLINK_HOST_PROD?.trim() || DEFAULT_HOST_PROD;
+  return DEEP_LINK_CONFIG.hostProd;
 }
 
 export function resolveDeepLinkHosts() {

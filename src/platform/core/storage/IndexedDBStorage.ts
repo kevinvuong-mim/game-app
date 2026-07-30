@@ -2,7 +2,7 @@ import type { StorageProvider } from './types';
 
 const DB_VERSION = 1;
 const STORE_NAME = 'kv';
-const DB_NAME = 'game-starter-kit';
+const DB_NAME = 'fruloop';
 
 export class IndexedDBStorageProvider implements StorageProvider {
   readonly type = 'indexedDB' as const;

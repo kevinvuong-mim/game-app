@@ -1,6 +1,6 @@
-# Game Starter Kit
+# Fruloop
 
-Production-grade starter kit for hyper-casual / casual mobile games. **Clone this repo once per game** — each game is its own project with a ready-made platform layer.
+Fruloop is a mobile game that allows you to play with your friends and family. 
 
 ## Tech Stack
 
@@ -13,8 +13,8 @@ Production-grade starter kit for hyper-casual / casual mobile games. **Clone thi
 | State       | Zustand (vanilla, in-memory)                                     |
 | Storage     | IndexedDB (web) / Capacitor Preferences (native)                 |
 | Networking  | Fetch API (NestJS-compatible REST envelope)                      |
-| Analytics   | Console (dev) + Firebase Analytics (staging/production)          |
-| Push        | FCM via `@capacitor/push-notifications` (staging/production)     |
+| Analytics   | Console (dev) + Firebase Analytics (production)          |
+| Push        | FCM via `@capacitor/push-notifications` (production)     |
 | Local notif | `@capacitor/local-notifications` (daily reward reminder)         |
 | Ads         | Mock (web/dev) + AdMob via `@capacitor-community/admob` (native) |
 
@@ -198,19 +198,14 @@ soundManager.playCoinDrop();
 Copy `.env.example` to `.env` and adjust per environment. `.env.example` includes a dev sample `VITE_REPLAY_SECRET` matching `GAME_CONFIG.FRULOOP` on `game-api`; use your own secret in production.
 
 ```bash
-VITE_APP_ENV=dev              # dev | staging | production
+VITE_APP_ENV=dev              # dev | production
 VITE_GAME_ID=FRULOOP
 VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 VITE_IAP_PROVIDER=mock        # mock | revenuecat
 VITE_ADS_PROVIDER=mock        # mock | admob (AdMob used on native when admob)
 VITE_ANALYTICS_PROVIDER=console # console | firebase
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.studio.gamestarterkit
-
-# Deep links (defaults shown)
-VITE_DEEPLINK_SCHEME=gamestarterkit
-VITE_DEEPLINK_HOST_DEV=dev.gamestarterkit.example.com
-VITE_DEEPLINK_HOST_PROD=gamestarterkit.example.com
+VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
 
 # Native AdMob (build/release)
 VITE_ADMOB_ANDROID_APP_ID=
@@ -232,7 +227,7 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 
 | Variable                                            | Description                                                                    |
 | --------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `staging`, `production`)                           |
+| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `production`)                           |
 | `VITE_GAME_ID`                                      | Game id used by the frontend and backend                                       |
 | `VITE_REPLAY_SECRET`                                | HMAC replay secret — **64-char lowercase hex**; must match backend per game id |
 | `VITE_IAP_PROVIDER`                                 | `mock` or `revenuecat`                                                         |
@@ -242,9 +237,8 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 | `VITE_ADMOB_*_*_ID`                                 | Production ad unit IDs per format/platform                                     |
 | `VITE_FIREBASE_*`                                   | Firebase web config (analytics + push gate on native)                          |
 | `VITE_IOS_APP_STORE_ID` / `VITE_ANDROID_PACKAGE_ID` | Store listing IDs attached when sharing scores                                 |
-| `VITE_DEEPLINK_*`                                   | Custom scheme plus development/production link hosts                           |
 
-API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` passes `gameConfig.id` and `gameConfig.replaySecret` (from `VITE_GAME_ID` / `VITE_REPLAY_SECRET`) into runtime config. `name`, `width`, `height`, and `version` are edited directly in `src/game/config.ts`.
+API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` passes `gameConfig.id` and `gameConfig.replaySecret` (from `VITE_GAME_ID` / `VITE_REPLAY_SECRET`) into runtime config. `name`, `width`, `height`, and `version` are edited directly in `src/game/config.ts`. Deep-link scheme/hosts live in `src/platform/modules/deep-link/deep-link.config.ts` (keep in sync with `scripts/deeplink-config.mjs`) — not `.env`.
 
 ## Mobile Deployment
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Tài liệu này mô tả các biến môi trường runtime của `game-starter-kit`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
+Tài liệu này mô tả các biến môi trường runtime của `fruloop`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
 
 `src/game/config.ts` là nơi khai báo game identity: `id` và `replaySecret` đọc từ `.env` (`VITE_GAME_ID`, `VITE_REPLAY_SECRET`); `name`, `width`, `height`, `version` chỉnh trực tiếp trong file.
 
@@ -18,7 +18,7 @@ VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 
 | Variable             | Values                         | Default / Source     | Description                                                                  |
 | -------------------- | ------------------------------ | -------------------- | ---------------------------------------------------------------------------- |
-| `VITE_APP_ENV`       | `dev`, `staging`, `production` | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
+| `VITE_APP_ENV`       | `dev`, `production`        | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
 | `VITE_GAME_ID`       | string                         | Bắt buộc             | Game id dùng ở frontend và backend                                           |
 | `VITE_REPLAY_SECRET` | string                         | Bắt buộc             | Secret replay — phải khớp `GAME_CONFIG[gameId].replaySecret` trên `game-api` |
 
@@ -27,12 +27,11 @@ Preset API URL trong code (`src/platform/core/config/index.ts`):
 | Env          | API URL                                  |
 | ------------ | ---------------------------------------- |
 | `dev`        | `http://localhost:3000/api`              |
-| `staging`    | `https://game-api-s5kn.onrender.com/api` |
 | `production` | `https://game-api-s5kn.onrender.com/api` |
 
 `VITE_REPLAY_SECRET` phải là **64-char lowercase hex** (`/^[0-9a-f]{64}$/`). Secret sai/thiếu → client **không sync** và **giữ** offline queue (không xóa im lặng).
 
-Production/staging nên dùng HTTPS.
+Production nên dùng HTTPS.
 
 ---
 
@@ -106,7 +105,6 @@ VITE_FIREBASE_MEASUREMENT_ID=
 | Env          | Analytics                  | Push (native) | Local notifications |
 | ------------ | -------------------------- | ------------- | ------------------- |
 | `dev`        | off (`analyticsEnabled`)   | off           | on\*                |
-| `staging`    | on (`analyticsEnabled`)    | on\*\*        | on\*                |
 | `production` | on                         | on\*\*        | on\*                |
 
 \* Local chỉ active trên native (`resolveLocalNotificationsEnabled()`).  
@@ -120,26 +118,14 @@ Native config files (`google-services.json`, `GoogleService-Info.plist`): [Fireb
 
 ---
 
-## Deep links
-
-```env
-VITE_DEEPLINK_SCHEME=gamestarterkit
-VITE_DEEPLINK_HOST_DEV=dev.gamestarterkit.example.com
-VITE_DEEPLINK_HOST_PROD=gamestarterkit.example.com
-```
-
-Ba biến đều optional và fallback về các giá trị trên. `production` dùng prod host; `dev` và `staging` dùng dev host. Native build scripts inject custom URL scheme cùng cả hai HTTPS hosts. Xem [Deep-link setup](../deeplink/README.md).
-
----
-
 ## Store listing
 
 ```env
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.studio.gamestarterkit
+VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
 ```
 
-Các ID này được gắn vào link khi share điểm số. Android package mặc định là `com.studio.gamestarterkit`; iOS App Store ID mặc định rỗng.
+Các ID này được gắn vào link khi share điểm số. Android package mặc định là `com.vraxion.fruloop`; iOS App Store ID mặc định rỗng.
 
 ---
 
@@ -160,12 +146,19 @@ VITE_ADMOB_ANDROID_APP_ID=
 VITE_ADMOB_IOS_APP_ID=
 
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.studio.gamestarterkit
-
-VITE_DEEPLINK_SCHEME=gamestarterkit
-VITE_DEEPLINK_HOST_DEV=dev.gamestarterkit.example.com
-VITE_DEEPLINK_HOST_PROD=gamestarterkit.example.com
+VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
 ```
+
+---
+
+## Deep links
+
+Không dùng biến `.env`. Scheme + hosts khai báo trong:
+
+- `src/platform/modules/deep-link/deep-link.config.ts` (runtime)
+- `scripts/deeplink-config.mjs` (native apply scripts)
+
+Hai file phải khớp. Chi tiết: [Deep-link setup](../deeplink/README.md).
 
 ---
 

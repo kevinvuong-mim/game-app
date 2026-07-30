@@ -4,7 +4,7 @@
     "details": [
       {
         "appIDs": [
-          "TEAM_ID.com.studio.gamestarterkit.dev"
+          "TEAM_ID.com.vraxion.fruloop.dev"
         ],
         "paths": [
           "/",
@@ -23,7 +23,7 @@
       },
       {
         "appIDs": [
-          "TEAM_ID.com.studio.gamestarterkit.prod"
+          "TEAM_ID.com.vraxion.fruloop.prod"
         ],
         "paths": [
           "/",

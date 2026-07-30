@@ -176,20 +176,38 @@ function patchDeepLinkInfoPlist(plistPath, scheme) {
   return 'present';
 }
 
-function patchDeepLinkEntitlements(entitlementsPath, hosts) {
-  if (!existsSync(entitlementsPath)) {
-    return 'missing';
-  }
-
+function stripApsEnvironment(entitlementsPath) {
+  if (!existsSync(entitlementsPath)) return;
   let content = readFileSync(entitlementsPath, 'utf8');
+  const updated = content.replace(
+    /\t<key>aps-environment<\/key>\s*\n\t<string>[^<]*<\/string>\s*\n/,
+    ''
+  );
+  if (updated !== content) {
+    writeFileSync(entitlementsPath, updated);
+  }
+}
+
+function patchDeepLinkEntitlements(entitlementsPath, hosts) {
   const entries = hosts.map((host) => `\t\t<string>applinks:${host}</string>`).join('\n');
   const snippet =
     `\t<key>com.apple.developer.associated-domains</key>\n` +
     `\t<array>\n${entries}\n\t</array>\n`;
 
+  if (!existsSync(entitlementsPath)) {
+    const content =
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n` +
+      `<plist version="1.0">\n<dict>\n${snippet}</dict>\n</plist>\n`;
+    writeFileSync(entitlementsPath, content);
+    return 'created';
+  }
+
+  let content = readFileSync(entitlementsPath, 'utf8');
+
   if (content.includes('com.apple.developer.associated-domains')) {
     const updated = content.replace(
-      /<key>com\.apple\.developer\.associated-domains<\/key>\s*<array>[\s\S]*?<\/array>/,
+      /\t*<key>com\.apple\.developer\.associated-domains<\/key>\s*<array>[\s\S]*?<\/array>/,
       snippet.trimEnd()
     );
     if (updated !== content) {
@@ -237,7 +255,8 @@ function patchPbxproj(projectPath) {
     console.log('[ios-native] Registered FullscreenBridgeViewController in Xcode project');
   }
 
-  if (pushNotificationsEnabled() && !content.includes(ENTITLEMENTS_FILE)) {
+  // Associated Domains (Universal Links) need entitlements even when push is off.
+  if (!content.includes(ENTITLEMENTS_FILE)) {
     content = content.replace(
       '504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };',
       `504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -322,9 +341,13 @@ if (existsSync(nativeDir)) {
     copyFileSync(appDelegateTemplate, join(iosAppDir, 'AppDelegate.swift'));
     console.log('[ios-native] Applied Firebase AppDelegate template');
   }
-  if (pushNotificationsEnabled() && existsSync(entitlementsTemplate)) {
+  // Always apply entitlements for Universal Links (associated domains).
+  if (existsSync(entitlementsTemplate)) {
     copyFileSync(entitlementsTemplate, join(iosAppDir, ENTITLEMENTS_FILE));
     console.log('[ios-native] Applied App.entitlements template');
+    if (!pushNotificationsEnabled()) {
+      stripApsEnvironment(join(iosAppDir, ENTITLEMENTS_FILE));
+    }
   }
   if (existsSync(iosProject)) {
     patchPbxproj(iosProject);

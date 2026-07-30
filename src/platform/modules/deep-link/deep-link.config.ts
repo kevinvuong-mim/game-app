@@ -6,28 +6,34 @@ export interface DeepLinkConfig {
   allowedHosts: string[];
 }
 
-const DEFAULT_SCHEME = 'gamestarterkit';
-const DEFAULT_HOST_PROD = 'gamestarterkit.example.com';
-const DEFAULT_HOST_DEV = 'dev.gamestarterkit.example.com';
+/** Edit these when cloning a game — keep in sync with `scripts/deeplink-config.mjs`. */
+const DEEP_LINK_CONFIG = {
+  scheme: 'fruloop',
+  hostProd: 'fruloop.example.com',
+  hostDev: 'dev.fruloop.example.com',
+};
 
 function resolveEnvironment(): Environment {
   const env = import.meta.env.VITE_APP_ENV as Environment | undefined;
-  if (env === 'dev' || env === 'staging' || env === 'production') {
+  if (env === 'dev' || env === 'production') {
     return env;
   }
   return import.meta.env.PROD ? 'production' : 'dev';
 }
 
-export function resolveDeepLinkConfig(): DeepLinkConfig {
-  const hostDev = import.meta.env.VITE_DEEPLINK_HOST_DEV ?? DEFAULT_HOST_DEV;
-  const hostProd = import.meta.env.VITE_DEEPLINK_HOST_PROD ?? DEFAULT_HOST_PROD;
+function resolveHost(environment: Environment): string {
+  if (environment === 'production') return DEEP_LINK_CONFIG.hostProd;
+  return DEEP_LINK_CONFIG.hostDev;
+}
 
+export function resolveDeepLinkConfig(): DeepLinkConfig {
   const environment = resolveEnvironment();
-  const host = environment === 'production' ? hostProd : hostDev;
 
   return {
-    host,
-    scheme: import.meta.env.VITE_DEEPLINK_SCHEME ?? DEFAULT_SCHEME,
-    allowedHosts: [...new Set([hostDev, hostProd].filter(Boolean))],
+    host: resolveHost(environment),
+    scheme: DEEP_LINK_CONFIG.scheme,
+    allowedHosts: [
+      ...new Set([DEEP_LINK_CONFIG.hostDev, DEEP_LINK_CONFIG.hostProd].filter(Boolean)),
+    ],
   };
 }
