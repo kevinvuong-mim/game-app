@@ -33,7 +33,7 @@ Hai file phải khớp nhau. Host active theo `VITE_APP_ENV` (`production` → p
    - `https://dev.fruloop.example.com/.well-known/apple-app-site-association`
    - `https://fruloop.example.com/.well-known/apple-app-site-association`
 4. Content-Type: `application/json` (không có extension `.json` trong URL).
-5. Associated Domains entitlement được apply bởi `scripts/apply-ios-native.mjs` (cả hai host).
+5. Associated Domains entitlement được apply bởi `scripts/apply-ios-native.mjs` (cả hai host) — luôn chạy, không phụ thuộc push; khi push tắt script strip `aps-environment`.
 
 ## Android (App Links)
 

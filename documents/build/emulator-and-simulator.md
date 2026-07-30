@@ -198,7 +198,7 @@ Thứ tự thực thi:
 4. **`node scripts/apply-ios-native.mjs pre-sync`** — pin `GoogleUserMessagingPlatform ~> 2.3` trong Podfile **trước** `pod install`
 5. `pod install --repo-update` trong `ios/App`
 6. `cap sync ios` — copy web assets + cập nhật plugins
-7. `node scripts/apply-ios-native.mjs` — copy storyboard/Swift template, inject `GADApplicationIdentifier`
+7. `node scripts/apply-ios-native.mjs` — copy storyboard/Swift/`App.entitlements`, inject AdMob + Associated Domains (Universal Links)
 
 > **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@6.x` không tương thích UMP 3.x. Script `pre-sync` pin UMP `~> 2.3`. Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
 >
