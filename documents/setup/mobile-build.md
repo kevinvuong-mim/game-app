@@ -2,7 +2,7 @@
 
 ## Overview
 
-`game-starter-kit` dùng Capacitor 6 để build native Android/iOS. Thư mục `android/` và `ios/` có thể được generate lại bằng scripts, còn native templates nằm trong `native/` và được apply sau `cap sync`.
+`fruloop` dùng Capacitor 6 để build native Android/iOS. Thư mục `android/` và `ios/` có thể được generate lại bằng scripts, còn native templates nằm trong `native/` và được apply sau `cap sync`.
 
 ---
 
@@ -29,8 +29,8 @@ Current config:
 
 | Field                                           | Value                       |
 | ----------------------------------------------- | --------------------------- |
-| `appId`                                         | `com.studio.gamestarterkit` |
-| `appName`                                       | `Game Starter Kit`          |
+| `appId`                                         | `com.vraxion.fruloop` |
+| `appName`                                       | `Fruloop`          |
 | `webDir`                                        | `dist`                      |
 | `server.androidScheme`                          | `https`                     |
 | `SplashScreen.launchAutoHide`                   | `false`                     |

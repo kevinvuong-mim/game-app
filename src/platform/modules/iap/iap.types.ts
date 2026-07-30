@@ -52,6 +52,11 @@ export interface IAPProvider {
   purchase(productId: string): Promise<ProviderPurchase>;
   /** Link store account to app user id (RevenueCat logIn). */
   linkAppUser?(appUserId: string): Promise<void>;
+  /**
+   * Look up a recent store purchase of `productId` (used to recover after client timeout).
+   * Optional — mock / providers without history omit this.
+   */
+  findRecentPurchase?(productId: string, withinMs: number): Promise<ProviderPurchase | null>;
 }
 
 export class IapError extends Error {

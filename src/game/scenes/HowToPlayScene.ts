@@ -1,16 +1,24 @@
 import { BasePanelScene } from './BasePanelScene';
-import { HowToPlayPanel } from '@platform/ui/how-to-play/HowToPlayPanel';
+import { HowToPlayPanel } from '@platform/ui';
 
 export class HowToPlayScene extends BasePanelScene {
+  private panel?: HowToPlayPanel;
+
   constructor() {
     super({
       sceneKey: 'HowToPlay',
-      defaultReturnTo: 'Settings',
-      titleKey: 'howToPlay.title',
+      defaultReturnTo: 'Home',
     });
   }
 
   protected createPanel(): void {
-    new HowToPlayPanel(this);
+    this.panel = new HowToPlayPanel(this, {
+      onBack: () => this.goBack(),
+    });
+  }
+
+  protected onPanelShutdown(): void {
+    this.panel?.destroy();
+    this.panel = undefined;
   }
 }

@@ -45,10 +45,6 @@ export class LeaderboardService {
     logger.info('[Leaderboard] Initialized');
   }
 
-  getView(): LeaderboardView {
-    return this.view;
-  }
-
   async fetchLeaderboard(options: FetchOptions = {}): Promise<LeaderboardView> {
     if (options.page) {
       this.currentPage = options.page;
@@ -68,8 +64,14 @@ export class LeaderboardService {
       }
     }
 
-    if (!options.force) {
-      await this.serveCachedPage(this.currentPage);
+    // Always SWR: surface durable cache before waiting on the network.
+    await this.serveCachedPage(this.currentPage);
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      if (this.view.entries.length === 0) {
+        return this.applyFailure(new Error('offline'));
+      }
+      return this.view;
     }
 
     // Reuse in-flight only for the same page and non-forced refresh.
@@ -91,6 +93,7 @@ export class LeaderboardService {
   }
 
   async refreshLeaderboard(page?: number): Promise<LeaderboardView> {
+    // Force bypasses TTL freshness but still serves cache first (see fetchLeaderboard).
     return this.fetchLeaderboard({ force: true, page });
   }
 
@@ -117,7 +120,6 @@ export class LeaderboardService {
         fromCache: true,
         isStale: !isCacheFresh(cache),
         lastUpdated: cache.updatedAt,
-        error: !isCacheFresh(cache) ? 'leaderboard.staleBanner' : null,
       })
     );
 
@@ -205,7 +207,6 @@ export class LeaderboardService {
       status: hasData ? 'ready' : 'error',
       fromCache: hasData ? true : current.fromCache,
       isStale: hasData,
-      error: hasData ? 'leaderboard.staleBanner' : 'leaderboard.error',
     });
     this.view = view;
     this.emit(view);

@@ -13,9 +13,6 @@ interface CurrencyState {
 interface InventoryItem {
   id: string;
   quantity: number;
-  equipped?: boolean;
-  /** Boost expiry wall-clock ms; ignored for non-boost items. */
-  expiresAt?: number;
 }
 
 interface InventoryState {
@@ -27,14 +24,18 @@ interface ProgressState {
   currentLevel: number;
   totalGamesPlayed: number;
   unlockedFeatures: string[];
+  /** User already submitted an in-app rating (stop further prompts). */
+  hasRatedApp: boolean;
+  /** Last `totalGamesPlayed` value when the rate modal was shown or deferred. */
+  lastRatePromptGamesPlayed: number;
+  /** Last star rating submitted in-app (1–5), if any. */
+  lastAppRating?: number;
 }
 
 export interface SettingsState {
   language: string;
   soundEnabled: boolean;
   musicEnabled: boolean;
-  vibrationEnabled: boolean;
-  graphicsQuality: 'low' | 'high' | 'medium';
 }
 
 type MissionStatus = 'active' | 'claimed' | 'completed';
@@ -83,6 +84,8 @@ export const DEFAULT_STATE: PlatformState = {
     currentLevel: 1,
     totalGamesPlayed: 0,
     unlockedFeatures: [],
+    hasRatedApp: false,
+    lastRatePromptGamesPlayed: 0,
   },
   currency: { coins: 0 },
   inventory: { items: {} },
@@ -104,7 +107,5 @@ export const DEFAULT_STATE: PlatformState = {
     language: 'en',
     soundEnabled: true,
     musicEnabled: true,
-    vibrationEnabled: true,
-    graphicsQuality: 'medium',
   },
 };

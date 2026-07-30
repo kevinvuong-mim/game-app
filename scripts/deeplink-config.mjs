@@ -4,9 +4,9 @@
  */
 
 const DEEP_LINK_CONFIG = {
-  scheme: 'gamestarterkit',
-  hostProd: 'gamestarterkit.example.com',
-  hostDev: 'dev.gamestarterkit.example.com',
+  scheme: 'fruloop',
+  hostProd: 'fruloop.example.com',
+  hostDev: 'dev.fruloop.example.com',
 };
 
 export function resolveDeepLinkScheme() {

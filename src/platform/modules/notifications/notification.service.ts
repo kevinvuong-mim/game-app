@@ -1,5 +1,4 @@
 import {
-  deviceSyncNeeded,
   NOTIFICATION_TYPES,
   resolveNotificationRoute,
   type PushNotificationPayload,
@@ -8,19 +7,17 @@ import { t } from '@platform/modules/i18n';
 import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { getConfig } from '@platform/core/config';
-import { toast } from '@platform/ui/toast/ToastManager';
+import { eventBus } from '@platform/core/events';
 import { deviceSyncService } from './device-sync.service';
 import { pushNotificationService } from './push-notification.service';
 import { localNotificationService } from './local-notification.service';
-import { navigationService } from '@platform/modules/navigation/navigation.service';
-
-type NotificationStatus = 'off' | 'active' | 'denied' | 'pending';
+import { navigationService } from '@platform/modules/navigation';
 
 class NotificationService {
   private pushInitialized = false;
   private localInitialized = false;
 
-  /** Local notifications do not require guest or network. */
+  /** Local notifications do not require guest or network. Retries until success. */
   async initializeLocal(): Promise<void> {
     const config = getConfig();
 
@@ -32,7 +29,11 @@ class NotificationService {
       return;
     }
 
-    await localNotificationService.initialize();
+    const ok = await localNotificationService.initialize();
+    if (!ok) {
+      return;
+    }
+
     this.localInitialized = true;
     logger.info('[Notification] Local notifications initialized');
   }
@@ -90,6 +91,7 @@ class NotificationService {
       return;
     }
 
+    await this.initializeLocal();
     await localNotificationService.scheduleDailyRewardReminder();
   }
 
@@ -100,42 +102,8 @@ class NotificationService {
       return;
     }
 
+    await this.initializeLocal();
     await localNotificationService.reconcileDailyRewardSchedule(canClaim);
-  }
-
-  async getNotificationStatus(): Promise<NotificationStatus> {
-    const config = getConfig();
-
-    if (!config.pushNotificationsEnabled && !config.localNotificationsEnabled) {
-      return 'off';
-    }
-
-    if (config.pushNotificationsEnabled) {
-      const pushGranted = await pushNotificationService.hasPermission();
-      if (!pushGranted) {
-        return 'denied';
-      }
-    }
-
-    if (config.localNotificationsEnabled) {
-      const localGranted = await localNotificationService.hasPermission();
-      if (!localGranted) {
-        return 'denied';
-      }
-    }
-
-    if (config.pushNotificationsEnabled) {
-      const state = await deviceSyncService.loadState();
-      if (deviceSyncNeeded(state) || state.unregisterPending) {
-        return 'pending';
-      }
-
-      if (!state.lastSyncedToken) {
-        return 'pending';
-      }
-    }
-
-    return 'active';
   }
 
   async onAppResume(canClaimDailyReward: boolean): Promise<void> {
@@ -172,7 +140,7 @@ class NotificationService {
 
     const message = this.resolveForegroundMessage(payload);
     if (message) {
-      toast.show({ message, type: 'info', duration: 4000 });
+      eventBus.emit('ui:toast', { message, type: 'info', duration: 4000 });
     }
   }
 

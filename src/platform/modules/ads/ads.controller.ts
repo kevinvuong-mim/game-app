@@ -1,7 +1,7 @@
 import { adsModule } from './ads.service';
-import { ads } from '@platform/core/advertising';
 import type { IEventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
+import { saveService } from '@platform/modules/save';
 
 export function bindAdsController(events: IEventBus): () => void {
   const unsubs = [
@@ -17,18 +17,14 @@ export function bindAdsController(events: IEventBus): () => void {
       if (result.success && result.reward) {
         if (result.reward.type === 'coins') {
           usePlatformStore.getState().addCoins(result.reward.amount);
+          await saveService.saveLocal();
         }
         events.emit('ad:reward', { placement, reward: result.reward });
       }
     }),
 
     events.on('ad:show:request', async ({ placement }) => {
-      const result = await adsModule.showPlacement(placement);
-      events.emit('ad:show:result', { placement, ...result });
-    }),
-
-    events.on('ad:banner:hide', () => {
-      void ads.hideBanner();
+      await adsModule.showPlacement(placement);
     }),
 
     events.on('ad:context:change', ({ context }) => {

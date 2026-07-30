@@ -11,9 +11,14 @@ import { ensureAndroidNotificationChannel } from './android-notification-channel
 class LocalNotificationService {
   private initialized = false;
 
-  async initialize(): Promise<void> {
-    if (!Capacitor.isNativePlatform() || this.initialized) {
-      return;
+  /** @returns true when channel + permission request completed successfully. */
+  async initialize(): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) {
+      return false;
+    }
+
+    if (this.initialized) {
+      return true;
     }
 
     try {
@@ -21,8 +26,10 @@ class LocalNotificationService {
       await ensureAndroidNotificationChannel();
       await LocalNotifications.requestPermissions();
       this.initialized = true;
+      return true;
     } catch (error) {
       logger.warn('[LocalNotification] Init failed', error);
+      return false;
     }
   }
 
@@ -64,7 +71,7 @@ class LocalNotificationService {
             title: t('notifications.dailyReward.title'),
             body: t('notifications.dailyReward.body'),
             channelId: NOTIFICATION_CHANNEL.ID,
-            schedule: { at: scheduleAt },
+            schedule: { at: scheduleAt, allowWhileIdle: true },
             extra: {
               route: 'DailyReward',
             },
@@ -93,9 +100,13 @@ class LocalNotificationService {
     }
   }
 
+  /**
+   * Keep a pending reminder when the user can already claim — opening the app
+   * briefly before 07:00 must not wipe today's nudge. Only (re)schedule when
+   * they have already claimed today (`canClaim === false`).
+   */
   async reconcileDailyRewardSchedule(canClaim: boolean): Promise<void> {
     if (canClaim) {
-      await this.cancelDailyRewardReminder();
       return;
     }
 

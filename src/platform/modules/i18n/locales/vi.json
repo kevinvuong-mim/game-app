@@ -5,127 +5,156 @@
   },
   "home": {
     "play": "Chơi",
-    "playBadge": "MỚI",
     "shop": "Cửa hàng",
     "settings": "Cài đặt",
-    "leaderboard": "Bảng xếp hạng",
-    "dailyReward": "Phần thưởng hàng ngày",
-    "missions": "Nhiệm vụ",
-    "rateApp": "Đánh giá"
+    "leaderboard": "Xếp hạng",
+    "dailyReward": "Quà hàng ngày",
+    "missions": "Nhiệm vụ"
+  },
+  "howToPlay": {
+    "title": "Hướng dẫn chơi",
+    "prev": "Trước",
+    "next": "Tiếp",
+    "done": "Đã hiểu",
+    "step1Title": "Ngắm & Thả",
+    "step1Body": "Kéo trái/phải để ngắm, rồi thả tay để rơi trái cây vào cốc.",
+    "step2Title": "Gộp trái giống nhau",
+    "step2Body": "Hai trái cùng loại chạm nhau sẽ gộp thành trái lớn hơn và nhận điểm.",
+    "step3Title": "Tránh vượt vạch nguy hiểm",
+    "step3Body": "Đừng để trái đã ổn định nằm trên vạch đỏ — nếu không ván chơi sẽ kết thúc!",
+    "step4Title": "Dùng vật phẩm",
+    "step4Body": "Mua vật phẩm ở Cửa hàng — búa, đổi chỗ, tăng cấp… — để cứu những stack khó."
   },
   "game": {
-    "score": "Điểm: {{score}}",
-    "gameOver": "Kết thúc",
-    "retry": "Chơi lại",
-    "home": "Trang chủ",
-    "shareScore": "Chia sẻ điểm",
+    "scoreLabel": "ĐIỂM",
+    "yourScore": "ĐIỂM CỦA BẠN",
+    "coinsEarned": "XU NHẬN ĐƯỢC",
+    "gameOver": "KẾT THÚC",
+    "newRecord": "KỶ LỤC MỚI",
+    "retry": "CHƠI LẠI",
+    "home": "TRANG CHỦ",
+    "shareScore": "CHIA SẺ",
     "shareScoreTitle": "Điểm của tôi trong {{gameName}}",
     "shareScoreText": "Tôi đạt {{score}} điểm trong {{gameName}}! Bạn có vượt qua được không?",
     "shareDialogTitle": "Chia sẻ điểm số",
-    "shareUnavailable": "Không thể chia sẻ trên thiết bị này"
+    "shareUnavailable": "Không thể chia sẻ trên thiết bị này",
+    "skillHintHammer": "Chọn trái để phá hủy",
+    "skillHintSwap": "Chọn 2 trái để hoán đổi",
+    "skillHintSwapSecond": "Chọn trái thứ hai",
+    "skillHintSize": "Chọn trái để tăng cấp",
+    "skillUndoNothing": "Không có gì để hoàn tác",
+    "quitConfirmTitle": "Thoát ván chơi?",
+    "quitConfirmMessage": "Điểm sẽ được ghi nhận và ván chơi kết thúc.",
+    "quitConfirm": "Thoát",
+    "quitCancel": "Hủy"
   },
-
   "shop": {
     "title": "Cửa hàng",
     "buy": "Mua",
-    "equip": "Mặc",
-    "equipped": "Đang mặc",
-    "owned": "Đã sở hữu",
-    "restore": "Khôi phục mua hàng",
     "purchaseSuccess": "Đã mua {{name}}!",
-    "equipSuccess": "Đã mặc {{name}}!",
     "purchaseFailed": "Mua thất bại",
-    "restoreSuccess": "Đã khôi phục {{count}} giao dịch",
-    "restoreEmpty": "Không có giao dịch để khôi phục",
-    "currency": {
-      "coins": "xu",
-      "iap": "USD"
+    "notEnoughCoins": "Không đủ xu!",
+    "ownedQuantity": "Đang có: {{quantity}}",
+    "getCoins": {
+      "missions": "Nhiệm vụ",
+      "dailyReward": "Quà hàng ngày",
+      "buyCoins": "{{coins}} xu · {{price}}",
+      "purchasing": "Đang xử lý mua hàng…",
+      "purchaseSuccess": "Nhận {{coins}} xu!"
     },
     "items": {
-      "skin_blue": {
-        "name": "Skin Xanh",
-        "description": "Skin nhân vật màu xanh cool"
+      "boost_hammer": {
+        "name": "Búa Nổ",
+        "description": "Phá hủy trái cây bạn chọn!"
       },
-      "skin_gold": {
-        "name": "Skin Vàng",
-        "description": "Skin nhân vật vàng cao cấp"
+      "boost_change": {
+        "name": "Đổi Trái",
+        "description": "Đổi trái hiện tại với trái tiếp theo!"
       },
-      "boost_double": {
-        "name": "Xu Gấp Đôi",
-        "description": "Nhân đôi xu trong 1 giờ"
+      "boost_swap": {
+        "name": "Hoán Đổi",
+        "description": "Hoán đổi vị trí các trái cây bất kỳ!"
+      },
+      "boost_size": {
+        "name": "Tăng Kích Cỡ",
+        "description": "Tăng kích thước của trái cây!"
+      },
+      "boost_undo": {
+        "name": "Hoàn tác",
+        "description": "Hoàn tác nước đi gần nhất!"
       },
       "remove_ads": {
         "name": "Gỡ Quảng Cáo",
-        "description": "Gỡ quảng cáo banner và interstitial vĩnh viễn"
+        "description": "Gỡ toàn bộ quảng cáo vĩnh viễn"
+      },
+      "coins_10000": {
+        "name": "10000 xu",
+        "description": "Nhận 10000 xu"
       }
     }
   },
   "settings": {
     "title": "Cài đặt",
+    "profile": "Hồ sơ",
     "language": "Ngôn ngữ",
     "languageEn": "English",
     "languageVi": "Tiếng Việt",
     "sound": "Âm thanh",
-    "soundOn": "Bật",
-    "soundOff": "Tắt",
+    "music": "Nhạc nền",
+    "soundEffects": "Hiệu ứng",
+    "terms": "Điều khoản",
+    "privacy": "Quyền riêng tư",
     "termsPrivacy": "Điều khoản & Quyền riêng tư",
-    "helpAndLegal": "Trợ giúp & Pháp lý",
-    "howToPlay": "Hướng dẫn chơi",
-    "back": "Quay lại",
-    "playerName": "Tên hiển thị",
+    "playerName": "Tên người chơi",
     "playerNamePlaceholder": "Nhập tên của bạn",
     "playerNameSave": "Lưu",
     "playerNameRequired": "Vui lòng nhập tên",
     "playerNameUpdated": "Đã cập nhật tên",
     "playerNameSavedLocally": "Đã lưu tên — sẽ đồng bộ khi có mạng",
     "playerNameFailed": "Không thể cập nhật tên",
-    "playerNameOffline": "Hãy tạo hồ sơ guest khi có mạng trước"
+    "playerNameOffline": "Hãy tạo hồ sơ guest khi có mạng trước",
+    "ads": "Quảng cáo",
+    "hideAds": "Ẩn quảng cáo",
+    "removeAdsPrice": "{{price}}",
+    "purchasingAds": "Đang xử lý mua hàng…",
+    "restorePurchasesHint": "Đã mua rồi? Khôi phục",
+    "restoringPurchases": "Đang khôi phục…",
+    "restorePurchasesSuccess": "Đã khôi phục giao dịch",
+    "restorePurchasesEmpty": "Không có giao dịch để khôi phục",
+    "restorePurchasesFailed": "Không thể khôi phục giao dịch"
   },
   "missions": {
     "title": "Nhiệm vụ",
-    "claim": "Nhận",
+    "claim": "NHẬN",
+    "go": "ĐI",
     "claimed": "Đã nhận",
     "progress": "{{current}}/{{target}}",
-    "reward": "{{coins}} xu",
-    "claimSuccess": "Đã nhận {{coins}} xu!",
     "claimFailed": "Chưa thể nhận thưởng",
-    "dailyMission": "Nhiệm vụ hàng ngày",
-    "watchAd3": "Xem 3 quảng cáo thưởng",
-    "watchAd": "Xem quảng cáo"
+    "reachScore2000": "Đạt 2.000 điểm",
+    "mergeFruit15": "Hợp 15 lần trái cây",
+    "watchAd": "Xem video quảng cáo",
+    "playGames3": "Chơi 3 ván bất kỳ",
+    "dailyLogin": "Đăng nhập mỗi ngày"
   },
   "dailyReward": {
-    "title": "Phần thưởng hàng ngày",
+    "title": "Quà hàng ngày",
     "claim": "Nhận",
     "day": "Ngày {{day}}",
-    "coins": "{{coins}} xu",
-    "random": "Ngẫu nhiên",
-    "chest": "Rương hiếm",
-    "claimed": "Đã nhận",
     "comeBack": "Quay lại vào ngày mai!",
-    "claimSuccess": "+{{coins}} xu!",
-    "chestSuccess": "Đã nhận {{item}}!",
-    "timeManipulated": "Phần thưởng hàng ngày không khả dụng do thay đổi thời gian thiết bị."
+    "timeManipulated": "Quà hàng ngày không khả dụng do thay đổi thời gian thiết bị."
   },
   "leaderboard": {
-    "title": "Bảng xếp hạng",
-    "refresh": "Làm mới",
-    "refreshing": "Đang cập nhật…",
+    "title": "Xếp hạng",
+    "top100": "Top 100",
+    "yourRank": "Hạng của bạn",
     "retry": "Thử lại",
     "rank": "Hạng của bạn: #{{rank}}",
     "empty": "Chưa có điểm nào. Chơi một ván để lên bảng!",
-    "you": "(Bạn)",
     "anonymous": "Người chơi",
     "rankUnavailable": "Chưa có hạng của bạn",
     "error": "Không tải được bảng xếp hạng. Kiểm tra kết nối và thử lại.",
     "offlineLocalBest": "Bạn đang ngoại tuyến — điểm chơi được lưu trên máy.",
-    "cached": "Đã lưu",
-    "stale": "Có thể đã cũ",
-    "staleBanner": "Đang hiển thị dữ liệu đã lưu — làm mới để cập nhật hạng mới nhất.",
-    "localBest": "Điểm cao nhất: {{score}}",
-    "updatedAgo": "Cập nhật {{seconds}}s trước",
-    "pageInfo": "Trang {{page}} / {{totalPages}}",
-    "prevPage": "Trước",
-    "nextPage": "Sau"
+    "localBest": "Điểm cao nhất: {{score}}"
   },
   "legal": {
     "title": "Điều khoản & Quyền riêng tư",
@@ -134,15 +163,6 @@
     "termsContent": "Cập nhật lần cuối: Tháng 6/2026\n\n1. Chấp nhận điều khoản\nBằng việc tải, cài đặt hoặc sử dụng trò chơi này, bạn đồng ý với các Điều khoản Dịch vụ. Nếu không đồng ý, vui lòng không sử dụng trò chơi.\n\n2. Giấy phép\nChúng tôi cấp cho bạn giấy phép hạn chế, không độc quyền, không thể chuyển nhượng để sử dụng trò chơi cho mục đích giải trí cá nhân, phi thương mại.\n\n3. Vật phẩm ảo\nXu, skin và các vật phẩm ảo khác không có giá trị tiền thật và không thể đổi thành tiền mặt. Chúng tôi có thể sửa đổi hoặc gỡ bỏ vật phẩm ảo bất cứ lúc nào.\n\n4. Hành vi người dùng\nBạn cam kết không gian lận, khai thác lỗi, quấy rối người chơi khác hoặc sử dụng trò chơi trái với pháp luật.\n\n5. Thay đổi\nChúng tôi có thể cập nhật điều khoản theo thời gian. Việc tiếp tục sử dụng trò chơi sau khi thay đổi đồng nghĩa với việc chấp nhận điều khoản mới.\n\n6. Liên hệ\nMọi thắc mắc về điều khoản, vui lòng liên hệ support@example.com.",
     "privacyContent": "Cập nhật lần cuối: Tháng 6/2026\n\n1. Thông tin chúng tôi thu thập\nChúng tôi có thể thu thập dữ liệu chơi game (điểm số, tiến độ, loại thiết bị) và sự kiện phân tích.\n\n2. Cách sử dụng thông tin\nDữ liệu được dùng để vận hành trò chơi, cải thiện tính năng, hiển thị bảng xếp hạng, xử lý giao dịch và gửi thông báo phù hợp.\n\n3. Dịch vụ bên thứ ba\nTrò chơi có thể sử dụng các dịch vụ như Firebase Analytics, mạng quảng cáo và nhà cung cấp thanh toán. Mỗi dịch vụ có chính sách riêng tư riêng.\n\n4. Lưu trữ dữ liệu\nTiến độ game được lưu cục bộ trên thiết bị. Điểm cao và hồ sơ guest có thể đồng bộ lên máy chủ để bảng xếp hạng và thông báo hoạt động giữa các phiên chơi.\n\n5. Quyền riêng tư trẻ em\nTrò chơi không hướng tới trẻ em dưới 13 tuổi. Chúng tôi không cố ý thu thập thông tin cá nhân từ trẻ em.\n\n6. Quyền của bạn\nTùy khu vực, bạn có thể yêu cầu truy cập, chỉnh sửa hoặc xóa dữ liệu cá nhân bằng cách liên hệ support@example.com.\n\n7. Thay đổi\nChúng tôi có thể cập nhật chính sách này theo thời gian. Thông báo thay đổi quan trọng sẽ được gửi qua ứng dụng hoặc website."
   },
-  "howToPlay": {
-    "title": "Hướng dẫn chơi",
-    "content": "Mục tiêu\nNhảy, thu thập xu và tránh chướng ngại vật để đạt điểm cao nhất có thể.\n\nĐiều khiển\n• Chạm màn hình để nhảy\n• Nhấn phím Space trên bàn phím (máy tính)\n• Có thể nhảy tối đa 5 lần trước khi chạm đất\n\nVật phẩm\n• Xu vàng: +10 điểm và +1 xu vào ví\n• Chướng ngại đỏ: chạm vào sẽ kết thúc ván chơi\n\nTính điểm\nĐiểm tăng khi thu thập xu. Hãy phá kỷ lục cá nhân và leo bảng xếp hạng.\n\nKết thúc\nKhi va chướng ngại đỏ, ván chơi kết thúc. Bạn có thể chơi lại ngay hoặc về trang chủ.\n\nTính năng khác\n• Nhiệm vụ: xem quảng cáo thưởng để nhận xu\n• Phần thưởng hàng ngày: nhận phần thưởng miễn phí mỗi ngày theo lịch\n• Cửa hàng: dùng xu mua skin và boost\n• Bảng xếp hạng: so sánh điểm cao nhất với người chơi khác"
-  },
-  "rateApp": {
-    "message": "Bạn có thích game không?",
-    "rate": "Đánh giá",
-    "notNow": "Để sau"
-  },
   "ads": {
     "rewardOffline": "Kết nối mạng để nhận thưởng",
     "rewardUnavailable": "Phần thưởng không khả dụng",
@@ -150,17 +170,24 @@
     "rewardIncomplete": "Quảng cáo chưa hoàn thành",
     "useRequestReward": "Dùng requestReward cho vị trí quảng cáo thưởng"
   },
+  "rateApp": {
+    "title": "ĐÁNH GIÁ TRÒ CHƠI",
+    "message": "Hãy đánh giá để giúp chúng tôi cải thiện trò chơi tốt hơn nhé!",
+    "rateNow": "ĐÁNH GIÁ NGAY",
+    "later": "ĐỂ SAU",
+    "selectStars": "Chọn số sao để đánh giá",
+    "thanks": "Cảm ơn bạn đã đánh giá!",
+    "thanksFeedback": "Cảm ơn phản hồi của bạn!"
+  },
   "notifications": {
     "dailyReward": {
-      "title": "Phần thưởng hàng ngày",
-      "body": "Phần thưởng hàng ngày đã sẵn sàng. Quay lại và nhận thưởng nhé!"
+      "title": "Quà hàng ngày",
+      "body": "Quà hàng ngày đã sẵn sàng. Quay lại và nhận thưởng nhé!"
     },
     "top100Exited": {
-      "title": "Top 100",
       "body": "Bạn đã rời Top 100. Hãy quay lại để cải thiện thứ hạng."
     },
     "rankPush": {
-      "title": "Cập nhật thứ hạng",
       "body": "Hiện bạn đang đứng hạng #{{rank}}.",
       "bodyFallback": "Xem thứ hạng leaderboard hiện tại của bạn."
     }

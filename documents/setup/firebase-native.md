@@ -2,7 +2,7 @@
 
 Hướng dẫn cấu hình Firebase Cloud Messaging (FCM) cho push notification trên native.
 
-**Bundle ID / Package name:** `com.studio.gamestarterkit` (khớp `capacitor.config.ts`)
+**Bundle ID / Package name:** `com.vraxion.fruloop` (khớp `capacitor.config.ts`)
 
 ---
 
@@ -17,7 +17,7 @@ Hướng dẫn cấu hình Firebase Cloud Messaging (FCM) cho push notification 
 ## 2. Thêm Android App
 
 1. Firebase Console → Add app → **Android**
-2. Package name: `com.studio.gamestarterkit`
+2. Package name: `com.vraxion.fruloop`
 3. Download `google-services.json`
 4. Copy vào:
 
@@ -32,7 +32,7 @@ File này **không commit** (đã có trong `.gitignore`). Dùng `native/firebas
 ## 3. Thêm iOS App
 
 1. Firebase Console → Add app → **iOS**
-2. Bundle ID: `com.studio.gamestarterkit`
+2. Bundle ID: `com.vraxion.fruloop`
 3. Download `GoogleService-Info.plist`
 4. Copy vào:
 

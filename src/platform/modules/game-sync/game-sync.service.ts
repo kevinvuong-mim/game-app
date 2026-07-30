@@ -4,6 +4,7 @@ import {
   toNonNegativeInt,
   MAX_SYNC_ATTEMPTS,
   isValidReplaySecret,
+  isTransientSyncErrorCode,
   type ResultSubmitData,
   computeReplaySignature,
   type PendingGameResult,
@@ -30,15 +31,37 @@ export interface RecordResultParams {
  * Offline-first match-result sync.
  */
 export class GameSyncService {
-  private flushing = false;
+  private dirty = false;
+  private flushPromise: Promise<number | null> | null = null;
+  /** Last `data.rank` from a successful `/results` response (this process). */
+  private lastApiRank: number | null = null;
 
   constructor(
     private readonly repository: GameSyncRepository = gameSyncRepository,
     private readonly guestService: GuestService = guest
   ) {}
 
+  /** Clears stale rank before a new finished match is queued. */
+  clearLastApiRank(): void {
+    this.lastApiRank = null;
+  }
+
+  /**
+   * Flush pending results and return `data.rank` from `/results` when online.
+   * Returns null when offline, guest not ready, or the API omits rank.
+   */
+  async flushAndGetRank(): Promise<number | null> {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return null;
+    }
+
+    await this.flush();
+    return this.lastApiRank;
+  }
+
   async recordResult(params: RecordResultParams): Promise<void> {
     const { gameId } = getConfig();
+    // Empty guestId is an unsigned marker; flush() rebinds when guest becomes ready.
     const guestId = this.guestService.getGuestId() ?? '';
     const score = toNonNegativeInt(params.score);
     const playedAt = params.playedAt ?? new Date().toISOString();
@@ -63,23 +86,34 @@ export class GameSyncService {
     logger.debug('[GameSync] Result queued', { clientResultId, score });
   }
 
-  async flush(): Promise<void> {
-    if (this.flushing) return;
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  async flush(): Promise<number | null> {
+    if (this.flushPromise) {
+      this.dirty = true;
+      return this.flushPromise;
+    }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
 
     const gameId = getConfig().gameId;
     const guestId = this.guestService.getGuestId();
     if (!guestId || this.guestService.getStatus() !== 'ready') {
       logger.debug('[GameSync] Flush skipped — guest not ready');
-      return;
+      return null;
     }
 
-    this.flushing = true;
+    this.flushPromise = this.runFlush(gameId, guestId);
     try {
-      await this.flushForGuest(gameId, guestId);
+      return await this.flushPromise;
     } finally {
-      this.flushing = false;
+      this.flushPromise = null;
     }
+  }
+
+  private async runFlush(gameId: string, guestId: string): Promise<number | null> {
+    do {
+      this.dirty = false;
+      await this.flushForGuest(gameId, guestId);
+    } while (this.dirty);
+    return this.lastApiRank;
   }
 
   private async flushForGuest(gameId: string, guestId: string): Promise<void> {
@@ -92,19 +126,41 @@ export class GameSyncService {
     }
 
     let queue = await this.repository.loadQueue();
+
+    // Re-bind orphans from a previous guest on this install (e.g. after 401 recovery).
+    // Signatures are recomputed below with the current guestId.
+    const orphanCount = queue.filter(
+      (item) => !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
+    ).length;
+    if (orphanCount > 0) {
+      logger.warn('[GameSync] Rebinding orphaned results to current guest', {
+        count: orphanCount,
+      });
+      queue = queue.map((item) =>
+        !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
+          ? { ...item, guestId, syncAttempts: 0, nextAttemptAt: undefined }
+          : item
+      );
+    }
+
+    // Bind unsigned/local rows that never got a guestId to the current identity.
+    queue = queue.map((item) =>
+      !item.synced && item.gameId === gameId && !item.guestId ? { ...item, guestId } : item
+    );
+
     const now = Date.now();
     const pending = queue.filter(
       (r) =>
         !r.synced &&
         r.gameId === gameId &&
-        r.syncAttempts < MAX_SYNC_ATTEMPTS &&
+        r.guestId === guestId &&
+        (r.syncAttempts < MAX_SYNC_ATTEMPTS || isTransientSyncErrorCode(r.lastErrorCode)) &&
         (!r.nextAttemptAt || Date.parse(r.nextAttemptAt) <= now)
     );
-    if (pending.length === 0) return;
-
-    queue = queue.map((item) =>
-      !item.synced && item.gameId === gameId ? { ...item, guestId } : item
-    );
+    if (pending.length === 0) {
+      await this.repository.saveQueue(queue);
+      return;
+    }
 
     for (let i = 0; i < pending.length; i += MAX_BATCH_SIZE) {
       const batch = pending.slice(i, i + MAX_BATCH_SIZE);
@@ -136,7 +192,7 @@ export class GameSyncService {
         );
 
         queue = this.applyBatchSyncResults(queue, batch, response, gameId, guestId);
-        this.handleSyncRank(response);
+        this.applyRankFromApi(response);
         queue = this.pruneQueue(queue);
         await this.repository.saveQueue(queue);
       } catch (error) {
@@ -159,16 +215,18 @@ export class GameSyncService {
     }
   }
 
-  private handleSyncRank(response: ResultSubmitData): void {
-    if (typeof response.rank !== 'number' || typeof response.bestScore !== 'number') {
-      return;
-    }
+  /** Prefer `data.rank` from `/results` — coerce number-like values from the wire. */
+  private applyRankFromApi(response: ResultSubmitData): void {
+    const rank = toOptionalFiniteNumber(response.rank);
+    if (rank === null) return;
 
-    leaderboard.updateSelfRank(response.rank, response.bestScore);
-    eventBus.emit('game:sync:completed', {
-      rank: response.rank,
-      bestScore: response.bestScore,
-    });
+    this.lastApiRank = rank;
+
+    const bestScore = toOptionalFiniteNumber(response.bestScore);
+    if (bestScore !== null) {
+      leaderboard.updateSelfRank(rank, bestScore);
+      eventBus.emit('game:sync:completed', { rank, bestScore });
+    }
   }
 
   private applyBatchSyncResults(
@@ -218,7 +276,8 @@ export class GameSyncService {
         continue;
       }
 
-      if (item.syncAttempts >= MAX_SYNC_ATTEMPTS) {
+      // Never drop scores that failed due to transient network / server blips.
+      if (item.syncAttempts >= MAX_SYNC_ATTEMPTS && !isTransientSyncErrorCode(item.lastErrorCode)) {
         eventBus.emit('game:sync:dropped', {
           clientResultId: item.clientResultId,
           attempts: item.syncAttempts,
@@ -242,13 +301,23 @@ export class GameSyncService {
     const errorCode = error instanceof ApiError ? String(error.status) : 'network';
     return queue.map((item) =>
       ids.has(item.localId) && item.gameId === gameId
-        ? this.markAttemptFailed(item, errorCode)
+        ? this.markAttemptFailed(item, errorCode, {
+            countTowardDrop: !isTransientSyncErrorCode(errorCode),
+          })
         : item
     );
   }
 
-  private markAttemptFailed(item: PendingGameResult, errorCode: string): PendingGameResult {
-    const syncAttempts = item.syncAttempts + 1;
+  private markAttemptFailed(
+    item: PendingGameResult,
+    errorCode: string,
+    options: { countTowardDrop?: boolean } = {}
+  ): PendingGameResult {
+    const countTowardDrop = options.countTowardDrop ?? !isTransientSyncErrorCode(errorCode);
+    // Cap below MAX so transient failures stay eligible for flush forever.
+    const syncAttempts = countTowardDrop
+      ? item.syncAttempts + 1
+      : Math.min(item.syncAttempts + 1, MAX_SYNC_ATTEMPTS - 1);
     const backoffMs = Math.min(
       MAX_SYNC_BACKOFF_MS,
       BASE_SYNC_BACKOFF_MS * 2 ** Math.max(0, syncAttempts - 1)
@@ -263,6 +332,15 @@ export class GameSyncService {
       nextAttemptAt: new Date(now + backoffMs).toISOString(),
     };
   }
+}
+
+function toOptionalFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
 }
 
 export const gameSync = new GameSyncService();

@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
-import { getConfig } from '@platform/core/config';
+import { getConfig, getEnvironment } from '@platform/core/config';
 import { services } from '@platform/core/services';
 import { iap, createIapProvider } from '@platform/modules/iap';
 import { createAdsProvider } from '@platform/core/advertising';
@@ -13,10 +13,24 @@ export function registerAdsProvider(): void {
   const runtime = config();
   if (!runtime.adsEnabled) return;
 
-  const providerName =
-    Capacitor.isNativePlatform() && runtime.ads.provider === 'admob' ? 'admob' : 'mock';
+  const isNative = Capacitor.isNativePlatform();
+  const wantAdmob = runtime.ads.provider === 'admob';
 
-  ads.setProvider(createAdsProvider(providerName));
+  if (isNative && wantAdmob) {
+    ads.setProvider(createAdsProvider('admob'));
+    logger.info('[Ads] AdMob provider registered');
+    return;
+  }
+
+  // Never ship mock ads on production native — rewarded would grant without real ads.
+  if (isNative && getEnvironment() === 'production') {
+    logger.error('[Ads] Mock ads blocked in production native — disabling ads');
+    ads.setEnabled(false);
+    return;
+  }
+
+  ads.setProvider(createAdsProvider('mock'));
+  logger.info('[Ads] Mock provider registered');
 }
 
 /** Registers the analytics provider selected by runtime config. */
@@ -54,6 +68,21 @@ export function registerIapProvider(appUserId?: string): void {
       })
     );
     logger.info('[IAP] RevenueCat provider registered');
+    return;
+  }
+
+  // Never ship mock IAP on production native builds — purchases would succeed for free.
+  if (Capacitor.isNativePlatform() && getEnvironment() === 'production') {
+    logger.error('[IAP] Mock IAP blocked in production native — disabling IAP');
+    iap.setEnabled(false);
+    return;
+  }
+
+  if (Capacitor.isNativePlatform() && runtime.iap.provider === 'revenuecat') {
+    logger.error(
+      '[IAP] RevenueCat selected but API key missing — disabling IAP (refusing mock fallback)'
+    );
+    iap.setEnabled(false);
     return;
   }
 

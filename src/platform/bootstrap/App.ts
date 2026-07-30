@@ -5,6 +5,7 @@ import {
   settings,
   leaderboard,
   saveService,
+  gameRunService,
   dailyRewards,
   guestController,
   bindAdsController,
@@ -25,12 +26,13 @@ import { logger } from '@platform/core/error';
 import { apiClient } from '@platform/core/api';
 import { services } from '@platform/core/services';
 import { usePlatformStore } from '@platform/core/state';
+import { iap } from '@platform/modules/iap';
 import { trackSessionEnd } from '@platform/core/analytics/events';
 import { bindAppEvents, bindAppLifecycle } from '@platform/bootstrap/app-events';
-import { bindNavigationEvents } from '@platform/modules/navigation/navigation.service';
+import { bindNavigationEvents } from '@platform/modules/navigation';
 import { syncGuestToStore, bindGuestStoreSync } from '@platform/modules/guest/guest-store-sync';
 
-const { ads, iap, config, events, analytics } = services;
+const { ads, config, events, analytics } = services;
 
 /**
  * App layer orchestrator. Wires platform modules to the event bus.
@@ -57,24 +59,27 @@ class App {
 
     apiClient.setAuthRecoveryHandler(() => guest.recoverFromUnauthorized());
 
-    const parallelInits = await Promise.allSettled([
-      i18n.init(),
-      ads.init(),
-      guest.init(),
-      analytics.init(),
-      leaderboard.init(),
-    ]);
-
-    for (const [index, result] of parallelInits.entries()) {
+    // Local-only inits that local play needs before Phaser boots.
+    // Ads / analytics / IAP may touch the network — never block the game shell on them.
+    const localInits = await Promise.allSettled([i18n.init(), leaderboard.init(), guest.init()]);
+    for (const [index, result] of localInits.entries()) {
       if (result.status === 'rejected') {
-        const labels = ['i18n', 'ads', 'guest', 'analytics', 'leaderboard'];
+        const labels = ['i18n', 'leaderboard', 'guest'];
         logger.error(`[App] ${labels[index]} init failed`, result.reason);
       }
     }
 
+    void ads.init().catch((error) => {
+      logger.error('[App] ads init failed', error);
+    });
+    void analytics.init().catch((error) => {
+      logger.error('[App] analytics init failed', error);
+    });
+
     this.unsubscribers.push(
       guest.onReady((guestId) => {
         analytics.setUserId(guestId);
+        void guest.flushPendingName();
         void iap.linkGuestUser(guestId).catch((error) => {
           logger.warn('[App] IAP guest link failed', error);
         });
@@ -85,7 +90,8 @@ class App {
     const fallbackUserId = usePlatformStore.getState().user.id || undefined;
     const analyticsUserId = guest.getGuestId() ?? fallbackUserId;
     registerIapProvider(analyticsUserId);
-    await iap.initialize().catch((error) => {
+    // RevenueCat can hang offline — do not await before starting the game.
+    void iap.initialize().catch((error) => {
       logger.warn('[App] IAP init failed — continuing without IAP', error);
     });
 
@@ -98,6 +104,7 @@ class App {
     analytics.setUserProperty('game_id', config().gameId);
 
     await saveService.loadLocal();
+    await gameRunService.load();
     syncGuestToStore();
     // Name flush may call saveLocal — only safe after hydrate.
     void guest.flushPendingName();

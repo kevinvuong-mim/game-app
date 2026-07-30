@@ -10,18 +10,19 @@ Guest identity quản lý anonymous player cho `game-api`.
 
 ## Storage
 
-| Key         | Provider                                            | Nội dung                                            |
-| ----------- | --------------------------------------------------- | --------------------------------------------------- |
-| `gsk:guest` | Capacitor Preferences (native) / localStorage (web) | `{ guestId, secretToken, name?, nameSyncPending? }` |
+| Key                   | Provider                                            | Nội dung                                            |
+| --------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| `gsk:guest`           | Capacitor Preferences (native) / localStorage (web) | `{ guestId, secretToken, name?, nameSyncPending? }` |
+| `gsk:guest:pending-name` | cùng provider                                    | Tên local khi chưa có credentials (first-install offline) |
 
 ## `guest.init()` flow
 
 1. Đọc `gsk:guest` từ storage.
-2. Nếu có → `apiClient.setAuthToken(secretToken)`, xong.
-3. Nếu không → `POST /api/guest/init` body `{ gameId }`.
-4. Lưu `{ guestId, secretToken }`, gọi `apiClient.setAuthToken`.
+2. Nếu có → `apiClient.setAuthToken(secretToken)`, xong (cold start không gọi mạng).
+3. Nếu không → giữ `pending`, **không block** cold start; `POST /api/guest/init` chạy nền khi online.
+4. Khi create xong → lưu `{ guestId, secretToken }`, `markReady`, adopt pending name nếu có.
 
-Nếu offline ở bước 3, guest ở trạng thái `pending` và tự retry khi network online (`@capacitor/network` trên native, `window.online` trên web).
+Nếu offline / create fail ở bước 3–4, guest ở `pending` và tự retry khi network online (`@capacitor/network` trên native, `window.online` trên web).
 
 Khi API trả 401, `guest.recoverFromUnauthorized()`:
 
@@ -38,11 +39,12 @@ Khi guest trở thành `ready` (kể cả sau offline retry), `App.ts` gọi `ia
 
 ## Offline name sync
 
-Đổi tên qua `guest.updateName()`:
+Đổi tên qua `guest.updateName()` (cho phép kể cả khi guest còn `pending`):
 
-1. Cập nhật local ngay (`displayName` trong store + `name` trong `gsk:guest`).
-2. Set `nameSyncPending: true`.
-3. Gọi `PATCH /api/guest/name` khi online.
+1. Cập nhật local ngay (`displayName` trong store + `saveLocal`).
+2. Nếu đã có credentials → set `nameSyncPending: true` trên `gsk:guest`.
+3. Nếu chưa có credentials → lưu `gsk:guest:pending-name`; khi guest create xong sẽ adopt sang credentials.
+4. Gọi `PATCH /api/guest/name` khi guest `ready` và online.
 
 `guest.controller.ts` gọi `flushPendingName()` khi:
 

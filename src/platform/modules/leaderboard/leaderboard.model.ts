@@ -3,7 +3,8 @@
  */
 type LeaderboardStatus = 'idle' | 'ready' | 'error' | 'loading' | 'refreshing';
 
-export const LEADERBOARD_LIMIT = 10;
+/** Top-N fetched in a single request (API max is 100). */
+export const LEADERBOARD_LIMIT = 100;
 const LEADERBOARD_CACHE_TTL_MS = 60_000;
 export const LEADERBOARD_CACHE_PREFIX = 'leaderboard:cache:';
 

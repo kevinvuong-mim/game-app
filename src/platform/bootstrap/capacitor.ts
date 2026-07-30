@@ -3,7 +3,8 @@ import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { services } from '@platform/core/services';
 import { trackSessionEnd } from '@platform/core/analytics/events';
-import { saveService } from '@platform/modules/save/save.service';
+import { saveService } from '@platform/modules/save';
+import { gameRunService } from '@platform/modules/game-run';
 import { initAppBridge } from '@platform/modules/deep-link/app-bridge';
 
 let capacitorInitialized = false;
@@ -47,6 +48,7 @@ export async function initCapacitorPlugins(): Promise<void> {
 
       trackSessionEnd();
       eventBus.emit('app:pause', undefined);
+      await gameRunService.flush();
       await saveService.saveLocal();
       await services.analytics.flush();
     });

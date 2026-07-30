@@ -3,7 +3,7 @@ import { logger } from '@platform/core/error';
 import { apiClient } from '@platform/core/api';
 import { getConfig } from '@platform/core/config';
 import { usePlatformStore } from '@platform/core/state';
-import { saveService } from '@platform/modules/save/save.service';
+import { saveService } from '@platform/modules/save';
 import { guestRepository, type GuestRepository } from './guest.repository';
 import { notificationRepository } from '@platform/modules/notifications/notification.repository';
 import { createDefaultNotificationState } from '@platform/modules/notifications/notification.model';
@@ -30,6 +30,7 @@ export class GuestService {
   private networkListenerRegistered = false;
   private guestStatus: GuestStatus = 'pending';
   private initPromise: Promise<void> | null = null;
+  private createPromise: Promise<void> | null = null;
   private recoveryPromise: Promise<boolean> | null = null;
   private nameFlushPromise: Promise<boolean> | null = null;
 
@@ -82,17 +83,38 @@ export class GuestService {
     };
   }
 
+  /**
+   * Saves the player name locally immediately. Syncs to the API when guest is ready
+   * and online; queues until first guest create on fresh offline installs.
+   */
   async updateName(name: string): Promise<UpdateNameResult> {
-    if (!this.guestId) {
-      throw new Error('[Guest] Cannot update name before guest is ready');
-    }
-
     const trimmed = name.trim();
     if (!trimmed) {
       throw new Error('[Guest] Name cannot be empty');
     }
 
-    await this.applyLocalName(trimmed);
+    this.playerName = trimmed;
+    usePlatformStore.getState().setUser({ displayName: trimmed });
+    await saveService.saveLocal();
+
+    const stored = await this.repository.loadCredentials();
+    if (!stored) {
+      await this.repository.savePendingName(trimmed);
+      logger.info('[Guest] Name saved locally — waiting for guest identity');
+      return { synced: false };
+    }
+
+    await this.repository.saveCredentials({
+      ...stored,
+      name: trimmed,
+      nameSyncPending: true,
+    });
+    await this.repository.clearPendingName();
+
+    if (this.guestStatus !== 'ready' || !this.guestId) {
+      return { synced: false };
+    }
+
     const synced = await this.flushPendingName();
     return { synced };
   }
@@ -152,6 +174,8 @@ export class GuestService {
 
     const stored = await this.repository.loadCredentials();
     if (!stored) {
+      await this.repository.savePendingName(name);
+      await saveService.saveLocal();
       return;
     }
 
@@ -160,8 +184,17 @@ export class GuestService {
       name,
       nameSyncPending: true,
     });
-
+    await this.repository.clearPendingName();
     await saveService.saveLocal();
+  }
+
+  /** Promote a first-install offline name onto credentials once identity exists. */
+  private async adoptPendingName(): Promise<void> {
+    const pendingName = await this.repository.loadPendingName();
+    if (!pendingName) return;
+
+    await this.applyLocalName(pendingName);
+    logger.info('[Guest] Adopted pending local name onto guest credentials');
   }
 
   private async runInit(): Promise<void> {
@@ -169,13 +202,54 @@ export class GuestService {
       const stored = await this.repository.loadCredentials();
       if (stored) {
         apiClient.setAuthToken(stored.secretToken);
-        this.playerName = stored.name ?? null;
+        this.playerName = stored.name ?? (await this.repository.loadPendingName());
         this.markReady(stored.guestId);
+        if (stored.name == null && this.playerName) {
+          await this.adoptPendingName();
+        }
         logger.info('[Guest] Loaded credentials from storage');
         // Defer name flush until App has loadLocal()'d — see App.init.
         return;
       }
 
+      // No credentials yet — stay pending and never block cold start on /guest/init.
+      this.guestStatus = 'pending';
+      this.guestId = null;
+      this.playerName = await this.repository.loadPendingName();
+      apiClient.setAuthToken(null);
+      void this.registerNetworkRetry();
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        logger.info('[Guest] Offline first install — deferring guest create');
+        return;
+      }
+
+      void this.createGuestIdentity();
+    } catch (error) {
+      this.guestStatus = 'pending';
+      this.guestId = null;
+      this.playerName = await this.repository.loadPendingName();
+      apiClient.setAuthToken(null);
+      logger.warn('[Guest] Failed to create guest identity (offline?)', error);
+      void this.registerNetworkRetry();
+    }
+  }
+
+  private async createGuestIdentity(): Promise<void> {
+    if (this.guestStatus === 'ready') return;
+    if (this.createPromise) return this.createPromise;
+
+    this.createPromise = this.runCreateGuestIdentity().finally(() => {
+      this.createPromise = null;
+    });
+    return this.createPromise;
+  }
+
+  private async runCreateGuestIdentity(): Promise<void> {
+    if (this.guestStatus === 'ready') return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+
+    try {
       const { gameId } = getConfig();
       const payload = await this.repository.initGuest();
 
@@ -192,11 +266,11 @@ export class GuestService {
       });
       apiClient.setAuthToken(payload.secretToken);
       this.markReady(payload.guestId);
+      await this.adoptPendingName();
       logger.info('[Guest] Created new guest identity');
     } catch (error) {
       this.guestStatus = 'pending';
       this.guestId = null;
-      this.playerName = null;
       apiClient.setAuthToken(null);
       logger.warn('[Guest] Failed to create guest identity (offline?)', error);
       void this.registerNetworkRetry();
@@ -210,9 +284,9 @@ export class GuestService {
     this.guestId = null;
     this.playerName = null;
 
-    // Keep offline score queue — next flush re-signs with the new guestId.
+    // Offline score queue is keyed by guestId — flush rebinds orphans after identity change.
     await notificationRepository.saveState(createDefaultNotificationState());
-    logger.info('[Guest] Auth recovery — credentials cleared, score queue preserved');
+    logger.info('[Guest] Auth recovery — credentials cleared');
 
     await this.init();
     const recovered = this.getStatus() === 'ready';

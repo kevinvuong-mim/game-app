@@ -19,12 +19,13 @@ class GameSyncController {
 
   bind(events: IEventBus): () => void {
     const unsubs = [
-      events.on('game:over', async ({ score, duration, jumps }) => {
+      events.on('game:over', async ({ score, duration, merges }) => {
         const metadata: Record<string, number> = {
           duration: Math.round(duration / 1000),
         };
-        if (typeof jumps === 'number') metadata.jumps = jumps;
+        if (typeof merges === 'number') metadata.merges = merges;
 
+        this.service.clearLastApiRank();
         await this.service.recordResult({ score, metadata });
         void this.service.flush().catch(() => undefined);
       }),

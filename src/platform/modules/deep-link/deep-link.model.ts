@@ -5,9 +5,9 @@ const DEEP_LINK_ROUTES = {
   GAMEPLAY: 'Gameplay',
   MISSIONS: 'Missions',
   SETTINGS: 'Settings',
-  HOW_TO_PLAY: 'HowToPlay',
   LEADERBOARD: 'Leaderboard',
   DAILY_REWARD: 'DailyReward',
+  HOW_TO_PLAY: 'HowToPlay',
 } as const;
 
 export type DeepLinkRoute = (typeof DEEP_LINK_ROUTES)[keyof typeof DEEP_LINK_ROUTES];
@@ -31,9 +31,9 @@ const PATH_TO_SCENE: Record<string, DeepLinkRoute> = {
   '/gameplay': DEEP_LINK_ROUTES.GAMEPLAY,
   '/missions': DEEP_LINK_ROUTES.MISSIONS,
   '/settings': DEEP_LINK_ROUTES.SETTINGS,
-  '/how-to-play': DEEP_LINK_ROUTES.HOW_TO_PLAY,
   '/leaderboard': DEEP_LINK_ROUTES.LEADERBOARD,
   '/daily-reward': DEEP_LINK_ROUTES.DAILY_REWARD,
+  '/how-to-play': DEEP_LINK_ROUTES.HOW_TO_PLAY,
 };
 
 export function resolveDeepLinkScene(path: string): DeepLinkRoute | null {
@@ -58,7 +58,7 @@ export function buildDeepLinkSceneData(payload: DeepLinkPayload): Record<string,
       url: payload.url,
       path: payload.path,
       source: payload.source,
+      params: payload.params,
     },
-    ...payload.params,
   };
 }

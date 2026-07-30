@@ -27,16 +27,6 @@ class SettingsService {
     usePlatformStore.getState().updateSettings({ musicEnabled: enabled });
     eventBus.emit('settings:change', { key: 'musicEnabled', value: enabled });
   }
-
-  async setVibrationEnabled(enabled: boolean): Promise<void> {
-    usePlatformStore.getState().updateSettings({ vibrationEnabled: enabled });
-    eventBus.emit('settings:change', { key: 'vibrationEnabled', value: enabled });
-  }
-
-  async setGraphicsQuality(quality: 'low' | 'medium' | 'high'): Promise<void> {
-    usePlatformStore.getState().updateSettings({ graphicsQuality: quality });
-    eventBus.emit('settings:change', { key: 'graphicsQuality', value: quality });
-  }
 }
 
 export const settings = new SettingsService();

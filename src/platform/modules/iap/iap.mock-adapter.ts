@@ -4,13 +4,22 @@ import type { IAPProvider, ProviderProduct, ProviderPurchase } from './iap.types
 
 const MOCK_PRODUCTS: ProviderProduct[] = [
   {
-    price: '$4.99',
+    price: '$3.99',
     currency: 'USD',
     id: 'remove_ads',
-    priceAmount: 4.99,
+    priceAmount: 3.99,
     title: 'Remove Ads',
     type: 'non_consumable',
     description: 'Permanent ad removal',
+  },
+  {
+    price: '$0.99',
+    currency: 'USD',
+    id: 'coins_10000',
+    priceAmount: 0.99,
+    title: '10000 Coins',
+    type: 'consumable',
+    description: 'Get 10000 coins',
   },
 ];
 
@@ -18,6 +27,7 @@ export class MockIapAdapter implements IAPProvider {
   readonly name = 'mock';
 
   private restoredPurchases: ProviderPurchase[] = [];
+  private recentPurchases: ProviderPurchase[] = [];
 
   async initialize(): Promise<void> {
     logger.info('[IAP] Mock adapter initialized');
@@ -43,10 +53,18 @@ export class MockIapAdapter implements IAPProvider {
       purchaseTime: Date.now(),
     };
 
-    this.restoredPurchases = [
-      ...this.restoredPurchases.filter((p) => p.productId !== productId),
+    this.recentPurchases = [
       purchase,
-    ];
+      ...this.recentPurchases.filter((p) => p.productId !== productId),
+    ].slice(0, 20);
+
+    // Only persist non-consumables for restore; coin packs are one-shot grants.
+    if (product.type !== 'consumable') {
+      this.restoredPurchases = [
+        ...this.restoredPurchases.filter((p) => p.productId !== productId),
+        purchase,
+      ];
+    }
 
     return purchase;
   }
@@ -54,6 +72,15 @@ export class MockIapAdapter implements IAPProvider {
   async restore(): Promise<ProviderPurchase[]> {
     logger.info('[IAP] Mock restore', { count: this.restoredPurchases.length });
     return [...this.restoredPurchases];
+  }
+
+  async findRecentPurchase(productId: string, withinMs: number): Promise<ProviderPurchase | null> {
+    const now = Date.now();
+    return (
+      this.recentPurchases.find(
+        (p) => p.productId === productId && now - p.purchaseTime <= withinMs
+      ) ?? null
+    );
   }
 
   async fetchEntitlements(): Promise<string[]> {

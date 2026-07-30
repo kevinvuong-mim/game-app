@@ -1,5 +1,5 @@
 // Package line is rewritten by scripts/apply-android-native.mjs from capacitor.config.ts appId.
-package com.studio.gamestarterkit;
+package com.vraxion.fruloop;
 
 import android.os.Bundle;
 import androidx.core.view.WindowCompat;

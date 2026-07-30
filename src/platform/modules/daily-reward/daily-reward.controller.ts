@@ -1,6 +1,6 @@
 import { logger } from '@platform/core/error';
 import type { IEventBus } from '@platform/core/events';
-import { saveService } from '@platform/modules/save/save.service';
+import { saveService } from '@platform/modules/save';
 import { trackDailyClaim } from '@platform/core/analytics/events';
 import { dailyRewards, type DailyRewardService } from './daily-reward.service';
 
@@ -9,10 +9,6 @@ class DailyRewardController {
 
   bind(events: IEventBus): () => void {
     const unsubs = [
-      events.on('daily:status:request', () => {
-        this.emitStatus(events);
-      }),
-
       events.on('daily:progress:request', () => {
         this.emitProgress(events);
       }),
@@ -23,7 +19,6 @@ class DailyRewardController {
 
       events.on('app:resume', () => {
         this.service.refreshSessionTimestamp();
-        this.emitStatus(events);
         this.emitProgress(events);
       }),
     ];
@@ -31,13 +26,6 @@ class DailyRewardController {
     return () => {
       for (const unsub of unsubs) unsub();
     };
-  }
-
-  private emitStatus(events: IEventBus): void {
-    events.emit('daily:status', {
-      canClaim: this.service.canClaim(),
-      timeManipulated: this.service.getRewardProgress().timeManipulated,
-    });
   }
 
   private emitProgress(events: IEventBus): void {
@@ -64,8 +52,6 @@ class DailyRewardController {
     trackDailyClaim({
       day: result.day,
       coins: result.coins,
-      rewardType: result.rewardType,
-      itemId: result.itemId,
     });
 
     await saveService.saveLocal();
@@ -74,11 +60,8 @@ class DailyRewardController {
       success: true,
       day: result.day,
       coins: result.coins,
-      rewardType: result.rewardType,
-      itemId: result.itemId,
     });
 
-    this.emitStatus(events);
     this.emitProgress(events);
     logger.info('[DailyRewardController] Claim handled', result);
   }

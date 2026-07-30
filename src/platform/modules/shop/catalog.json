@@ -1,42 +1,70 @@
 {
   "items": [
     {
-      "price": 100,
-      "type": "skin",
-      "id": "skin_blue",
+      "price": 1000,
+      "type": "boost",
       "currency": "coins",
-      "name": "Blue Skin",
-      "icon": "skin_blue",
-      "description": "A cool blue character skin"
+      "id": "boost_hammer",
+      "name": "Explosive Hammer",
+      "icon": "shop-item-1",
+      "description": "Destroy the fruit you choose!"
+    },
+    {
+      "price": 500,
+      "type": "boost",
+      "currency": "coins",
+      "id": "boost_change",
+      "name": "Change Fruit",
+      "icon": "shop-item-2",
+      "description": "Swap the current fruit with the next one!"
+    },
+    {
+      "price": 1500,
+      "type": "boost",
+      "currency": "coins",
+      "id": "boost_swap",
+      "name": "Swap",
+      "icon": "shop-item-3",
+      "description": "Swap the positions of any fruits!"
+    },
+    {
+      "price": 500,
+      "type": "boost",
+      "currency": "coins",
+      "id": "boost_size",
+      "name": "Size Increase",
+      "icon": "shop-item-4",
+      "description": "Increase the size of the fruit!"
     },
     {
       "price": 300,
-      "type": "skin",
-      "id": "skin_gold",
-      "currency": "coins",
-      "name": "Gold Skin",
-      "icon": "skin_gold",
-      "description": "Premium gold character skin"
-    },
-    {
-      "price": 200,
       "type": "boost",
-      "duration": 3600,
       "currency": "coins",
-      "id": "boost_double",
-      "name": "Double Coins",
-      "icon": "boost_double",
-      "description": "2x coins for 1 hour"
+      "id": "boost_undo",
+      "name": "Undo",
+      "icon": "shop-item-5",
+      "description": "Undo your last move!"
     },
     {
-      "price": 4.99,
+      "price": 3.99,
+      "type": "entitlement",
       "currency": "iap",
+      "productKey": "REMOVE_ADS",
       "id": "remove_ads",
       "name": "Remove Ads",
-      "icon": "remove_ads",
-      "type": "entitlement",
-      "productKey": "REMOVE_ADS",
-      "description": "Remove banner and interstitial ads permanently"
+      "icon": "coin-icon",
+      "description": "Remove all ads permanently"
+    },
+    {
+      "price": 0.99,
+      "type": "coins",
+      "currency": "iap",
+      "productKey": "COINS_10000",
+      "id": "coins_10000",
+      "name": "10000 Coins",
+      "icon": "coin-icon",
+      "description": "Get 10000 coins",
+      "coinAmount": 10000
     }
   ]
 }

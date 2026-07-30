@@ -61,17 +61,6 @@ export class FirebaseAnalyticsProvider implements IAnalyticsProvider {
 
   async flush(): Promise<void> {}
 
-  async reset(): Promise<void> {
-    try {
-      if (this.analytics) {
-        setUserId(this.analytics, null);
-      }
-      logger.info('[Analytics][firebase] reset complete');
-    } catch (error) {
-      logger.error('[Analytics][firebase] reset failed', error);
-    }
-  }
-
   async shutdown(): Promise<void> {
     this.analytics = null;
     this.app = null;

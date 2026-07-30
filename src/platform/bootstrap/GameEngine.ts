@@ -11,12 +11,35 @@ import { refreshServicesFromConfig } from '@platform/core/services';
 import { initCapacitorPlugins } from '@platform/bootstrap/capacitor';
 import { getConfig, setConfig, createConfig } from '@platform/core/config';
 import { errorBoundary, setupGlobalErrorHandlers } from '@platform/core/error';
-import { navigationService } from '@platform/modules/navigation/navigation.service';
+import { eventBus } from '@platform/core/events';
+import { navigationService } from '@platform/modules/navigation';
+import { iap } from '@platform/modules/iap';
 
 const TABLET_LETTERBOX_BG_ID = 'tablet-letterbox-bg';
 
+function buildPhaserPhysics(): Phaser.Types.Core.PhysicsConfig | undefined {
+  const physics = gameConfig.physics;
+  if (!physics || physics.default === false || physics.default === undefined) {
+    return undefined;
+  }
+
+  const config: Phaser.Types.Core.PhysicsConfig = {
+    default: physics.default,
+  };
+
+  if (physics.matter) {
+    config.matter = {
+      debug: physics.matter.debug,
+      gravity: physics.matter.gravity,
+    };
+  }
+
+  return config;
+}
+
 class GameEngine {
   private game: Phaser.Game | null = null;
+  private toastUnsub?: () => void;
 
   async bootstrap(): Promise<Phaser.Game> {
     if (this.game) return this.game;
@@ -29,6 +52,7 @@ class GameEngine {
       })
     );
     refreshServicesFromConfig();
+    iap.setEnabled(getConfig().iapEnabled);
 
     try {
       await app.init();
@@ -70,6 +94,7 @@ class GameEngine {
       },
       height: gameConfig.height,
       backgroundColor: '#1a1a2e',
+      physics: buildPhaserPhysics(),
       scale: {
         autoCenter: PhaserLib.Scale.CENTER_BOTH,
         mode: isTablet ? PhaserLib.Scale.FIT : PhaserLib.Scale.ENVELOP,
@@ -80,6 +105,9 @@ class GameEngine {
     navigationService.setGame(this.game);
     toast.init(this.game);
     soundManager.init(this.game);
+    this.toastUnsub = eventBus.on('ui:toast', (payload) => {
+      toast.show(payload);
+    });
 
     return this.game;
   }
@@ -98,6 +126,8 @@ class GameEngine {
   }
 
   destroy(): void {
+    this.toastUnsub?.();
+    this.toastUnsub = undefined;
     this.game?.destroy(true);
     this.game = null;
 

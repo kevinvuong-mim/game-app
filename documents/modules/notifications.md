@@ -9,7 +9,7 @@ Module quản lý **push notification** (FCM) và **local notification** (daily 
 | Push — Top 100 exited | Backend FCM                 | Player rời Top 100 (tự rớt hoặc bị đẩy)                                                          |
 | Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (FRULOOP mặc định: 9:00 Thứ 7 VN); FCM type `rank_push` |
 | Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                            |
-| Local — Daily reward  | Client schedule             | 07:00 ngày hôm sau sau khi claim; hủy nếu có thể claim                                           |
+| Local — Daily reward  | Client schedule             | 07:00 ngày hôm sau sau khi claim; giữ pending nếu vẫn có thể claim (không hủy khi mở app sớm)   |
 
 Push cần Firebase native + backend `FIREBASE_*`. Local chỉ cần `@capacitor/local-notifications`.
 
@@ -103,7 +103,7 @@ Khi callback tap được giao trước lúc Phaser preload xong, `navigationSer
 
 | Event                               | Handler                                                                        |
 | ----------------------------------- | ------------------------------------------------------------------------------ |
-| `app:resume`                        | Push: refresh token + flush pending sync; local: reconcile daily schedule      |
+| `app:resume`                        | Push: refresh token + flush pending sync; local: (re)schedule daily reminder khi đã claim hôm nay |
 | `daily:claim`                       | Schedule local reminder ngày hôm sau                                           |
 | `settings:change` (`language`)      | Push: `PATCH /api/devices` với locale mới                                      |
 | `boot:preload-complete`             | `markBootComplete()` + clear pending (PreloadScene navigate tới target)        |

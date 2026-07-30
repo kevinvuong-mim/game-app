@@ -9,7 +9,7 @@ import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
-import { saveService } from '@platform/modules/save/save.service';
+import { saveService } from '@platform/modules/save';
 import { rewardResolver, type RewardResolver, type ResolvedReward } from './reward-resolver';
 import { dailyRewardRepository, type DailyRewardRepository } from './daily-reward.repository';
 
@@ -76,14 +76,6 @@ export class DailyRewardService {
     return result;
   }
 
-  getCurrentReward(): ResolvedReward {
-    const definition = this.resolver.getRewardForDay(this.model.currentDay);
-    if (definition.type === 'random') {
-      return { day: definition.day, type: 'coins' };
-    }
-    return this.resolver.resolveClaim(this.model.currentDay);
-  }
-
   getRewardProgress(): RewardProgress {
     return {
       currentDay: this.model.currentDay,
@@ -93,7 +85,18 @@ export class DailyRewardService {
     };
   }
 
-  detectTimeManipulation(now = Date.now()): boolean {
+  refreshSessionTimestamp(): void {
+    if (this.detectTimeManipulation()) {
+      this.model.timeManipulated = true;
+    } else {
+      // Clock is consistent again — clear a previous lock so claims can resume.
+      this.model.timeManipulated = false;
+      this.model.lastSessionTimestamp = Date.now();
+    }
+    void this.persist();
+  }
+
+  private detectTimeManipulation(now = Date.now()): boolean {
     const { lastSessionTimestamp, lastClaimWallClock } = this.model;
 
     if (lastSessionTimestamp > 0 && now < lastSessionTimestamp - BACKWARD_CLOCK_TOLERANCE_MS) {
@@ -111,34 +114,8 @@ export class DailyRewardService {
     return false;
   }
 
-  async reset(): Promise<void> {
-    this.model = createDefaultModel();
-    await this.repository.reset();
-    await this.persist();
-  }
-
-  refreshSessionTimestamp(): void {
-    if (this.detectTimeManipulation()) {
-      this.model.timeManipulated = true;
-    } else {
-      // Clock is consistent again — clear a previous lock so claims can resume.
-      this.model.timeManipulated = false;
-      this.model.lastSessionTimestamp = Date.now();
-    }
-    void this.persist();
-  }
-
   private applyReward(reward: ResolvedReward): void {
-    const store = usePlatformStore.getState();
-
-    if (reward.type === 'coins' && reward.coins) {
-      store.addCoins(reward.coins);
-      return;
-    }
-
-    if (reward.type === 'chest' && reward.itemId) {
-      store.addItem(reward.itemId, reward.itemQuantity ?? 1);
-    }
+    usePlatformStore.getState().addCoins(reward.coins);
   }
 
   private async persist(): Promise<void> {
@@ -152,9 +129,6 @@ function toClaimResult(reward: ResolvedReward): ClaimResult {
   return {
     day: reward.day,
     coins: reward.coins,
-    itemId: reward.itemId,
-    rewardType: reward.type,
-    itemQuantity: reward.itemQuantity,
   };
 }
 

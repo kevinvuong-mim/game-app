@@ -6,8 +6,19 @@ import { getConfig } from '@platform/core/config';
 import { MockIapAdapter } from './iap.mock-adapter';
 import type { IEventBus } from '@platform/core/events';
 import { purchaseStorage, type PurchaseStorage } from './purchase.storage';
-import { PRODUCTS, getProductById, IAP_PURCHASE_TIMEOUT_MS } from './iap.config';
-import type { IAPProvider, RestoreResult, PurchaseResult, ProductDefinition } from './iap.types';
+import {
+  PRODUCTS,
+  getProductById,
+  IAP_PURCHASE_TIMEOUT_MS,
+  IAP_TIMEOUT_RECOVERY_MS,
+} from './iap.config';
+import type {
+  IAPProvider,
+  RestoreResult,
+  PurchaseResult,
+  ProductDefinition,
+  ProviderPurchase,
+} from './iap.types';
 
 interface IapServiceDeps {
   emit?: IEventBus['emit'];
@@ -102,11 +113,6 @@ class IapService {
     return [...this.entitlements];
   }
 
-  /** Convenience — true when remove_ads entitlement is active. */
-  isPremium(): boolean {
-    return this.has('remove_ads');
-  }
-
   async purchase(product: ProductDefinition): Promise<PurchaseResult> {
     if (!this.isEnabled()) {
       return { success: false, cancelled: false, error: 'IAP not available' };
@@ -127,28 +133,27 @@ class IapService {
     this.purchasing = true;
     logger.info('[IAP] Purchase started', { productId: product.id });
 
+    const purchasePromise = this.provider.purchase(product.id);
+
     try {
       const providerPurchase = await this.withTimeout(
-        this.provider.purchase(product.id),
+        purchasePromise,
         IAP_PURCHASE_TIMEOUT_MS,
         'Purchase timed out'
       );
 
-      await this.grantEntitlement(product.entitlement);
-
-      this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
-        productId: providerPurchase.productId,
-        entitlement: product.entitlement,
-      });
-
-      logger.info('[IAP] Purchase succeeded', {
-        productId: product.id,
-        entitlement: product.entitlement,
-      });
-
-      return { success: true, cancelled: false, entitlement: product.entitlement };
+      return await this.completePurchase(product, providerPurchase);
     } catch (error) {
       const result = this.normalizePurchaseError(error, product.id);
+
+      // Store purchase may still complete after a client timeout — keep waiting + poll.
+      if (result.error && /timed out/i.test(result.error)) {
+        const recovered = await this.recoverAfterTimeout(product, purchasePromise);
+        if (recovered) {
+          return { success: true, cancelled: false, entitlement: product.entitlement };
+        }
+      }
+
       this.emit(IAP_EVENTS.PURCHASE_FAILED, {
         productId: product.id,
         cancelled: result.cancelled,
@@ -158,6 +163,127 @@ class IapService {
       return result;
     } finally {
       this.purchasing = false;
+    }
+  }
+
+  private async completePurchase(
+    product: ProductDefinition,
+    providerPurchase: ProviderPurchase
+  ): Promise<PurchaseResult> {
+    const matched = getProductById(providerPurchase.productId) ?? product;
+
+    if (matched.type === 'consumable') {
+      // Grant before recording so a crash mid-fulfillment can still recover via restore.
+      if (await this.storage.hasConsumableTransaction(providerPurchase.transactionId)) {
+        logger.info('[IAP] Consumable transaction already granted', {
+          productId: matched.id,
+          transactionId: providerPurchase.transactionId,
+        });
+        return { success: true, cancelled: false, entitlement: matched.entitlement };
+      }
+
+      this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+        productId: providerPurchase.productId,
+        entitlement: matched.entitlement,
+      });
+      await this.storage.recordConsumableTransaction(providerPurchase.transactionId);
+    } else {
+      await this.grantEntitlement(matched.entitlement);
+      this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+        productId: providerPurchase.productId,
+        entitlement: matched.entitlement,
+      });
+    }
+
+    logger.info('[IAP] Purchase succeeded', {
+      productId: matched.id,
+      entitlement: matched.entitlement,
+      type: matched.type,
+    });
+
+    return { success: true, cancelled: false, entitlement: matched.entitlement };
+  }
+
+  /** After a client timeout, await the store promise and poll purchase history. */
+  private async recoverAfterTimeout(
+    product: ProductDefinition,
+    purchasePromise: Promise<ProviderPurchase>
+  ): Promise<boolean> {
+    if (!this.provider) return false;
+
+    let settled: ProviderPurchase | undefined;
+    let settledError: unknown;
+    void purchasePromise.then(
+      (value) => {
+        settled = value;
+      },
+      (error: unknown) => {
+        settledError = error;
+      }
+    );
+
+    const deadline = Date.now() + IAP_TIMEOUT_RECOVERY_MS;
+    const delaysMs = [0, 400, 800, 1_500, 3_000, 5_000, 8_000, 12_000, 20_000];
+
+    try {
+      for (const delayMs of delaysMs) {
+        if (delayMs > 0) {
+          await this.delay(delayMs);
+        }
+
+        if (settled) {
+          await this.completePurchase(product, settled);
+          logger.info('[IAP] Recovered purchase after timeout (provider promise)', {
+            productId: product.id,
+          });
+          return true;
+        }
+
+        if (settledError) {
+          const failed = this.normalizePurchaseError(settledError, product.id);
+          if (failed.cancelled || (failed.error && !/timed out/i.test(failed.error))) {
+            logger.warn('[IAP] Timeout recovery: store returned failure', failed);
+            return false;
+          }
+        }
+
+        if (product.type === 'consumable') {
+          const withinMs = IAP_PURCHASE_TIMEOUT_MS + IAP_TIMEOUT_RECOVERY_MS;
+          const recent = await this.provider.findRecentPurchase?.(product.id, withinMs);
+          if (recent) {
+            await this.completePurchase(product, recent);
+            logger.info('[IAP] Recovered consumable after purchase timeout', {
+              productId: product.id,
+              transactionId: recent.transactionId,
+            });
+            return true;
+          }
+        } else {
+          const remote = await this.provider.fetchEntitlements();
+          if (remote.includes(product.entitlement)) {
+            await this.grantEntitlement(product.entitlement);
+            this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+              productId: product.id,
+              entitlement: product.entitlement,
+            });
+            logger.info('[IAP] Recovered entitlement after purchase timeout', {
+              productId: product.id,
+              entitlement: product.entitlement,
+            });
+            return true;
+          }
+        }
+
+        if (Date.now() >= deadline) break;
+      }
+
+      logger.warn('[IAP] Timeout recovery: no recent purchase found', {
+        productId: product.id,
+      });
+      return false;
+    } catch (error) {
+      logger.warn('[IAP] Timeout recovery failed', error);
+      return false;
     }
   }
 
@@ -181,6 +307,23 @@ class IapService {
         const product = getProductById(purchase.productId);
         if (!product?.entitlement) continue;
 
+        if (product.type === 'consumable') {
+          if (await this.storage.hasConsumableTransaction(purchase.transactionId)) {
+            continue;
+          }
+          this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+            productId: purchase.productId,
+            entitlement: product.entitlement,
+          });
+          await this.storage.recordConsumableTransaction(purchase.transactionId);
+          restoredEntitlements.push(product.entitlement);
+          logger.info('[IAP] Restored unconsumed consumable', {
+            productId: product.id,
+            transactionId: purchase.transactionId,
+          });
+          continue;
+        }
+
         const wasNew = !this.has(product.entitlement);
         await this.grantEntitlement(product.entitlement, { emitChange: wasNew });
         if (wasNew) restoredEntitlements.push(product.entitlement);
@@ -197,14 +340,6 @@ class IapService {
     } finally {
       this.restoring = false;
     }
-  }
-
-  isPurchasing(): boolean {
-    return this.purchasing;
-  }
-
-  isRestoring(): boolean {
-    return this.restoring;
   }
 
   /** Associates the IAP provider with the guest id when it becomes available. */
@@ -292,6 +427,10 @@ class IapService {
           reject(error);
         });
     });
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private logClientAuthorityWarning(): void {

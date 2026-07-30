@@ -27,10 +27,6 @@ class StorageService {
     return resolveDurableProviderType();
   }
 
-  setPrimary(type: StorageProviderType): void {
-    this.primary = type;
-  }
-
   getProvider(type?: StorageProviderType): StorageProvider {
     return this.providers.get(type ?? this.primary) ?? this.providers.get('memory')!;
   }
@@ -45,14 +41,6 @@ class StorageService {
 
   async remove(key: string, provider?: StorageProviderType): Promise<void> {
     await this.getProvider(provider).remove(key);
-  }
-
-  async clear(provider?: StorageProviderType): Promise<void> {
-    await this.getProvider(provider).clear();
-  }
-
-  async keys(provider?: StorageProviderType): Promise<string[]> {
-    return this.getProvider(provider).keys();
   }
 }
 

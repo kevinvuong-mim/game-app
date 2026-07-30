@@ -6,7 +6,6 @@ export type AdState =
   | 'READY'
   | 'LOADING'
   | 'SHOWING'
-  | 'EXPIRED'
   | 'COMPLETED'
   | 'DESTROYED';
 
@@ -73,7 +72,7 @@ export interface AdsRemoteConfig {
 export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
   cooldowns: {
     app_open: 0,
-    rewarded: 30,
+    rewarded: 10,
     interstitial: 90,
   },
   bannerEnabled: true,
@@ -96,21 +95,3 @@ export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
 };
 
 export const BANNER_ALLOWED_PLACEMENTS = new Set(['HOME', 'LEADERBOARD', 'SHOP', 'GAME_OVER']);
-
-export const AD_ANALYTICS_EVENTS = {
-  CLOSED: 'ads_closed',
-  FAILED: 'ads_failed',
-  LOADED: 'ads_loaded',
-  OPENED: 'ads_opened',
-  CLICKED: 'ads_clicked',
-  CACHE_HIT: 'ad_cache_hit',
-  CACHE_MISS: 'ad_cache_miss',
-  IMPRESSION: 'ads_impression',
-  BANNER_HIDDEN: 'banner_hidden',
-  BANNER_LOADED: 'banner_loaded',
-  ONLINE_RESTORE: 'online_restore',
-  REWARD_EARNED: 'ads_reward_earned',
-  REWARD_CLAIMED: 'ads_reward_claimed',
-  OFFLINE_ATTEMPT: 'offline_ads_attempt',
-  OFFLINE_REWARD_BLOCKED: 'offline_reward_blocked',
-} as const;

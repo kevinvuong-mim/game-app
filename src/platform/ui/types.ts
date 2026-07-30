@@ -8,8 +8,6 @@ export type UIButton = Phaser.GameObjects.Container & {
   setBadgeVisible(visible: boolean): void;
 };
 
-export type UIScreenId = string;
-
 export type UIToastType = 'info' | 'error' | 'success' | 'warning';
 
 export type UIButtonSize = {
@@ -34,22 +32,9 @@ export type UIButtonTextStyle = {
   border?: { color: string; width: number };
 };
 
-export interface IUIScreen extends IUIComponent {
-  close(): void;
-  open(data?: Record<string, unknown>): void;
-}
-
 export interface ToastOffset {
   x?: number;
   y?: number;
-}
-
-export interface IUIComponent {
-  hide(): void;
-  destroy(): void;
-  readonly id: string;
-  isVisible(): boolean;
-  show(data?: Record<string, unknown>): void;
 }
 
 export interface UIButtonIcon {

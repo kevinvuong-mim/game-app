@@ -25,10 +25,6 @@ export class DailyRewardRepository {
     });
   }
 
-  async reset(): Promise<void> {
-    await Preferences.remove({ key: DAILY_REWARD_STORAGE_KEY });
-  }
-
   migrateFromStoreState(state: DailyRewardState | undefined): DailyRewardModel | null {
     if (!state || state.version < DAILY_REWARD_MODEL_VERSION) return null;
 

@@ -13,6 +13,9 @@ export class BootScene extends Phaser.Scene {
     gfx.fillCircle(16, 16, 16);
     gfx.generateTexture('particle', 32, 32);
     gfx.destroy();
+
+    // Needed immediately for Preload UI — do not wait for the full asset pack.
+    this.load.image('home-background-image', '/assets/images/home-background-image.webp');
   }
 
   create(): void {

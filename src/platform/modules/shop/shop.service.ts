@@ -4,27 +4,22 @@ import { eventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
 import type { ProductKey } from '@platform/modules/iap';
 import { iap, getProductByKey } from '@platform/modules/iap';
+import { saveService } from '@platform/modules/save';
 
-type ShopItemType = 'skin' | 'boost' | 'entitlement';
+type ShopItemType = 'boost' | 'entitlement' | 'coins';
 
 export interface ShopItem {
   id: string;
   name: string;
   icon: string;
   price: number;
-  duration?: number;
   type: ShopItemType;
   description: string;
   productKey?: ProductKey;
+  /** Coins granted after a successful IAP coin-pack purchase. */
+  coinAmount?: number;
   currency: 'iap' | 'coins';
 }
-
-const DEFAULT_PLAYER_COLOR = 0x4a90d9;
-
-const SKIN_COLORS: Record<string, number> = {
-  skin_blue: 0x4a90d9,
-  skin_gold: 0xffd700,
-};
 
 class ShopService {
   private items: ShopItem[] = catalog.items as ShopItem[];
@@ -48,42 +43,22 @@ class ShopService {
     }
 
     if (item.type === 'boost') {
-      return this.isBoostActive(id);
+      return this.getQuantity(id) > 0;
     }
 
     return !!usePlatformStore.getState().inventory.items[id];
   }
 
-  isEquipped(id: string): boolean {
-    return !!usePlatformStore.getState().inventory.items[id]?.equipped;
+  getQuantity(id: string): number {
+    return usePlatformStore.getState().inventory.items[id]?.quantity ?? 0;
   }
 
-  isBoostActive(id: string, now = Date.now()): boolean {
-    const expiresAt = usePlatformStore.getState().inventory.items[id]?.expiresAt;
-    return typeof expiresAt === 'number' && expiresAt > now;
-  }
-
-  getActiveCoinMultiplier(now = Date.now()): number {
-    return this.isBoostActive('boost_double', now) ? 2 : 1;
-  }
-
-  getEquippedSkinColor(): number {
-    const items = usePlatformStore.getState().inventory.items;
-    for (const [id, item] of Object.entries(items)) {
-      if (item.equipped && SKIN_COLORS[id] !== undefined) {
-        return SKIN_COLORS[id];
-      }
-    }
-    return DEFAULT_PLAYER_COLOR;
-  }
-
-  equipSkin(id: string): boolean {
-    const item = this.getItem(id);
-    if (!item || item.type !== 'skin' || !this.isOwned(id)) {
-      return false;
-    }
-    usePlatformStore.getState().equipItem(id);
-    eventBus.emit('shop:equip', { itemId: id });
+  /** Consume one use of a boost skill. Returns false if none left. */
+  consumeBoost(id: string): boolean {
+    if (this.getQuantity(id) <= 0) return false;
+    usePlatformStore.getState().removeItem(id, 1);
+    // Persist immediately so force-quit mid-match cannot restore spent boosts.
+    void saveService.saveLocal();
     return true;
   }
 
@@ -94,17 +69,14 @@ class ShopService {
       return false;
     }
 
-    if (item.type === 'skin' && this.isOwned(itemId)) {
-      return false;
-    }
-
-    if (item.type === 'entitlement' && item.productKey) {
-      if (this.isOwned(itemId)) return false;
+    if (item.currency === 'iap' && item.productKey) {
+      if (item.type === 'entitlement' && this.isOwned(itemId)) return false;
 
       const product = getProductByKey(item.productKey);
       const result = await iap.purchase(product);
 
       if (result.success) {
+        // Coin packs are fulfilled via iap:purchase:success (also covers timeout recovery).
         eventBus.emit('shop:purchase', { itemId, price: item.price });
         return true;
       }
@@ -116,9 +88,7 @@ class ShopService {
     }
 
     if (item.currency === 'coins') {
-      const coinsBefore = usePlatformStore.getState().currency.coins;
-      await eventBus.emitAsync('coin:spend', { amount: item.price, reason: `shop:${itemId}` });
-      if (usePlatformStore.getState().currency.coins === coinsBefore) return false;
+      if (!usePlatformStore.getState().spendCoins(item.price)) return false;
     } else {
       return false;
     }
@@ -128,23 +98,32 @@ class ShopService {
     return true;
   }
 
-  async restore(): Promise<number> {
-    const result = await iap.restore();
-    return result.restoredEntitlements.length;
+  /** Grant coin packs after IAP success / restore of an unconsumed consumable. */
+  fulfillIapProduct(productId: string): void {
+    const item = this.items.find((entry) => {
+      if (entry.id === productId) return true;
+      if (!entry.productKey) return false;
+      return getProductByKey(entry.productKey).id === productId;
+    });
+    if (item?.type === 'coins') {
+      this.grantCoins(item);
+    }
   }
 
   private grantItem(item: ShopItem): void {
-    const store = usePlatformStore.getState();
+    if (item.type === 'boost') {
+      usePlatformStore.getState().addItem(item.id, 1);
+    }
+  }
 
-    if (item.type === 'skin') {
-      store.addItem(item.id);
-      store.equipItem(item.id);
+  private grantCoins(item: ShopItem): void {
+    const amount = item.coinAmount ?? 0;
+    if (amount <= 0) {
+      logger.warn(`[Shop] Coin pack missing coinAmount: ${item.id}`);
       return;
     }
-
-    if (item.type === 'boost') {
-      store.activateBoost(item.id, item.duration ?? 3600);
-    }
+    usePlatformStore.getState().addCoins(amount);
+    void saveService.saveLocal();
   }
 }
 

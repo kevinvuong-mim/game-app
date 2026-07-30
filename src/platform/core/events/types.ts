@@ -21,11 +21,8 @@ export type EventHandler<T extends PlatformEvent> = (
 
 export interface PlatformEventMap {
   // Gameplay (game layer emits, platform consumes)
-  jump: { count?: number };
+  merge: { count?: number };
   'score:update': { score: number };
-  collect: { itemId: string; count?: number };
-  'coin:add': { amount: number; source?: string };
-  'coin:spend': { amount: number; reason?: string };
 
   // Lifecycle
   'app:back': void;
@@ -34,28 +31,20 @@ export interface PlatformEventMap {
   'app:resume': void;
   'game:destroy': void;
   'game:start': { gameId: string };
-  'game:over': { score: number; jumps?: number; duration: number };
+  'game:over': { score: number; merges?: number; duration: number };
 
   // Platform
-  'shop:restore': void;
-  'ad:banner:hide': void;
   'daily:claim:request': void;
-  'daily:status:request': void;
   'boot:preload-complete': void;
   'daily:progress:request': void;
   'daily:progress': RewardProgress;
   'deeplink:open': DeepLinkPayload;
-  'shop:equip': { itemId: string };
   'daily:claim:result': {
     day?: number;
     coins?: number;
-    itemId?: string;
     success: boolean;
     message?: string;
-    rewardType?: 'coins' | 'chest';
   };
-  'deeplink:received': DeepLinkPayload;
-  'leaderboard:page': { page: number };
   'leaderboard:update': LeaderboardView;
   'ad:show:request': { placement: string };
   'ad:context:change': { context: string };
@@ -73,22 +62,23 @@ export interface PlatformEventMap {
   'iap:purchase:success': IapPurchaseSuccessPayload;
   'settings:change': { key: string; value: unknown };
   'shop:purchase': { itemId: string; price: number };
+  'shop:restore': void;
   'ad:reward': { placement: string; reward: unknown };
   'leaderboard:refresh': { page?: number } | undefined;
   'iap:entitlement:changed': IapEntitlementChangedPayload;
   'mission:update': { missionId: string; progress: number };
   'game:sync:completed': { rank: number; bestScore: number };
   analytics: { event: AnalyticsEvent; params?: AnalyticsParams };
-  'daily:status': { canClaim: boolean; timeManipulated: boolean };
   'game:sync:dropped': { clientResultId: string; attempts: number };
-  'ad:show:result': { placement: string; shown: boolean; error?: string };
+  /** Modules emit; bootstrap binds ToastManager (avoids modules → UI imports). */
+  'ui:toast': {
+    message: string;
+    type?: 'info' | 'success' | 'warning' | 'error';
+    duration?: number;
+  };
 }
 
 export interface IEventBus {
-  clear(): void;
-  off<T extends PlatformEvent>(event: T, handler: EventHandler<T>): void;
   emit<T extends PlatformEvent>(event: T, payload: PlatformEventMap[T]): void;
-  emitAsync<T extends PlatformEvent>(event: T, payload: PlatformEventMap[T]): Promise<void>;
   on<T extends PlatformEvent>(event: T, handler: EventHandler<T>): () => void;
-  once<T extends PlatformEvent>(event: T, handler: EventHandler<T>): () => void;
 }

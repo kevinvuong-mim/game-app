@@ -1,6 +1,6 @@
 import { logger } from '@platform/core/error';
 import type { IEventBus } from '@platform/core/events';
-import { saveService } from '@platform/modules/save/save.service';
+import { saveService } from '@platform/modules/save';
 import { missions, type MissionService } from './mission.service';
 import { missionTracker, type MissionTracker } from './mission.tracker';
 
@@ -12,12 +12,12 @@ class MissionController {
 
   bind(events: IEventBus): () => void {
     const unsubs = [
-      this.tracker.bind(events, (type, amount) => {
-        void this.handleProgress(type, amount);
+      this.tracker.bind(events, (type, amount, mode) => {
+        void this.handleProgress(type, amount, mode ?? 'increment');
       }),
 
       events.on('app:resume', () => {
-        void this.handleResets();
+        void this.handleResetsAndLogin();
       }),
     ];
 
@@ -26,20 +26,28 @@ class MissionController {
     };
   }
 
-  private async handleProgress(type: string, amount: number): Promise<void> {
-    const updated = this.service.incrementProgressByType(type, amount);
+  private async handleProgress(
+    type: string,
+    amount: number,
+    mode: 'increment' | 'set'
+  ): Promise<void> {
+    const updated =
+      mode === 'set'
+        ? this.service.setProgressByType(type, amount)
+        : this.service.incrementProgressByType(type, amount);
     if (!updated) return;
 
     await saveService.saveLocal();
-    logger.debug('[MissionController] Progress saved', { type, amount });
+    logger.debug('[MissionController] Progress saved', { type, amount, mode });
   }
 
-  private async handleResets(): Promise<void> {
-    const changed = this.service.applyResets();
-    if (!changed) return;
+  private async handleResetsAndLogin(): Promise<void> {
+    const resetChanged = this.service.applyResets();
+    const loginChanged = this.service.recordDailyLogin();
+    if (!resetChanged && !loginChanged) return;
 
     await saveService.saveLocal();
-    logger.debug('[MissionController] Reset saved');
+    logger.debug('[MissionController] Reset/login saved');
   }
 }
 

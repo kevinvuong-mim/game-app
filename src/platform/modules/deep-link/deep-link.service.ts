@@ -14,22 +14,8 @@ class DeepLinkService {
   private bootComplete = false;
   private pendingDeepLink: DeepLinkPayload | null = null;
 
-  peekPendingDeepLink(): DeepLinkPayload | null {
-    return this.pendingDeepLink;
-  }
-
-  consumePendingDeepLink(): DeepLinkPayload | null {
-    const pending = this.pendingDeepLink;
-    this.pendingDeepLink = null;
-    return pending;
-  }
-
   markBootComplete(): void {
     this.bootComplete = true;
-  }
-
-  isBootComplete(): boolean {
-    return this.bootComplete;
   }
 
   handleUrl(url: string, source: DeepLinkSource): boolean {
@@ -40,7 +26,6 @@ class DeepLinkService {
     }
 
     this.pendingDeepLink = parsed;
-    eventBus.emit('deeplink:received', parsed);
     logger.info('[DeepLink] Received', {
       scene: parsed.scene,
       path: parsed.path,

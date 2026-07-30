@@ -9,21 +9,26 @@ import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
-import { saveService } from '@platform/modules/save/save.service';
+import { saveService } from '@platform/modules/save';
 
 export class MissionService {
   private definitions: MissionDefinition[] = missionsData as MissionDefinition[];
 
   init(): void {
     this.initializeMissions();
-    if (this.applyResets()) {
+    let changed = this.applyResets();
+    if (this.syncReachScoreFromHighScore()) changed = true;
+    if (this.recordDailyLogin()) changed = true;
+    if (changed) {
       void saveService.saveLocal();
     }
   }
 
   getMissions(): MissionProgress[] {
     const { missions } = usePlatformStore.getState().missions;
-    return Object.values(missions);
+    return this.definitions
+      .map((def) => missions[def.id])
+      .filter((mission): mission is MissionProgress => !!mission);
   }
 
   getDefinition(id: string): MissionDefinition | undefined {
@@ -63,11 +68,35 @@ export class MissionService {
     return changed;
   }
 
+  /** Marks daily-login missions complete for the current local day. */
+  recordDailyLogin(): boolean {
+    return this.setProgressByType('DAILY_LOGIN', 1);
+  }
+
+  /** Seeds REACH_SCORE missions from the player's saved high score. */
+  syncReachScoreFromHighScore(): boolean {
+    const highScore = usePlatformStore.getState().progress.highScore;
+    return this.setProgressByType('REACH_SCORE', highScore);
+  }
+
   incrementProgressByType(type: string, amount: number): boolean {
     let updated = false;
 
     for (const def of this.getDefinitionsByType(type)) {
       if (this.incrementProgress(def.id, amount)) {
+        updated = true;
+      }
+    }
+
+    return updated;
+  }
+
+  /** Sets progress to `value` when higher than the current progress (absolute goals). */
+  setProgressByType(type: string, value: number): boolean {
+    let updated = false;
+
+    for (const def of this.getDefinitionsByType(type)) {
+      if (this.setProgress(def.id, value)) {
         updated = true;
       }
     }
@@ -86,6 +115,25 @@ export class MissionService {
     }
 
     store.claimMission(id);
+
+    if ((def?.resetPolicy ?? 'never') === 'onClaim') {
+      const { missions: all, setMissions } = usePlatformStore.getState();
+      const current = all.missions[id];
+      if (current) {
+        setMissions({
+          ...all.missions,
+          [id]: {
+            ...current,
+            progress: 0,
+            status: 'active',
+            completedAt: undefined,
+            claimedAt: undefined,
+          },
+        });
+        eventBus.emit('mission:update', { missionId: id, progress: 0 });
+      }
+    }
+
     logger.info('mission_claimed', { missionId: id });
     return true;
   }
@@ -156,6 +204,16 @@ export class MissionService {
     if (!mission || mission.status !== 'active') return false;
 
     usePlatformStore.getState().updateMissionProgress(missionId, mission.progress + amount);
+    this.checkCompletion(missionId);
+    return true;
+  }
+
+  private setProgress(missionId: string, value: number): boolean {
+    const mission = usePlatformStore.getState().missions.missions[missionId];
+    if (!mission || mission.status !== 'active') return false;
+    if (value <= mission.progress) return false;
+
+    usePlatformStore.getState().updateMissionProgress(missionId, value);
     this.checkCompletion(missionId);
     return true;
   }

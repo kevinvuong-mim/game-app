@@ -12,15 +12,18 @@ export interface PlatformStore extends PlatformState {
   spendCoins: (amount: number) => boolean;
 
   // Inventory
-  equipItem: (id: string) => void;
   addItem: (id: string, quantity?: number) => void;
   removeItem: (id: string, quantity?: number) => void;
-  activateBoost: (id: string, durationSeconds: number) => void;
 
   // Progress
   incrementGamesPlayed: () => void;
   setHighScore: (score: number) => void;
   setCurrentLevel: (level: number) => void;
+  setRatePromptProgress: (
+    update: Partial<
+      Pick<PlatformState['progress'], 'hasRatedApp' | 'lastRatePromptGamesPlayed' | 'lastAppRating'>
+    >
+  ) => void;
 
   // Settings
   updateSettings: (settings: Partial<PlatformState['settings']>) => void;
@@ -70,7 +73,6 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
             [id]: {
               id,
               quantity: (existing?.quantity ?? 0) + quantity,
-              equipped: existing?.equipped,
             },
           },
         },
@@ -91,40 +93,6 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
       return { inventory: { items } };
     }),
 
-  equipItem: (id) =>
-    set((s) => {
-      const items = { ...s.inventory.items };
-      for (const key of Object.keys(items)) {
-        if (items[key].equipped) {
-          items[key] = { ...items[key], equipped: false };
-        }
-      }
-      if (items[id]) {
-        items[id] = { ...items[id], equipped: true };
-      }
-      return { inventory: { items } };
-    }),
-
-  activateBoost: (id, durationSeconds) =>
-    set((s) => {
-      const existing = s.inventory.items[id];
-      const now = Date.now();
-      const baseExpiry = existing?.expiresAt && existing.expiresAt > now ? existing.expiresAt : now;
-      return {
-        inventory: {
-          items: {
-            ...s.inventory.items,
-            [id]: {
-              id,
-              quantity: Math.max(1, existing?.quantity ?? 1),
-              equipped: existing?.equipped,
-              expiresAt: baseExpiry + durationSeconds * 1000,
-            },
-          },
-        },
-      };
-    }),
-
   setHighScore: (score) =>
     set((s) => ({
       progress: {
@@ -142,6 +110,14 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
     })),
 
   setCurrentLevel: (level) => set((s) => ({ progress: { ...s.progress, currentLevel: level } })),
+
+  setRatePromptProgress: (update) =>
+    set((s) => ({
+      progress: {
+        ...s.progress,
+        ...update,
+      },
+    })),
 
   updateSettings: (settings) => set((s) => ({ settings: { ...s.settings, ...settings } })),
 
@@ -212,6 +188,11 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
     set((s) => ({
       ...s,
       ...state,
+      progress: {
+        ...DEFAULT_STATE.progress,
+        ...s.progress,
+        ...(state.progress ?? {}),
+      },
       settings: { ...DEFAULT_STATE.settings, ...s.settings, ...(state.settings ?? {}) },
       dailyRewards: {
         ...DEFAULT_STATE.dailyRewards,

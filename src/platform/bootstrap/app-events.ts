@@ -10,9 +10,9 @@ import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { services } from '@platform/core/services';
 import { usePlatformStore } from '@platform/core/state';
-import { shop } from '@platform/modules/shop/shop.service';
 import { hideNativeSplash } from '@platform/bootstrap/capacitor';
-import { saveService } from '@platform/modules/save/save.service';
+import { saveService } from '@platform/modules/save';
+import { gameRunService } from '@platform/modules/game-run';
 
 const { events, analytics } = services;
 
@@ -29,17 +29,13 @@ export function bindAppEvents(): () => void {
       events.emit('ad:show:request', { placement: 'HOME' });
     }),
 
-    events.on('coin:add', ({ amount }) => {
-      const multiplier = shop.getActiveCoinMultiplier();
-      usePlatformStore.getState().addCoins(amount * multiplier);
-    }),
-
-    events.on('coin:spend', ({ amount }) => {
-      usePlatformStore.getState().spendCoins(amount);
-    }),
-
     events.on('score:update', ({ score }) => {
+      const before = usePlatformStore.getState().progress.highScore;
       usePlatformStore.getState().setHighScore(score);
+      // Checkpoint new PBs mid-run — OS may not deliver pause before a kill.
+      if (usePlatformStore.getState().progress.highScore > before) {
+        void saveService.saveLocal();
+      }
     }),
 
     events.on('game:start', () => {
@@ -47,10 +43,14 @@ export function bindAppEvents(): () => void {
       trackGameStart();
     }),
 
-    events.on('game:over', async ({ score, duration, jumps }) => {
+    events.on('game:over', async ({ score, duration, merges }) => {
       // Apply score before save — do not rely on a later score:update ordering.
       usePlatformStore.getState().setHighScore(score);
-      trackGameOver({ score, duration, jumps });
+      // 1 point = 1 coin at end of run.
+      if (score > 0) {
+        usePlatformStore.getState().addCoins(score);
+      }
+      trackGameOver({ score, duration, merges });
       events.emit('ad:show:request', { placement: 'GAME_OVER' });
       await saveService.saveLocal();
     }),
@@ -65,10 +65,6 @@ export function bindAppEvents(): () => void {
 
     events.on('shop:purchase', ({ itemId, price }) => {
       trackPurchase({ itemId, price });
-      void saveService.saveLocal();
-    }),
-
-    events.on('shop:equip', () => {
       void saveService.saveLocal();
     }),
 
@@ -99,6 +95,7 @@ export function bindAppLifecycle(): () => void {
     if (document.hidden) {
       trackSessionEnd();
       events.emit('app:pause', undefined);
+      void gameRunService.flush();
       void saveService.saveLocal();
       void analytics.flush();
     } else {

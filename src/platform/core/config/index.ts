@@ -5,9 +5,9 @@ import {
   resolveDeepLinkConfig,
 } from '@platform/modules/deep-link/deep-link.config';
 import {
-  type AppReviewConfig,
-  resolveAppReviewConfig,
-} from '@platform/modules/app-review/app-review.config';
+  type StoreListingConfig,
+  resolveStoreListingConfig,
+} from '@platform/modules/share/share.config';
 import notificationEnvConfigs from './notification-env.json';
 
 type IapProvider = 'mock' | 'revenuecat';
@@ -34,7 +34,7 @@ export interface RuntimeConfig {
   deepLink: DeepLinkConfig;
   firebase: FirebaseConfig;
   analyticsEnabled: boolean;
-  appReview: AppReviewConfig;
+  storeListing: StoreListingConfig;
   pushNotificationsEnabled: boolean;
   localNotificationsEnabled: boolean;
   analyticsProvider: AnalyticsProvider;
@@ -251,7 +251,7 @@ export function createConfig(overrides?: Partial<RuntimeConfig>): RuntimeConfig 
     apiUrl: base.apiUrl ?? '',
     debug: base.debug ?? false,
     deepLink: resolveDeepLinkConfig(),
-    appReview: resolveAppReviewConfig(),
+    storeListing: resolveStoreListingConfig(),
     adsEnabled: base.adsEnabled ?? false,
     iapEnabled: base.iapEnabled ?? false,
     analyticsEnabled: base.analyticsEnabled ?? false,

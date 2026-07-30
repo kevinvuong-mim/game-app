@@ -8,12 +8,10 @@ interface RewardRequestResult {
 }
 
 class AdsModuleService {
-  private configLoaded = false;
   private runtimeConfig: AdsRemoteConfig = { ...DEFAULT_REMOTE_CONFIG };
 
   async init(): Promise<void> {
     ads.setRemoteConfig(this.runtimeConfig);
-    this.configLoaded = true;
   }
 
   async showPlacement(placement: string): Promise<{ shown: boolean; error?: string }> {
@@ -90,10 +88,6 @@ class AdsModuleService {
       success: true,
       reward,
     };
-  }
-
-  isConfigLoaded(): boolean {
-    return this.configLoaded;
   }
 }
 

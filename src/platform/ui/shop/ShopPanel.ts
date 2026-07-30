@@ -1,184 +1,245 @@
 import Phaser from 'phaser';
 
+import {
+  PANEL_BG,
+  TEXT_COLOR,
+  PANEL_BORDER,
+  PANEL_CORNER_RADIUS,
+  PANEL_LIST_PADDING,
+} from '../panel/panelTheme';
+import type { UIButton } from '../types';
 import { toast } from '../toast/ToastManager';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
+import { PanelHeader } from '../panel/PanelHeader';
+import { createUIButton } from '../button/UIButton';
+import { formatNumber } from '@platform/core/utils';
 import { t } from '@platform/modules/i18n/i18n.service';
-import { shop } from '@platform/modules/shop/shop.service';
-import type { ShopItem } from '@platform/modules/shop/shop.service';
-import { getPanelLayoutMetrics } from '@platform/ui/layout/panelLayout';
-import { createUIButton, UIButtonBackgroundKey } from '../button/UIButton';
+import { usePlatformStore } from '@platform/core/state';
+import { drawRoundedRect, measureTextWidth } from '../panel/graphics';
+import { shop, type ShopItem } from '@platform/modules/shop';
+
+const ITEM_ROW_HEIGHT = 146;
+
+const PRICE_BTN_GAP = 6;
+const PRICE_BTN_PAD_X = 14;
+const PRICE_ICON_SIZE = 22;
+const PRICE_BTN_HEIGHT = 60;
+const PRICE_BTN_MIN_WIDTH = 100;
+const PRICE_BTN_RIGHT_MARGIN = 4;
+const FALLBACK_ITEM_ICON = 'shop-item-1';
 
 /**
- * Shop UI — lives in platform/ui so game scenes stay event-driven.
+ * Shop UI — coin boosts only. IAP (remove ads) lives in Settings.
  */
 export class ShopPanel extends Phaser.GameObjects.Container {
-  private readonly rowWidth: number;
+  private readonly onBack: () => void;
+  private readonly onNavigate: (sceneKey: string) => void;
 
+  private header?: PanelHeader;
   private listContainer?: Phaser.GameObjects.Container;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(
+    scene: Phaser.Scene,
+    options: {
+      onBack: () => void;
+      onNavigate: (sceneKey: string) => void;
+    }
+  ) {
     super(scene, 0, 0);
-    const metrics = getPanelLayoutMetrics(scene.cameras.main);
-    this.rowWidth = metrics.innerWidth;
+    this.onBack = options.onBack;
+    this.onNavigate = options.onNavigate;
     scene.add.existing(this);
     this.build();
     this.renderItems();
   }
 
-  private build(): void {
-    const { height } = this.scene.cameras.main;
-    const metrics = getPanelLayoutMetrics(this.scene.cameras.main);
+  destroy(fromScene?: boolean): void {
+    this.header = undefined;
+    super.destroy(fromScene);
+  }
 
-    const panel = this.scene.add.rectangle(
-      metrics.centerX,
-      height / 2,
-      metrics.panelWidth,
-      height * 0.75,
-      0x2a2a4a,
-      1
+  isGetCoinsModalOpen(): boolean {
+    return !!this.header?.isGetCoinsModalOpen();
+  }
+
+  hideGetCoinsModal(): void {
+    this.header?.hideGetCoinsModal();
+  }
+
+  private getBoostItems(): ShopItem[] {
+    return shop.getItems('boost');
+  }
+
+  private build(): void {
+    const { width, height } = this.scene.cameras.main;
+    const panelWidth = Math.min(width * 0.97, 460);
+    const itemCount = Math.max(this.getBoostItems().length, 1);
+    const panelHeight =
+      PANEL_LIST_PADDING * 2 + ITEM_ROW_HEIGHT * (itemCount - 1) + ITEM_ROW_HEIGHT * 0.85;
+    const panelTop = height * 0.24;
+    const panelY = panelTop + panelHeight / 2;
+
+    const panel = this.scene.add.graphics();
+    drawRoundedRect(
+      panel,
+      width / 2 - panelWidth / 2,
+      panelY - panelHeight / 2,
+      panelWidth,
+      panelHeight,
+      PANEL_CORNER_RADIUS,
+      PANEL_BG,
+      PANEL_BORDER
     );
-    panel.setStrokeStyle(2, 0x4a90d9);
     this.add(panel);
 
-    this.listContainer = this.scene.add.container(metrics.centerX, height * 0.22);
-    this.add(this.listContainer);
-
-    const restoreButton = createUIButton({
-      scene: this.scene,
-      position: { x: metrics.centerX, y: height * 0.82 },
-      size: { width: 180, height: 44 },
-      background: { key: UIButtonBackgroundKey.Primary },
-      text: {
-        content: t('shop.restore'),
-      },
-      onClick: () => {
-        void this.restorePurchases();
-      },
+    this.header = new PanelHeader(this.scene, {
+      onBack: this.onBack,
+      onNavigate: this.onNavigate,
+      titleKey: 'shop.title',
     });
-    this.add(restoreButton);
+    this.add(this.header);
+
+    this.listContainer = this.scene.add.container(
+      width / 2,
+      panelTop + PANEL_LIST_PADDING + ITEM_ROW_HEIGHT * 0.4
+    );
+    this.add(this.listContainer);
   }
 
   private renderItems(): void {
     if (!this.listContainer) return;
     this.listContainer.removeAll(true);
 
-    const items = shop.getItems();
-    const rowHeight = 68;
+    const { width } = this.scene.cameras.main;
+    const items = this.getBoostItems();
+    const rowWidth = Math.min(width * 0.91, 430);
 
     items.forEach((item, index) => {
-      const row = this.createItemRow(item, index * rowHeight);
-      this.listContainer!.add(row);
+      const y = index * ITEM_ROW_HEIGHT;
+      this.listContainer!.add(this.createItemRow(item, y, rowWidth));
+
+      if (index < items.length - 1) {
+        this.listContainer!.add(
+          this.scene.add.rectangle(
+            0,
+            y + ITEM_ROW_HEIGHT / 2,
+            rowWidth * 0.92,
+            2,
+            PANEL_BORDER,
+            0.55
+          )
+        );
+      }
     });
   }
 
-  private createItemRow(item: ShopItem, y: number): Phaser.GameObjects.Container {
+  private createItemRow(item: ShopItem, y: number, rowWidth: number): Phaser.GameObjects.Container {
     const container = this.scene.add.container(0, y);
-    const owned = shop.isOwned(item.id);
-    const equipped = item.type === 'skin' && shop.isEquipped(item.id);
-    const itemName = t(`shop.items.${item.id}.name`);
-    const itemDesc = t(`shop.items.${item.id}.description`);
-    const priceLabel = owned
-      ? equipped
-        ? t('shop.equipped')
-        : t('shop.owned')
-      : `${item.price} ${t(`shop.currency.${item.currency}`)}`;
-    const rowHalf = this.rowWidth / 2;
-    const textWrapWidth = Math.max(140, this.rowWidth * 0.52);
-    const actionX = rowHalf - 56;
+    const rowHalf = rowWidth / 2;
+    const iconSize = 100;
+    const iconX = -rowHalf + iconSize / 2 + 4;
+    const iconKey = this.scene.textures.exists(item.icon) ? item.icon : FALLBACK_ITEM_ICON;
 
-    const bg = this.scene.add.rectangle(0, 0, this.rowWidth, 58, 0x1a1a2e, 1);
-    bg.setStrokeStyle(1, 0x4a90d9);
-    container.add(bg);
+    const icon = this.scene.add.image(iconX, 0, iconKey);
+    icon.setDisplaySize(iconSize, iconSize);
+    container.add(icon);
 
-    const nameText = this.scene.add.text(-rowHalf + 14, -10, itemName, {
-      fontSize: '16px',
-      fontStyle: 'bold',
-      color: '#ffffff',
-      fontFamily: FREDOKA_FONT,
-    });
-    container.add(nameText);
-
-    const descText = this.scene.add.text(-rowHalf + 14, 10, itemDesc, {
-      fontSize: '13px',
-      color: '#aaaaaa',
-      fontFamily: FREDOKA_FONT,
-      wordWrap: { width: textWrapWidth },
-    });
-    container.add(descText);
-
-    if (!owned || item.type === 'boost') {
-      const buyBtn = this.scene.add.rectangle(actionX, 0, 92, 36, 0x4a90d9);
-      buyBtn.setStrokeStyle(1, 0xffffff);
-      buyBtn.setInteractive({ useHandCursor: true });
-
-      const buyLabel = this.scene.add.text(actionX, 0, t('shop.buy'), {
-        fontSize: '15px',
-        color: '#ffffff',
+    const textX = iconX + iconSize / 2 + 12;
+    container.add(
+      this.scene.add.text(textX, -38, t(`shop.items.${item.id}.name`), {
+        fontSize: '20px',
+        fontStyle: 'bold',
+        color: TEXT_COLOR,
         fontFamily: FREDOKA_FONT,
-      });
-      buyLabel.setOrigin(0.5);
-
-      buyBtn.on('pointerdown', () => {
-        void this.purchaseItem(item);
-      });
-
-      container.add([buyBtn, buyLabel]);
-    } else if (item.type === 'skin' && !equipped) {
-      const equipBtn = this.scene.add.rectangle(actionX, 0, 92, 36, 0x6c5ce7);
-      equipBtn.setStrokeStyle(1, 0xffffff);
-      equipBtn.setInteractive({ useHandCursor: true });
-
-      const equipLabel = this.scene.add.text(actionX, 0, t('shop.equip'), {
-        fontSize: '15px',
-        color: '#ffffff',
-        fontFamily: FREDOKA_FONT,
-      });
-      equipLabel.setOrigin(0.5);
-
-      equipBtn.on('pointerdown', () => {
-        if (shop.equipSkin(item.id)) {
-          toast.show({
-            type: 'success',
-            message: t('shop.equipSuccess', { name: itemName }),
-          });
-          this.renderItems();
-        }
-      });
-
-      container.add([equipBtn, equipLabel]);
-    } else {
-      const ownedText = this.scene.add.text(actionX, 0, priceLabel, {
+      })
+    );
+    container.add(
+      this.scene.add.text(textX, -12, t(`shop.items.${item.id}.description`), {
         fontSize: '13px',
-        color: '#ffd700',
+        color: TEXT_COLOR,
         fontFamily: FREDOKA_FONT,
-      });
-      ownedText.setOrigin(0.5);
-      container.add(ownedText);
-    }
+        wordWrap: { width: rowWidth * 0.42 },
+      })
+    );
+    container.add(
+      this.scene.add.text(
+        textX,
+        24,
+        t('shop.ownedQuantity', { quantity: formatNumber(shop.getQuantity(item.id)) }),
+        {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: '#b45309',
+          fontFamily: FREDOKA_FONT,
+        }
+      )
+    );
+
+    container.add(this.createPriceButton(item, rowHalf));
 
     return container;
   }
 
-  private async purchaseItem(item: ShopItem): Promise<void> {
-    const itemName = t(`shop.items.${item.id}.name`);
-    const success = await shop.purchase(item.id);
-    if (success) {
-      toast.show({
-        type: 'success',
-        message: t('shop.purchaseSuccess', { name: itemName }),
-      });
-      this.renderItems();
-    } else {
-      toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
-    }
+  private createPriceButton(item: ShopItem, rowHalf: number): UIButton {
+    const priceLabel = formatNumber(item.price);
+    const priceTextWidth = measureTextWidth(this.scene, priceLabel, {
+      fontSize: '16px',
+      fontStyle: 'bold',
+      fontFamily: FREDOKA_FONT,
+      stroke: '#000000',
+      strokeThickness: 2,
+    });
+
+    const priceButtonWidth = Math.max(
+      PRICE_BTN_MIN_WIDTH,
+      PRICE_BTN_PAD_X + PRICE_ICON_SIZE + PRICE_BTN_GAP + priceTextWidth + PRICE_BTN_PAD_X
+    );
+
+    return createUIButton({
+      scene: this.scene,
+      position: {
+        x: rowHalf - PRICE_BTN_RIGHT_MARGIN - priceButtonWidth / 2,
+        y: 0,
+      },
+      size: { width: priceButtonWidth, height: PRICE_BTN_HEIGHT },
+      background: { key: 'leaderboard-button-background' },
+      icon: {
+        key: 'coin-icon',
+        size: { width: PRICE_ICON_SIZE, height: PRICE_ICON_SIZE },
+        offset: { x: PRICE_BTN_PAD_X + PRICE_ICON_SIZE / 2, y: PRICE_BTN_HEIGHT / 2 },
+      },
+      text: {
+        content: priceLabel,
+        offset: {
+          x: PRICE_BTN_PAD_X + PRICE_ICON_SIZE + PRICE_BTN_GAP + priceTextWidth / 2,
+          y: PRICE_BTN_HEIGHT / 2,
+        },
+        style: {
+          fontSize: 16,
+          fontStyle: 'bold',
+          border: { width: 2, color: '#000000' },
+        },
+      },
+      onClick: () => {
+        void this.purchaseItem(item);
+      },
+    });
   }
 
-  private async restorePurchases(): Promise<void> {
-    const count = await shop.restore();
-    toast.show({
-      type: count > 0 ? 'success' : 'info',
-      message: count > 0 ? t('shop.restoreSuccess', { count }) : t('shop.restoreEmpty'),
-    });
+  private async purchaseItem(item: ShopItem): Promise<void> {
+    const coins = usePlatformStore.getState().currency.coins;
+
+    if (item.currency === 'coins' && coins < item.price) {
+      toast.show({ message: t('shop.notEnoughCoins'), type: 'error' });
+      return;
+    }
+
+    const success = await shop.purchase(item.id);
+    if (!success) {
+      toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
+      return;
+    }
+
     this.renderItems();
   }
 }

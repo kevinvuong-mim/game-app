@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 
-import { t } from '@platform/ui/index';
+import { t, canClaimDailyReward, getClaimableMissionCount } from '@platform/ui/index';
 import { eventBus } from '@platform/core/events';
-import { createUIButton, UIButtonBackgroundKey } from '@platform/ui/button/UIButton';
+import { createUIButton } from '@platform/ui/button/UIButton';
 
 export class HomeScene extends Phaser.Scene {
   constructor() {
@@ -23,46 +23,29 @@ export class HomeScene extends Phaser.Scene {
 
     createUIButton({
       scene: this,
-      position: { x: width / 2, y: height * 0.5 },
-      size: { width: 256, height: 78 },
-      background: { key: 'play-button-background' },
-      icon: {
-        key: 'play-button-icon',
-        size: { width: 43, height: 43 },
-        offset: { x: 56, y: 39 },
-      },
-      text: {
-        content: t('home.play'),
-        style: {
-          fontSize: 36,
-          fontStyle: 'bold',
-          border: { width: 4, color: '#b55419' },
-        },
-        offset: { x: 152, y: 39 },
-      },
-      onClick: () => this.scene.start('Gameplay'),
-      badge: {
-        textStyle: {
-          border: { width: 4, color: '#c4271d' },
-        },
-        background: {
-          radius: 10,
-          color: '#ea2313',
-          border: {
-            width: 3,
-            color: '#ac2503',
-          },
-        },
-        content: t('home.playBadge'),
-        position: { x: 210, y: -10 },
-      },
+      position: { x: width * 0.83, y: height * 0.04 },
+      size: { width: 80, height: 80 },
+      background: { key: 'how-to-play-icon' },
+      onClick: () => this.openScreen('HowToPlay'),
     });
 
     createUIButton({
       scene: this,
-      position: { x: width / 2, y: height * 0.57 },
-      size: { width: 256, height: 78 },
-      background: { key: UIButtonBackgroundKey.Rounded },
+      position: { x: width / 2, y: height * 0.56 },
+      size: { width: 300, height: 110 },
+      background: { key: 'play-button-background' },
+      text: {
+        content: t('home.play'),
+        style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+      },
+      onClick: () => this.scene.start('Gameplay', { returnTo: 'Home' }),
+    });
+
+    createUIButton({
+      scene: this,
+      position: { x: width / 2, y: height * 0.65 },
+      size: { width: 300, height: 110 },
+      background: { key: 'leaderboard-button-background' },
       text: {
         content: t('home.leaderboard'),
         style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
@@ -72,9 +55,9 @@ export class HomeScene extends Phaser.Scene {
 
     createUIButton({
       scene: this,
-      position: { x: width / 2, y: height * 0.64 },
-      size: { width: 256, height: 78 },
-      background: { key: UIButtonBackgroundKey.Rounded },
+      position: { x: width / 2, y: height * 0.74 },
+      size: { width: 300, height: 110 },
+      background: { key: 'settings-button-background' },
       text: {
         content: t('home.settings'),
         style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
@@ -84,41 +67,72 @@ export class HomeScene extends Phaser.Scene {
 
     createUIButton({
       scene: this,
-      position: { x: width / 2, y: height * 0.71 },
-      size: { width: 256, height: 78 },
-      background: { key: UIButtonBackgroundKey.Rounded },
+      position: { x: width / 4, y: height * 0.86 },
+      size: { width: 120, height: 120 },
+      background: { key: 'shop-icon' },
       text: {
         content: t('home.shop'),
-        style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+        offset: { x: 60, y: 110 },
+        style: { fontSize: 24, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
       onClick: () => this.openScreen('Shop'),
     });
 
+    const claimableMissions = getClaimableMissionCount();
+
     createUIButton({
       scene: this,
-      position: { x: width / 2, y: height * 0.78 },
-      size: { width: 256, height: 78 },
-      background: { key: UIButtonBackgroundKey.Rounded },
+      position: { x: width / 2, y: height * 0.86 },
+      size: { width: 120, height: 120 },
+      background: { key: 'missions-icon' },
       text: {
+        offset: { x: 60, y: 110 },
         content: t('home.missions'),
-        style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+        style: { fontSize: 24, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+      },
+      badge: {
+        content: String(claimableMissions),
+        visible: claimableMissions > 0,
+        position: { x: 82, y: 2 },
+        minSize: { width: 36, height: 36 },
+        padding: { horizontal: 5, vertical: 3 },
+        background: { color: '#e53935', radius: 18 },
+        textStyle: {
+          fontSize: 20,
+          fontStyle: 'bold',
+          color: '#ffffff',
+          border: { width: 3, color: '#000000' },
+        },
       },
       onClick: () => this.openScreen('Missions'),
     });
 
     createUIButton({
       scene: this,
-      position: { x: width / 2, y: height * 0.85 },
-      size: { width: 256, height: 78 },
-      background: { key: UIButtonBackgroundKey.Rounded },
+      position: { x: (3 * width) / 4, y: height * 0.86 },
+      size: { width: 120, height: 120 },
+      background: { key: 'daily-reward-icon' },
       text: {
+        offset: { x: 60, y: 110 },
         content: t('home.dailyReward'),
-        style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+        style: { fontSize: 24, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
-      sound: 'coin-drop',
+      badge: {
+        content: '!',
+        visible: canClaimDailyReward(),
+        position: { x: 82, y: 2 },
+        minSize: { width: 36, height: 36 },
+        padding: { horizontal: 5, vertical: 3 },
+        background: { color: '#e53935', radius: 18 },
+        textStyle: {
+          fontSize: 20,
+          fontStyle: 'bold',
+          color: '#ffffff',
+          border: { width: 3, color: '#000000' },
+        },
+      },
       onClick: () => this.openScreen('DailyReward'),
     });
-
   }
 
   private addBackgroundImage(width: number, height: number): void {

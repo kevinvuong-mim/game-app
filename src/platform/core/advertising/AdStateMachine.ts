@@ -1,7 +1,7 @@
 import type { AdState, AdFormat, BannerState } from './types';
 
 const SHOWABLE_STATES: AdState[] = ['READY'];
-const LOADABLE_STATES: AdState[] = ['IDLE', 'ERROR', 'COMPLETED', 'EXPIRED'];
+const LOADABLE_STATES: AdState[] = ['IDLE', 'ERROR', 'COMPLETED'];
 
 export class AdStateMachine {
   private state: AdState = 'IDLE';
@@ -16,10 +16,6 @@ export class AdStateMachine {
 
   canShow(): boolean {
     return SHOWABLE_STATES.includes(this.state);
-  }
-
-  isDestroyed(): boolean {
-    return this.state === 'DESTROYED';
   }
 
   startLoading(): boolean {
@@ -44,10 +40,6 @@ export class AdStateMachine {
 
   markError(): void {
     this.state = 'ERROR';
-  }
-
-  markExpired(): void {
-    this.state = 'EXPIRED';
   }
 
   markDestroyed(): void {
@@ -94,6 +86,11 @@ export class BannerStateMachine {
 
   markDestroyed(): void {
     this.state = 'DESTROYED';
+  }
+
+  /** Leave DESTROYED so banners can load again after ads are re-enabled. */
+  forceReset(): void {
+    this.state = 'IDLE';
   }
 
   reset(): void {

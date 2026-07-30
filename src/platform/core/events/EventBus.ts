@@ -1,7 +1,6 @@
 import type { IEventBus, EventHandler, PlatformEvent, PlatformEventMap } from './types';
 
 type ListenerEntry = {
-  once: boolean;
   handler: EventHandler<PlatformEvent>;
 };
 
@@ -18,8 +17,6 @@ class EventBus implements IEventBus {
     const entries = this.listeners.get(event);
     if (!entries?.size) return;
 
-    const toRemove: ListenerEntry[] = [];
-
     for (const entry of entries) {
       try {
         const result = entry.handler(payload as PlatformEventMap[PlatformEvent]);
@@ -31,71 +28,19 @@ class EventBus implements IEventBus {
       } catch (error) {
         console.error(`[EventBus] Handler error for "${event}":`, error);
       }
-      if (entry.once) toRemove.push(entry);
-    }
-
-    for (const entry of toRemove) {
-      entries.delete(entry);
-    }
-  }
-
-  /**
-   * Await all handlers in registration order. Use when the emitter depends on handler side effects.
-   */
-  async emitAsync<T extends PlatformEvent>(event: T, payload: PlatformEventMap[T]): Promise<void> {
-    const entries = this.listeners.get(event);
-    if (!entries?.size) return;
-
-    const toRemove: ListenerEntry[] = [];
-
-    for (const entry of entries) {
-      try {
-        await entry.handler(payload as PlatformEventMap[PlatformEvent]);
-      } catch (error) {
-        console.error(`[EventBus] Handler error for "${event}":`, error);
-      }
-      if (entry.once) toRemove.push(entry);
-    }
-
-    for (const entry of toRemove) {
-      entries.delete(entry);
     }
   }
 
   on<T extends PlatformEvent>(event: T, handler: EventHandler<T>): () => void {
-    return this.addListener(event, handler as EventHandler<PlatformEvent>, false);
+    return this.addListener(event, handler as EventHandler<PlatformEvent>);
   }
 
-  off<T extends PlatformEvent>(event: T, handler: EventHandler<T>): void {
-    const entries = this.listeners.get(event);
-    if (!entries) return;
-
-    for (const entry of entries) {
-      if (entry.handler === handler) {
-        entries.delete(entry);
-        break;
-      }
-    }
-  }
-
-  once<T extends PlatformEvent>(event: T, handler: EventHandler<T>): () => void {
-    return this.addListener(event, handler as EventHandler<PlatformEvent>, true);
-  }
-
-  clear(): void {
-    this.listeners.clear();
-  }
-
-  private addListener(
-    event: PlatformEvent,
-    handler: EventHandler<PlatformEvent>,
-    once: boolean
-  ): () => void {
+  private addListener(event: PlatformEvent, handler: EventHandler<PlatformEvent>): () => void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
 
-    const entry: ListenerEntry = { handler, once };
+    const entry: ListenerEntry = { handler };
     this.listeners.get(event)!.add(entry);
 
     return () => {

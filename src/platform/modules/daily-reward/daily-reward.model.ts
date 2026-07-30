@@ -21,10 +21,8 @@ type RewardDayStatus = 'locked' | 'claimed' | 'current';
 
 export interface RewardDayProgress {
   day: number;
-  coins?: number;
-  rewardLabel: string;
+  coins: number;
   status: RewardDayStatus;
-  rewardType: 'coins' | 'chest' | 'random';
 }
 
 export interface RewardProgress {
@@ -36,10 +34,7 @@ export interface RewardProgress {
 
 export interface ClaimResult {
   day: number;
-  coins?: number;
-  itemId?: string;
-  itemQuantity?: number;
-  rewardType: 'chest' | 'coins';
+  coins: number;
 }
 
 export function createDefaultModel(): DailyRewardModel {

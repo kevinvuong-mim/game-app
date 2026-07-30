@@ -1,5 +1,4 @@
-import { eventBus } from '@platform/core/events';
-import { LeaderboardPanel } from '@platform/ui/index';
+import { LeaderboardPanel } from '@platform/ui';
 import { BasePanelScene, type PanelSceneData } from './BasePanelScene';
 
 export class LeaderboardScene extends BasePanelScene {
@@ -7,11 +6,9 @@ export class LeaderboardScene extends BasePanelScene {
 
   constructor() {
     super({
-      closeButtonY: 0.94,
-      defaultReturnTo: 'Home',
       sceneKey: 'Leaderboard',
-      titleKey: 'leaderboard.title',
-      backgroundKey: 'general-background-image',
+      defaultReturnTo: 'Home',
+      adContext: 'LEADERBOARD',
     });
   }
 
@@ -19,12 +16,10 @@ export class LeaderboardScene extends BasePanelScene {
     return data.returnTo ? data.returnData : undefined;
   }
 
-  protected onBeforePanel(): void {
-    eventBus.emit('ad:context:change', { context: 'LEADERBOARD' });
-  }
-
   protected createPanel(): void {
-    this.panel = new LeaderboardPanel(this);
+    this.panel = new LeaderboardPanel(this, {
+      onBack: () => this.goBack(),
+    });
   }
 
   protected onPanelShutdown(): void {

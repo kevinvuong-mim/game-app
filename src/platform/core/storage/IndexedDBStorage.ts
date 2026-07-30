@@ -2,7 +2,7 @@ import type { StorageProvider } from './types';
 
 const DB_VERSION = 1;
 const STORE_NAME = 'kv';
-const DB_NAME = 'game-starter-kit';
+const DB_NAME = 'fruloop';
 
 export class IndexedDBStorageProvider implements StorageProvider {
   readonly type = 'indexedDB' as const;
@@ -34,9 +34,10 @@ export class IndexedDBStorageProvider implements StorageProvider {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
-      const request = store.put(value, key);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve();
+      store.put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+      tx.onerror = () => reject(tx.error ?? requestError(tx));
     });
   }
 
@@ -46,8 +47,9 @@ export class IndexedDBStorageProvider implements StorageProvider {
       const tx = db.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
       const request = store.get(key);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve((request.result as T) ?? null);
+      tx.oncomplete = () => resolve((request.result as T) ?? null);
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+      tx.onerror = () => reject(tx.error ?? request.error ?? new Error('IndexedDB read failed'));
     });
   }
 
@@ -56,9 +58,10 @@ export class IndexedDBStorageProvider implements StorageProvider {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
-      const request = store.delete(key);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve();
+      store.delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+      tx.onerror = () => reject(tx.error ?? new Error('IndexedDB delete failed'));
     });
   }
 
@@ -67,9 +70,10 @@ export class IndexedDBStorageProvider implements StorageProvider {
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
-      const request = store.clear();
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve();
+      store.clear();
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+      tx.onerror = () => reject(tx.error ?? new Error('IndexedDB clear failed'));
     });
   }
 
@@ -79,8 +83,13 @@ export class IndexedDBStorageProvider implements StorageProvider {
       const tx = db.transaction(STORE_NAME, 'readonly');
       const store = tx.objectStore(STORE_NAME);
       const request = store.getAllKeys();
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result as string[]);
+      tx.oncomplete = () => resolve(request.result as string[]);
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+      tx.onerror = () => reject(tx.error ?? request.error ?? new Error('IndexedDB keys failed'));
     });
   }
+}
+
+function requestError(tx: IDBTransaction): Error {
+  return tx.error ?? new Error('IndexedDB request failed');
 }

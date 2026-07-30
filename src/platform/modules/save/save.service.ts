@@ -14,20 +14,36 @@ interface SaveData {
 class SaveService {
   /** Blocks saveLocal until loadLocal has run, preventing boot races from wiping progress. */
   private hydrated = false;
+  private dirty = false;
+  private writeChain: Promise<void> = Promise.resolve();
 
+  /**
+   * Persist platform progress. Concurrent callers coalesce into one durable write
+   * and every `await saveLocal()` waits until that write (including coalesced
+   * snapshots) has finished — critical for daily-reward / IAP durability.
+   */
   async saveLocal(): Promise<void> {
     if (!this.hydrated) {
       logger.warn('[Save] Skipping saveLocal before loadLocal (would overwrite progress)');
       return;
     }
 
-    const data: SaveData = {
-      version: 1,
-      timestamp: Date.now(),
-      state: this.extractSaveableState(),
-    };
-    await storage.save(SAVE_KEY, data, storage.getDurableProviderType());
-    logger.debug('[Save] Local save complete');
+    this.dirty = true;
+    this.writeChain = this.writeChain.then(() => this.flushDirty());
+    await this.writeChain;
+  }
+
+  private async flushDirty(): Promise<void> {
+    while (this.dirty) {
+      this.dirty = false;
+      const data: SaveData = {
+        version: 1,
+        timestamp: Date.now(),
+        state: this.extractSaveableState(),
+      };
+      await storage.save(SAVE_KEY, data, storage.getDurableProviderType());
+      logger.debug('[Save] Local save complete');
+    }
   }
 
   async loadLocal(): Promise<boolean> {

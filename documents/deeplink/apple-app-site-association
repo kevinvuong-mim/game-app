@@ -4,7 +4,7 @@
     "details": [
       {
         "appIDs": [
-          "TEAM_ID.com.studio.gamestarterkit.dev"
+          "TEAM_ID.com.vraxion.fruloop.dev"
         ],
         "paths": [
           "/",
@@ -14,16 +14,16 @@
           "/settings",
           "/missions",
           "/daily-reward",
+          "/how-to-play",
           "/play",
           "/gameplay",
-          "/how-to-play",
           "/legal",
           "NOT /api/*"
         ]
       },
       {
         "appIDs": [
-          "TEAM_ID.com.studio.gamestarterkit.prod"
+          "TEAM_ID.com.vraxion.fruloop.prod"
         ],
         "paths": [
           "/",
@@ -33,9 +33,9 @@
           "/settings",
           "/missions",
           "/daily-reward",
+          "/how-to-play",
           "/play",
           "/gameplay",
-          "/how-to-play",
           "/legal",
           "NOT /api/*"
         ]

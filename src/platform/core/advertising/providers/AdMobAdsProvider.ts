@@ -3,7 +3,18 @@ import { Capacitor } from '@capacitor/core';
 import { logger } from '../../error';
 import type { AdFormat, AdShowResult, IAdsProvider, AdsProviderConfig } from '../types';
 
+type AdMobRewardItem = {
+  type?: string;
+  amount?: number;
+};
+
+type AdMobConsentInfo = {
+  status: string;
+  isConsentFormAvailable: boolean;
+};
+
 type AdMobModule = {
+  AdmobConsentStatus: { REQUIRED: string };
   BannerAdSize: { BANNER: string };
   BannerAdPosition: { BOTTOM_CENTER: string };
   BannerAdPluginEvents: { Loaded: string; FailedToLoad: string };
@@ -20,13 +31,17 @@ type AdMobModule = {
     showInterstitial: () => Promise<void>;
     addListener: (
       event: string,
-      handler: (event: { type?: string }) => void
+      handler: (event: AdMobRewardItem) => void
     ) => Promise<{ remove: () => void }>;
-    showRewardVideoAd: () => Promise<{ type?: string }>;
+    showRewardVideoAd: () => Promise<AdMobRewardItem>;
     prepareAppOpenAd: (opts: { adId: string }) => Promise<void>;
     prepareInterstitial: (opts: { adId: string }) => Promise<void>;
     prepareRewardVideoAd: (opts: { adId: string }) => Promise<void>;
     initialize: (opts: { initializeForTesting?: boolean }) => Promise<void>;
+    trackingAuthorizationStatus: () => Promise<{ status: string }>;
+    requestTrackingAuthorization: () => Promise<void>;
+    requestConsentInfo: () => Promise<AdMobConsentInfo>;
+    showConsentForm: () => Promise<AdMobConsentInfo>;
   };
   RewardAdPluginEvents: { Rewarded: string; Dismissed: string; FailedToLoad: string };
   InterstitialAdPluginEvents: { Loaded: string; Dismissed: string; FailedToLoad: string };
@@ -50,12 +65,47 @@ export class AdMobAdsProvider implements IAdsProvider {
     this.config = config;
     this.admob = (await import('@capacitor-community/admob')) as unknown as AdMobModule;
 
+    // Order: initialize → ATT + UMP → then caller may preload ads.
     await this.admob.AdMob.initialize({
       initializeForTesting: config.testing ?? false,
     });
 
+    // TODO: re-enable ATT + UMP before production release.
+    // await this.requestPrivacyConsent();
+
     logger.info('[Ads] AdMob provider initialized');
   }
+
+  // /**
+  //  * ATT (iOS) + Google UMP consent before any ad load.
+  //  * Declining still allows ads (typically non-personalized); failures are non-fatal.
+  //  */
+  // private async requestPrivacyConsent(): Promise<void> {
+  //   if (!this.admob) return;
+  //
+  //   try {
+  //     if (Capacitor.getPlatform() === 'ios') {
+  //       const tracking = await this.admob.AdMob.trackingAuthorizationStatus();
+  //       if (tracking.status === 'notDetermined') {
+  //         await this.admob.AdMob.requestTrackingAuthorization();
+  //       }
+  //     }
+  //   } catch (error) {
+  //     logger.warn('[Ads] ATT request failed — continuing', error);
+  //   }
+  //
+  //   try {
+  //     const consentInfo = await this.admob.AdMob.requestConsentInfo();
+  //     if (
+  //       consentInfo.isConsentFormAvailable &&
+  //       consentInfo.status === this.admob.AdmobConsentStatus.REQUIRED
+  //     ) {
+  //       await this.admob.AdMob.showConsentForm();
+  //     }
+  //   } catch (error) {
+  //     logger.warn('[Ads] UMP consent request failed — continuing', error);
+  //   }
+  // }
 
   isReady(format: AdFormat): boolean {
     return this.ready.has(format);
@@ -78,15 +128,53 @@ export class AdMobAdsProvider implements IAdsProvider {
       return { shown: false, error: 'Rewarded ad not ready' };
     }
 
-    let rewarded = false;
     const transactionId = `admob-${Date.now()}-${placement}`;
+    let rewardItem: AdMobRewardItem | null = null;
+    let dismissed = false;
+    let failed = false;
+
+    // Attach listeners BEFORE show — Rewarded can fire (and Android may resolve
+    // showRewardVideoAd early) before we would otherwise subscribe.
+    const rewardHandle = await this.admob!.AdMob.addListener(
+      this.admob!.RewardAdPluginEvents.Rewarded,
+      (reward) => {
+        rewardItem = reward;
+      }
+    );
+    const dismissHandle = await this.admob!.AdMob.addListener(
+      this.admob!.RewardAdPluginEvents.Dismissed,
+      () => {
+        dismissed = true;
+      }
+    );
+    const failHandle = await this.admob!.AdMob.addListener(
+      this.admob!.RewardAdPluginEvents.FailedToLoad,
+      () => {
+        failed = true;
+      }
+    );
 
     try {
-      const result = await this.admob!.AdMob.showRewardVideoAd();
-      rewarded = result?.type === 'rewarded' || result?.type === 'Rewarded';
+      const showResult = await this.admob!.AdMob.showRewardVideoAd();
+      // `type` is the reward *name* (e.g. "coins"), not the string "rewarded".
+      if (!rewardItem && isRewardItem(showResult)) {
+        rewardItem = showResult;
+      }
+
+      // Wait until the ad finishes (Rewarded / Dismissed). show() may resolve early on Android.
+      const deadline = Date.now() + 5 * 60_000;
+      while (!rewardItem && !dismissed && !failed && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
       this.ready.delete('rewarded');
       this.cached.delete('rewarded');
 
+      if (failed && !rewardItem) {
+        return { shown: false, error: 'Rewarded ad failed' };
+      }
+
+      const rewarded = rewardItem != null;
       return {
         shown: true,
         rewarded,
@@ -96,11 +184,19 @@ export class AdMobAdsProvider implements IAdsProvider {
           rewarded,
           transactionId,
           placement,
+          rewardType: rewardItem?.type,
+          rewardAmount: rewardItem?.amount,
         },
       };
     } catch (error) {
       logger.warn('[Ads] AdMob rewarded show failed', error);
       return { shown: false, error: 'Rewarded ad failed' };
+    } finally {
+      await Promise.allSettled([
+        rewardHandle.remove(),
+        dismissHandle.remove(),
+        failHandle.remove(),
+      ]);
     }
   }
 
@@ -234,4 +330,11 @@ export class AdMobAdsProvider implements IAdsProvider {
     }
     return adId;
   }
+}
+
+/** True when the payload looks like a real AdMob reward item (name + amount). */
+function isRewardItem(value: AdMobRewardItem | null | undefined): value is AdMobRewardItem {
+  if (!value || typeof value !== 'object') return false;
+  if (typeof value.amount === 'number' && value.amount > 0) return true;
+  return typeof value.type === 'string' && value.type.length > 0;
 }

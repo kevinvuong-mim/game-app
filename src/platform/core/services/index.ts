@@ -4,15 +4,14 @@ import { eventBus } from '../events';
 import { storage } from '../storage';
 import { getConfig } from '../config';
 import { analytics } from '../analytics';
-import { iap } from '@platform/modules/iap';
 
 /**
  * Service locator for core platform services.
  * Provides a single access point for cross-cutting infrastructure.
+ * Feature modules (IAP, etc.) are wired from bootstrap — not listed here.
  */
 export const services = {
   ads,
-  iap,
   storage,
   analytics,
   api: apiClient,
@@ -25,6 +24,5 @@ export function refreshServicesFromConfig(): void {
   const config = getConfig();
   analytics.setEnabled(config.analyticsEnabled);
   ads.setEnabled(config.adsEnabled);
-  iap.setEnabled(config.iapEnabled);
   apiClient.setBaseUrl(config.apiUrl);
 }

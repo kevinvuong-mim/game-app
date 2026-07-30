@@ -2,7 +2,7 @@
 
 ## Overview
 
-Tài liệu này mô tả các biến môi trường runtime của `game-starter-kit`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
+Tài liệu này mô tả các biến môi trường runtime của `fruloop`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
 
 `src/game/config.ts` là nơi khai báo game identity: `id` và `replaySecret` đọc từ `.env` (`VITE_GAME_ID`, `VITE_REPLAY_SECRET`); `name`, `width`, `height`, `version` chỉnh trực tiếp trong file.
 
@@ -18,7 +18,7 @@ VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 
 | Variable             | Values                         | Default / Source     | Description                                                                  |
 | -------------------- | ------------------------------ | -------------------- | ---------------------------------------------------------------------------- |
-| `VITE_APP_ENV`       | `dev`, `production`            | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
+| `VITE_APP_ENV`       | `dev`, `production`        | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
 | `VITE_GAME_ID`       | string                         | Bắt buộc             | Game id dùng ở frontend và backend                                           |
 | `VITE_REPLAY_SECRET` | string                         | Bắt buộc             | Secret replay — phải khớp `GAME_CONFIG[gameId].replaySecret` trên `game-api` |
 
@@ -118,14 +118,14 @@ Native config files (`google-services.json`, `GoogleService-Info.plist`): [Fireb
 
 ---
 
-## App review
+## Store listing
 
 ```env
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.studio.gamestarterkit
+VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
 ```
 
-Các ID này được dùng để mở store listing khi native in-app review không khả dụng. Android package mặc định là `com.studio.gamestarterkit`; iOS App Store ID mặc định rỗng.
+Các ID này được gắn vào link khi share điểm số. Android package mặc định là `com.vraxion.fruloop`; iOS App Store ID mặc định rỗng.
 
 ---
 
@@ -146,7 +146,7 @@ VITE_ADMOB_ANDROID_APP_ID=
 VITE_ADMOB_IOS_APP_ID=
 
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.studio.gamestarterkit
+VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
 ```
 
 ---

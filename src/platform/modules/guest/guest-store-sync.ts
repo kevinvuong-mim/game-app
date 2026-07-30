@@ -3,11 +3,13 @@ import { usePlatformStore } from '@platform/core/state';
 
 export function syncGuestToStore(): void {
   const guestId = guest.getGuestId();
-  if (!guestId) return;
+  const guestName = guest.getName();
+  if (!guestId && !guestName) return;
 
+  // Prefer guest-held name (including first-install offline pending) over hydrated defaults.
   usePlatformStore.getState().setUser({
-    id: guestId,
-    displayName: guest.getName() ?? 'Player',
+    ...(guestId ? { id: guestId } : {}),
+    ...(guestName ? { displayName: guestName } : {}),
   });
 }
 

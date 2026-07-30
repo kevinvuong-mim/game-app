@@ -1,25 +1,30 @@
-import { eventBus } from '@platform/core/events';
 import { BasePanelScene } from './BasePanelScene';
-import { ShopPanel } from '@platform/ui/shop/ShopPanel';
+import { ShopPanel } from '@platform/ui';
 
 export class ShopScene extends BasePanelScene {
   private panel?: ShopPanel;
 
   constructor() {
     super({
-      titleY: 0.1,
       sceneKey: 'Shop',
-      titleKey: 'shop.title',
       defaultReturnTo: 'Home',
+      adContext: 'SHOP',
     });
   }
 
-  protected onBeforePanel(): void {
-    eventBus.emit('ad:context:change', { context: 'SHOP' });
+  protected createPanel(): void {
+    this.panel = new ShopPanel(this, {
+      onBack: () => this.goBack(),
+      onNavigate: (sceneKey) => this.openScreen(sceneKey),
+    });
   }
 
-  protected createPanel(): void {
-    this.panel = new ShopPanel(this);
+  protected handleAppBack(): void {
+    if (this.panel?.isGetCoinsModalOpen()) {
+      this.panel.hideGetCoinsModal();
+      return;
+    }
+    this.goBack();
   }
 
   protected onPanelShutdown(): void {

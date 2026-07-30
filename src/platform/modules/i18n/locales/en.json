@@ -5,127 +5,156 @@
   },
   "home": {
     "play": "Play",
-    "playBadge": "NEW",
     "shop": "Shop",
     "settings": "Settings",
     "leaderboard": "Leaderboard",
     "dailyReward": "Daily Reward",
-    "missions": "Missions",
-    "rateApp": "Rate App"
+    "missions": "Missions"
+  },
+  "howToPlay": {
+    "title": "How to Play",
+    "prev": "Back",
+    "next": "Next",
+    "done": "Got it",
+    "step1Title": "Aim & Drop",
+    "step1Body": "Drag left or right to aim, then release to drop the fruit into the glass.",
+    "step2Title": "Merge Same Fruits",
+    "step2Body": "When two identical fruits touch, they merge into the next larger fruit and earn points.",
+    "step3Title": "Watch the Danger Line",
+    "step3Body": "Don't let settled fruits stay above the danger line — or the round ends!",
+    "step4Title": "Use Boosts",
+    "step4Body": "Buy boosts in the Shop — hammer, swap, grow, and more — to save tough stacks."
   },
   "game": {
-    "score": "Score: {{score}}",
-    "gameOver": "Game Over",
-    "retry": "Retry",
-    "home": "Home",
-    "shareScore": "Share Score",
+    "scoreLabel": "SCORE",
+    "yourScore": "YOUR SCORE",
+    "coinsEarned": "COINS EARNED",
+    "gameOver": "GAME OVER",
+    "newRecord": "NEW RECORD",
+    "retry": "PLAY AGAIN",
+    "home": "HOME",
+    "shareScore": "SHARE",
     "shareScoreTitle": "My score in {{gameName}}",
     "shareScoreText": "I scored {{score}} in {{gameName}}! Can you beat me?",
     "shareDialogTitle": "Share your score",
-    "shareUnavailable": "Sharing is not available"
+    "shareUnavailable": "Sharing is not available",
+    "skillHintHammer": "Tap a fruit to destroy it",
+    "skillHintSwap": "Tap two fruits to swap them",
+    "skillHintSwapSecond": "Tap the second fruit",
+    "skillHintSize": "Tap a fruit to grow it",
+    "skillUndoNothing": "Nothing to undo",
+    "quitConfirmTitle": "Quit this run?",
+    "quitConfirmMessage": "Your score will be submitted and the run will end.",
+    "quitConfirm": "Quit",
+    "quitCancel": "Cancel"
   },
-
   "shop": {
     "title": "Shop",
     "buy": "Buy",
-    "equip": "Equip",
-    "equipped": "Equipped",
-    "owned": "Owned",
-    "restore": "Restore Purchases",
     "purchaseSuccess": "Purchased {{name}}!",
-    "equipSuccess": "Equipped {{name}}!",
     "purchaseFailed": "Purchase failed",
-    "restoreSuccess": "Restored {{count}} purchase(s)",
-    "restoreEmpty": "No purchases to restore",
-    "currency": {
-      "coins": "coins",
-      "iap": "USD"
+    "notEnoughCoins": "Not enough coins!",
+    "ownedQuantity": "Owned: {{quantity}}",
+    "getCoins": {
+      "missions": "Missions",
+      "dailyReward": "Daily Reward",
+      "buyCoins": "{{coins}} Coins · {{price}}",
+      "purchasing": "Processing purchase…",
+      "purchaseSuccess": "Got {{coins}} coins!"
     },
     "items": {
-      "skin_blue": {
-        "name": "Blue Skin",
-        "description": "A cool blue character skin"
+      "boost_hammer": {
+        "name": "Explosive Hammer",
+        "description": "Destroy the fruit you choose!"
       },
-      "skin_gold": {
-        "name": "Gold Skin",
-        "description": "Premium gold character skin"
+      "boost_change": {
+        "name": "Change Fruit",
+        "description": "Swap the current fruit with the next one!"
       },
-      "boost_double": {
-        "name": "Double Coins",
-        "description": "2x coins for 1 hour"
+      "boost_swap": {
+        "name": "Swap",
+        "description": "Swap the positions of any fruits!"
+      },
+      "boost_size": {
+        "name": "Size Increase",
+        "description": "Increase the size of the fruit!"
+      },
+      "boost_undo": {
+        "name": "Undo",
+        "description": "Undo your last move!"
       },
       "remove_ads": {
         "name": "Remove Ads",
-        "description": "Remove banner and interstitial ads permanently"
+        "description": "Remove all ads permanently"
+      },
+      "coins_10000": {
+        "name": "10000 Coins",
+        "description": "Get 10000 coins"
       }
     }
   },
   "settings": {
     "title": "Settings",
+    "profile": "Profile",
     "language": "Language",
     "languageEn": "English",
     "languageVi": "Tiếng Việt",
     "sound": "Sound",
-    "soundOn": "On",
-    "soundOff": "Off",
+    "music": "Music",
+    "soundEffects": "Effects",
+    "terms": "Terms",
+    "privacy": "Privacy",
     "termsPrivacy": "Terms & Privacy",
-    "helpAndLegal": "Help & Legal",
-    "howToPlay": "How to Play",
-    "back": "Back",
-    "playerName": "Display Name",
+    "playerName": "Player name",
     "playerNamePlaceholder": "Enter your name",
     "playerNameSave": "Save",
     "playerNameRequired": "Please enter a name",
     "playerNameUpdated": "Name updated",
     "playerNameSavedLocally": "Name saved — will sync when online",
     "playerNameFailed": "Could not update name",
-    "playerNameOffline": "Create a guest profile when online first"
+    "playerNameOffline": "Create a guest profile when online first",
+    "ads": "Ads",
+    "hideAds": "Hide ads",
+    "removeAdsPrice": "{{price}}",
+    "purchasingAds": "Processing purchase…",
+    "restorePurchasesHint": "Already purchased? Restore",
+    "restoringPurchases": "Restoring purchases…",
+    "restorePurchasesSuccess": "Purchases restored",
+    "restorePurchasesEmpty": "No purchases to restore",
+    "restorePurchasesFailed": "Could not restore purchases"
   },
   "missions": {
     "title": "Missions",
-    "claim": "Claim",
+    "claim": "CLAIM",
+    "go": "GO",
     "claimed": "Claimed",
     "progress": "{{current}}/{{target}}",
-    "reward": "{{coins}} coins",
-    "claimSuccess": "Claimed {{coins}} coins!",
     "claimFailed": "Cannot claim yet",
-    "dailyMission": "Daily mission",
-    "watchAd3": "Watch 3 rewarded ads",
-    "watchAd": "Watch ad"
+    "reachScore2000": "Reach 2,000 points",
+    "mergeFruit15": "Merge fruits 15 times",
+    "watchAd": "Watch an ad video",
+    "playGames3": "Play 3 matches",
+    "dailyLogin": "Log in every day"
   },
   "dailyReward": {
     "title": "Daily Reward",
     "claim": "Claim",
     "day": "Day {{day}}",
-    "coins": "{{coins}} coins",
-    "random": "Random",
-    "chest": "Rare Chest",
-    "claimed": "Claimed",
     "comeBack": "Come back tomorrow!",
-    "claimSuccess": "+{{coins}} coins!",
-    "chestSuccess": "{{item}} received!",
     "timeManipulated": "Daily rewards are unavailable due to a clock change."
   },
   "leaderboard": {
     "title": "Leaderboard",
-    "refresh": "Refresh",
-    "refreshing": "Updating…",
+    "top100": "Top 100",
+    "yourRank": "Your Rank",
     "retry": "Retry",
     "rank": "Your Rank: #{{rank}}",
     "empty": "No scores yet. Play a game to get on the board!",
-    "you": "(You)",
     "anonymous": "Player",
     "rankUnavailable": "Your rank is not available yet",
     "error": "Couldn't load the leaderboard. Check your connection and try again.",
     "offlineLocalBest": "You're offline — play scores are saved locally.",
-    "cached": "Cached",
-    "stale": "May be outdated",
-    "staleBanner": "Showing saved data — pull to refresh for latest ranks.",
-    "localBest": "Your best: {{score}}",
-    "updatedAgo": "Updated {{seconds}}s ago",
-    "pageInfo": "Page {{page}} / {{totalPages}}",
-    "prevPage": "Prev",
-    "nextPage": "Next"
+    "localBest": "Your best: {{score}}"
   },
   "legal": {
     "title": "Terms & Privacy",
@@ -134,15 +163,6 @@
     "termsContent": "Last updated: June 2026\n\n1. Acceptance of Terms\nBy downloading, installing, or using this game, you agree to these Terms of Service. If you do not agree, please do not use the game.\n\n2. License\nWe grant you a limited, non-exclusive, non-transferable license to use the game for personal, non-commercial entertainment purposes.\n\n3. Virtual Items\nCoins, skins, and other virtual items have no real-world monetary value and cannot be exchanged for cash. We may modify or remove virtual items at any time.\n\n4. User Conduct\nYou agree not to cheat, exploit bugs, harass other players, or use the game in any way that violates applicable laws.\n\n5. Changes\nWe may update these terms from time to time. Continued use of the game after changes constitutes acceptance of the updated terms.\n\n6. Contact\nFor questions about these terms, contact us at support@example.com.",
     "privacyContent": "Last updated: June 2026\n\n1. Information We Collect\nWe may collect gameplay data (scores, progress, device type) and analytics events.\n\n2. How We Use Information\nWe use collected data to operate the game, improve features, display leaderboards, process purchases, and send relevant notifications.\n\n3. Third-Party Services\nThe game may use third-party services such as Firebase Analytics, ad networks, and payment providers. Each service has its own privacy policy.\n\n4. Data Storage\nGame progress is stored locally on your device. High scores and your guest profile may sync to our servers so leaderboards and notifications work across sessions.\n\n5. Children's Privacy\nThe game is not directed at children under 13. We do not knowingly collect personal information from children.\n\n6. Your Rights\nDepending on your region, you may request access to, correction of, or deletion of your personal data by contacting support@example.com.\n\n7. Changes\nWe may update this privacy policy from time to time. We will notify you of significant changes through the app or our website."
   },
-  "howToPlay": {
-    "title": "How to Play",
-    "content": "Goal\nJump, collect coins, and avoid obstacles to get the highest score possible.\n\nControls\n• Tap anywhere on the screen to jump\n• Press Space on keyboard (desktop)\n• You can jump up to 5 times before landing on the ground\n\nCollectibles\n• Gold coins: +10 score and +1 coin for your wallet\n• Red obstacles: touching them ends the game\n\nScoring\nYour score increases when you collect coins. Try to beat your personal best and climb the leaderboard.\n\nGame Over\nWhen you hit a red obstacle, the run ends. You can retry immediately or return to the home screen.\n\nOther Features\n• Missions: watch rewarded ads to earn coin rewards\n• Daily Reward: claim free rewards once per calendar day\n• Shop: spend coins on skins and boosts\n• Leaderboard: compare your best score with other players"
-  },
-  "rateApp": {
-    "message": "Do you enjoy the game?",
-    "rate": "Rate",
-    "notNow": "Not now"
-  },
   "ads": {
     "rewardOffline": "Connect to the internet to claim your reward",
     "rewardUnavailable": "Reward unavailable",
@@ -150,17 +170,24 @@
     "rewardIncomplete": "Ad was not completed",
     "useRequestReward": "Use requestReward for rewarded placements"
   },
+  "rateApp": {
+    "title": "RATE THE GAME",
+    "message": "Please rate us to help improve the game!",
+    "rateNow": "RATE NOW",
+    "later": "LATER",
+    "selectStars": "Please select a star rating",
+    "thanks": "Thanks for your rating!",
+    "thanksFeedback": "Thanks for your feedback!"
+  },
   "notifications": {
     "dailyReward": {
       "title": "Daily Reward Ready",
       "body": "Your daily reward is waiting. Come back and claim it!"
     },
     "top100Exited": {
-      "title": "Top 100",
       "body": "You left Top 100. Come back to improve your rank."
     },
     "rankPush": {
-      "title": "Weekly Rank Update",
       "body": "You are currently ranked #{{rank}}.",
       "bodyFallback": "Tap to view your current leaderboard rank."
     }
