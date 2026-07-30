@@ -7,10 +7,7 @@ export type FruitBody = Phaser.Physics.Matter.Image & {
 };
 
 export type ActiveSkill =
-  | { kind: 'hammer' }
-  | { kind: 'swap'; selected?: FruitBody }
-  | { kind: 'size' }
-  | null;
+  { kind: 'hammer' } | { kind: 'swap'; selected?: FruitBody } | { kind: 'size' } | null;
 
 /** Inner play-area ratios relative to glass-container.png display size. */
 export const CONTAINER_INSET = {

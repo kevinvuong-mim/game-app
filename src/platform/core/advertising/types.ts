@@ -1,13 +1,7 @@
 export type AdFormat = 'banner' | 'app_open' | 'rewarded' | 'interstitial';
 
 export type AdState =
-  | 'IDLE'
-  | 'ERROR'
-  | 'READY'
-  | 'LOADING'
-  | 'SHOWING'
-  | 'COMPLETED'
-  | 'DESTROYED';
+  'IDLE' | 'ERROR' | 'READY' | 'LOADING' | 'SHOWING' | 'COMPLETED' | 'DESTROYED';
 
 export type BannerState = 'IDLE' | 'HIDDEN' | 'LOADING' | 'VISIBLE' | 'DESTROYED';
 
