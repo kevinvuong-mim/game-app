@@ -12,6 +12,7 @@
 #   SKIP_GRADLE=1          — skip `./gradlew assembleDebug`
 #   BOOT_TIMEOUT_SEC=300   — max wait for emulator boot
 #   SHOW_LOGS=1            — tail Capacitor console after launch
+#   JAVA_HOME=<path>       — JDK 21+ home (Capacitor 7); auto-detects Android Studio JBR if unset
 
 set -euo pipefail
 
@@ -34,6 +35,50 @@ fail() {
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "Missing command: $1"
+}
+
+# Capacitor 7 compiles with JavaVersion.VERSION_21 — JDK must be 21+.
+java_major_version() {
+  local home="$1"
+  local java_bin="$home/bin/java"
+  [[ -x "$java_bin" ]] || return 1
+  "$java_bin" -version 2>&1 | awk -F[\".] '/version/ { print ($2=="1" ? $3 : $2); exit }'
+}
+
+is_jdk_21_plus() {
+  local major
+  major="$(java_major_version "$1" 2>/dev/null || true)"
+  [[ -n "$major" && "$major" -ge 21 ]]
+}
+
+resolve_java_home() {
+  local candidates=()
+
+  if [[ -n "${JAVA_HOME:-}" ]]; then
+    candidates+=("$JAVA_HOME")
+  fi
+
+  candidates+=(
+    "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+    "/Applications/Android Studio.app/Contents/jre/Contents/Home"
+    "$HOME/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+  )
+
+  if command -v /usr/libexec/java_home >/dev/null 2>&1; then
+    local brew_home
+    brew_home="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
+    [[ -n "$brew_home" ]] && candidates+=("$brew_home")
+  fi
+
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    if [[ -d "$candidate" ]] && is_jdk_21_plus "$candidate"; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+
+  fail 'Capacitor 7 requires JDK 21+. Install Android Studio (bundled JBR) or set JAVA_HOME to a JDK 21+ path.'
 }
 
 resolve_android_home() {
@@ -114,6 +159,11 @@ ensure_emulator() {
 ANDROID_HOME="$(resolve_android_home)"
 export ANDROID_HOME
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+
+JAVA_HOME="$(resolve_java_home)"
+export JAVA_HOME
+export PATH="$JAVA_HOME/bin:$PATH"
+log "Using JAVA_HOME=$JAVA_HOME (Java $(java_major_version "$JAVA_HOME"))"
 
 EMULATOR="$ANDROID_HOME/emulator/emulator"
 ADB="$ANDROID_HOME/platform-tools/adb"

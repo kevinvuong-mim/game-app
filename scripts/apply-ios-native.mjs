@@ -73,10 +73,17 @@ function patchPodfile(podfilePath) {
   if (!content.includes("pod 'GoogleUserMessagingPlatform'")) {
     content = content.replace(
       /(target 'App' do\n(?:.*\n)*? {2}# Add your Pods here\n)/,
-      `$1  pod 'GoogleUserMessagingPlatform', '~> 2.3'\n`
+      `$1  pod 'GoogleUserMessagingPlatform', '3.0.0'\n`
     );
     changed = true;
-    console.log('[ios-native] Pinned GoogleUserMessagingPlatform ~> 2.3 in Podfile');
+    console.log('[ios-native] Pinned GoogleUserMessagingPlatform 3.0.0 in Podfile');
+  } else if (content.includes("pod 'GoogleUserMessagingPlatform', '~> 2.3'")) {
+    content = content.replace(
+      "pod 'GoogleUserMessagingPlatform', '~> 2.3'",
+      "pod 'GoogleUserMessagingPlatform', '3.0.0'"
+    );
+    changed = true;
+    console.log('[ios-native] Upgraded GoogleUserMessagingPlatform pin to 3.0.0');
   }
 
   if (pushNotificationsEnabled() && !content.includes("pod 'FirebaseMessaging'")) {
