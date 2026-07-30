@@ -69,14 +69,16 @@ npm run assets:generate
 node scripts/apply-ios-native.mjs pre-sync   # pin UMP trước pod install
 (cd ios/App && pod install --repo-update)    # native-ops thực thi bước này
 npx cap sync ios
-node scripts/apply-ios-native.mjs            # post-sync: templates + AdMob plist
+node scripts/apply-ios-native.mjs            # post-sync: templates + AdMob + entitlements/deeplink
 ```
 
 Các script trong `scripts/` merge template từ `native/` để giữ native changes repeatable sau mỗi lần regenerate platform.
 
 `native-ops.mjs` chỉ hỗ trợ action `build` (`build android` hoặc `build ios`). Việc thêm platform khi thiếu nằm bên trong pipeline; không có action `ensure` riêng.
 
-**Firebase / FCM:** `apply-android-native.mjs` và `apply-ios-native.mjs` cũng copy `google-services.json` / `GoogleService-Info.plist`, permissions notification, và iOS `AppDelegate.swift` khi push enabled. Chi tiết: [Firebase Native Setup](./firebase-native.md).
+**Deep links (iOS):** `apply-ios-native.mjs` luôn copy/register `App.entitlements` và inject Associated Domains — không phụ thuộc push. Khi push tắt, script strip `aps-environment`. Chi tiết: [Deep-link setup](../deeplink/README.md).
+
+**Firebase / FCM:** khi push enabled, `apply-android-native.mjs` / `apply-ios-native.mjs` copy `google-services.json` / `GoogleService-Info.plist`, permissions notification, và iOS `AppDelegate.swift` (+ giữ `aps-environment`). Chi tiết: [Firebase Native Setup](./firebase-native.md).
 
 Hướng dẫn chi tiết build + chạy emulator/simulator (CLI & IDE): [Emulator and Simulator](../build/emulator-and-simulator.md).
 
