@@ -1,6 +1,6 @@
 # Fruloop
 
-Fruloop is a mobile game that allows you to play with your friends and family. 
+Fruloop is a mobile game that allows you to play with your friends and family.
 
 ## Tech Stack
 
@@ -13,8 +13,8 @@ Fruloop is a mobile game that allows you to play with your friends and family.
 | State       | Zustand (vanilla, in-memory)                                     |
 | Storage     | IndexedDB (web) / Capacitor Preferences (native)                 |
 | Networking  | Fetch API (NestJS-compatible REST envelope)                      |
-| Analytics   | Console (dev) + Firebase Analytics (production)          |
-| Push        | FCM via `@capacitor/push-notifications` (production)     |
+| Analytics   | Console (dev) + Firebase Analytics (production)                  |
+| Push        | FCM via `@capacitor/push-notifications` (production)             |
 | Local notif | `@capacitor/local-notifications` (daily reward reminder)         |
 | Ads         | Mock (web/dev) + AdMob via `@capacitor-community/admob` (native) |
 
@@ -227,7 +227,7 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 
 | Variable                                            | Description                                                                    |
 | --------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `production`)                           |
+| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `production`)                                      |
 | `VITE_GAME_ID`                                      | Game id used by the frontend and backend                                       |
 | `VITE_REPLAY_SECRET`                                | HMAC replay secret — **64-char lowercase hex**; must match backend per game id |
 | `VITE_IAP_PROVIDER`                                 | `mock` or `revenuecat`                                                         |

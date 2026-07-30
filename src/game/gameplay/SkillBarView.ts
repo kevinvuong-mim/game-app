@@ -128,7 +128,12 @@ export class SkillBarView {
       .setOrigin(0.5)
       .setDepth(404);
     this.skillRightArrow = this.scene.add
-      .text(this.skillPanelLeft + this.skillPanelWidth - 22, this.skillTrackCenterY, '›', arrowStyle)
+      .text(
+        this.skillPanelLeft + this.skillPanelWidth - 22,
+        this.skillTrackCenterY,
+        '›',
+        arrowStyle
+      )
       .setOrigin(0.5)
       .setDepth(404);
 
