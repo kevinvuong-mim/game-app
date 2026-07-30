@@ -59,7 +59,6 @@ Push/local bật theo `src/platform/core/config/notification-env.json`, merge v�
 | Env          | Push | Local |
 | ------------ | ---- | ----- |
 | `dev`        | off  | on    |
-| `staging`    | on\* | on    |
 | `production` | on\* | on    |
 
 \* Push chỉ thực sự bật khi native **và** đủ 5 biến Firebase sau:

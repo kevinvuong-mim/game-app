@@ -18,7 +18,7 @@ VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 
 | Variable             | Values                         | Default / Source     | Description                                                                  |
 | -------------------- | ------------------------------ | -------------------- | ---------------------------------------------------------------------------- |
-| `VITE_APP_ENV`       | `dev`, `staging`, `production` | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
+| `VITE_APP_ENV`       | `dev`, `production`            | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
 | `VITE_GAME_ID`       | string                         | Bắt buộc             | Game id dùng ở frontend và backend                                           |
 | `VITE_REPLAY_SECRET` | string                         | Bắt buộc             | Secret replay — phải khớp `GAME_CONFIG[gameId].replaySecret` trên `game-api` |
 
@@ -27,12 +27,11 @@ Preset API URL trong code (`src/platform/core/config/index.ts`):
 | Env          | API URL                                  |
 | ------------ | ---------------------------------------- |
 | `dev`        | `http://localhost:3000/api`              |
-| `staging`    | `https://game-api-s5kn.onrender.com/api` |
 | `production` | `https://game-api-s5kn.onrender.com/api` |
 
 `VITE_REPLAY_SECRET` phải là **64-char lowercase hex** (`/^[0-9a-f]{64}$/`). Secret sai/thiếu → client **không sync** và **giữ** offline queue (không xóa im lặng).
 
-Production/staging nên dùng HTTPS.
+Production nên dùng HTTPS.
 
 ---
 
@@ -106,7 +105,6 @@ VITE_FIREBASE_MEASUREMENT_ID=
 | Env          | Analytics                  | Push (native) | Local notifications |
 | ------------ | -------------------------- | ------------- | ------------------- |
 | `dev`        | off (`analyticsEnabled`)   | off           | on\*                |
-| `staging`    | on (`analyticsEnabled`)    | on\*\*        | on\*                |
 | `production` | on                         | on\*\*        | on\*                |
 
 \* Local chỉ active trên native (`resolveLocalNotificationsEnabled()`).  
@@ -128,7 +126,7 @@ VITE_DEEPLINK_HOST_DEV=dev.gamestarterkit.example.com
 VITE_DEEPLINK_HOST_PROD=gamestarterkit.example.com
 ```
 
-Ba biến đều optional và fallback về các giá trị trên. `production` dùng prod host; `dev` và `staging` dùng dev host. Native build scripts inject custom URL scheme cùng cả hai HTTPS hosts. Xem [Deep-link setup](../deeplink/README.md).
+Ba biến đều optional và fallback về các giá trị trên. `production` dùng prod host; `dev` dùng dev host. Native build scripts inject custom URL scheme cùng cả hai HTTPS hosts. Xem [Deep-link setup](../deeplink/README.md).
 
 ---
 

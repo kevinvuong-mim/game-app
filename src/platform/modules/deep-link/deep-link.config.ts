@@ -12,7 +12,7 @@ const DEFAULT_HOST_DEV = 'dev.gamestarterkit.example.com';
 
 function resolveEnvironment(): Environment {
   const env = import.meta.env.VITE_APP_ENV as Environment | undefined;
-  if (env === 'dev' || env === 'staging' || env === 'production') {
+  if (env === 'dev' || env === 'production') {
     return env;
   }
   return import.meta.env.PROD ? 'production' : 'dev';

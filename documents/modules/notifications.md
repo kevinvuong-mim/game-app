@@ -20,7 +20,6 @@ Preset trong `src/platform/core/config/notification-env.json`, merge vào `ENV_C
 | Env          | Push | Local |
 | ------------ | ---- | ----- |
 | `dev`        | off  | on    |
-| `staging`    | on\* | on    |
 | `production` | on\* | on    |
 
 \* Push chỉ bật khi native + đủ `VITE_FIREBASE_*` (xem [Firebase Native Setup](../setup/firebase-native.md)). Local preset `on` cũng bị tắt trên web vì `resolveLocalNotificationsEnabled()` yêu cầu native.

@@ -13,8 +13,8 @@ Production-grade starter kit for hyper-casual / casual mobile games. **Clone thi
 | State       | Zustand (vanilla, in-memory)                                     |
 | Storage     | IndexedDB (web) / Capacitor Preferences (native)                 |
 | Networking  | Fetch API (NestJS-compatible REST envelope)                      |
-| Analytics   | Console (dev) + Firebase Analytics (staging/production)          |
-| Push        | FCM via `@capacitor/push-notifications` (staging/production)     |
+| Analytics   | Console (dev) + Firebase Analytics (production)                  |
+| Push        | FCM via `@capacitor/push-notifications` (production)             |
 | Local notif | `@capacitor/local-notifications` (daily reward reminder)         |
 | Ads         | Mock (web/dev) + AdMob via `@capacitor-community/admob` (native) |
 
@@ -204,7 +204,7 @@ soundManager.playCoinDrop();
 Copy `.env.example` to `.env` and adjust per environment. `.env.example` includes a dev sample `VITE_REPLAY_SECRET` matching `GAME_CONFIG.FRULOOP` on `game-api`; use your own secret in production.
 
 ```bash
-VITE_APP_ENV=dev              # dev | staging | production
+VITE_APP_ENV=dev              # dev | production
 VITE_GAME_ID=FRULOOP
 VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 VITE_IAP_PROVIDER=mock        # mock | revenuecat
@@ -238,7 +238,7 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 
 | Variable                                            | Description                                                                    |
 | --------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `staging`, `production`)                           |
+| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `production`)                                      |
 | `VITE_GAME_ID`                                      | Game id used by the frontend and backend                                       |
 | `VITE_REPLAY_SECRET`                                | HMAC replay secret — **64-char lowercase hex**; must match backend per game id |
 | `VITE_IAP_PROVIDER`                                 | `mock` or `revenuecat`                                                         |

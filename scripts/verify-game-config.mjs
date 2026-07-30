@@ -27,7 +27,6 @@ function loadEnvFile() {
 
 const API_URLS_BY_ENV = {
   dev: 'http://localhost:3000/api',
-  staging: 'https://game-api-s5kn.onrender.com/api',
   production: 'https://game-api-s5kn.onrender.com/api',
 };
 
@@ -42,8 +41,8 @@ function readGameIdFromEnv() {
 
 function resolveApiUrl() {
   const appEnv = process.env.VITE_APP_ENV ?? 'dev';
-  if (appEnv === 'staging' || appEnv === 'production') {
-    return API_URLS_BY_ENV[appEnv];
+  if (appEnv === 'production') {
+    return API_URLS_BY_ENV.production;
   }
 
   return API_URLS_BY_ENV.dev;

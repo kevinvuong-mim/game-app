@@ -3,10 +3,6 @@
     "pushNotificationsEnabled": false,
     "localNotificationsEnabled": true
   },
-  "staging": {
-    "pushNotificationsEnabled": true,
-    "localNotificationsEnabled": true
-  },
   "production": {
     "pushNotificationsEnabled": true,
     "localNotificationsEnabled": true
