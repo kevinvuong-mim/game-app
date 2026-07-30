@@ -201,8 +201,7 @@ function stripApsEnvironment(entitlementsPath) {
 function patchDeepLinkEntitlements(entitlementsPath, hosts) {
   const entries = hosts.map((host) => `\t\t<string>applinks:${host}</string>`).join('\n');
   const snippet =
-    `\t<key>com.apple.developer.associated-domains</key>\n` +
-    `\t<array>\n${entries}\n\t</array>\n`;
+    `\t<key>com.apple.developer.associated-domains</key>\n` + `\t<array>\n${entries}\n\t</array>\n`;
 
   if (!existsSync(entitlementsPath)) {
     const content =

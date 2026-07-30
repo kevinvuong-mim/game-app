@@ -155,13 +155,13 @@ this.add.circle(120, height - 160, 24, getEquippedPlayerColor());
 
 Feature screens are **Phaser scenes** that compose reusable **panels**. Five panel scenes (`Shop`, `Missions`, `Leaderboard`, `DailyReward`, `Legal`) share `BasePanelScene` for title, close button, and `app:back` handling.
 
-Fonts: **Fredoka** (default UI via `FREDOKA_FONT`) and **Nunito Sans** (`NUNITO_FONT`). Home’s Play button badge uses Nunito Sans with i18n key `home.playBadge` (`"NEW"` / `"MỚI"`).
+Fonts: **Fredoka** is the only UI font (`FREDOKA_FONT`). Home’s Play button badge uses i18n key `home.playBadge` (`"NEW"` / `"MỚI"`).
 
 The `@platform/ui` barrel re-exports `t`, `toast`, `shareService`, `LeaderboardPanel`, and `getEquippedPlayerColor`. Import other helpers from their module paths:
 
 ```typescript
 import { t, toast } from '@platform/ui';
-import { NUNITO_FONT } from '@platform/ui/fonts';
+import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 import { createUIButton } from '@platform/ui/button/UIButton';
 
@@ -175,7 +175,7 @@ const button = createUIButton({
   sound: 'coin-drop',
   badge: {
     content: t('home.playBadge'),
-    textStyle: { fontFamily: NUNITO_FONT },
+    textStyle: { fontFamily: FREDOKA_FONT },
     background: {
       radius: 10,
       color: '#ff0000',
