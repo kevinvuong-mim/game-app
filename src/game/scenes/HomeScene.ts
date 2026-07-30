@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 
 import { t } from '@platform/ui/index';
 import { eventBus } from '@platform/core/events';
-import { NUNITO_FONT } from '@platform/ui/fonts';
 import { createUIButton, UIButtonBackgroundKey } from '@platform/ui/button/UIButton';
 
 export class HomeScene extends Phaser.Scene {
@@ -44,7 +43,6 @@ export class HomeScene extends Phaser.Scene {
       onClick: () => this.scene.start('Gameplay'),
       badge: {
         textStyle: {
-          fontFamily: NUNITO_FONT,
           border: { width: 4, color: '#c4271d' },
         },
         background: {
