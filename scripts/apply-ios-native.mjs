@@ -11,6 +11,9 @@ const SWIFT_FILE_REF_ID = 'F5LL5CRN1FED79650016851F';
 const ENTITLEMENTS_REF_ID = 'F5LL5CRN3FED79650016851F';
 const SWIFT_BUILD_FILE_ID = 'F5LL5CRN2FED79650016851F';
 const SWIFT_FILE = 'FullscreenBridgeViewController.swift';
+const GOOGLE_SERVICE_INFO_FILE = 'GoogleService-Info.plist';
+const GOOGLE_SERVICE_INFO_REF_ID = 'F5LL5CRN4FED79650016851F';
+const GOOGLE_SERVICE_INFO_BUILD_FILE_ID = 'F5LL5CRN5FED79650016851F';
 const GOOGLE_SAMPLE_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
 const ENTITLEMENTS_BUILD_SETTING = 'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;';
 
@@ -184,8 +187,7 @@ function patchDeepLinkEntitlements(entitlementsPath, hosts) {
   let content = readFileSync(entitlementsPath, 'utf8');
   const entries = hosts.map((host) => `\t\t<string>applinks:${host}</string>`).join('\n');
   const snippet =
-    `\t<key>com.apple.developer.associated-domains</key>\n` +
-    `\t<array>\n${entries}\n\t</array>\n`;
+    `\t<key>com.apple.developer.associated-domains</key>\n` + `\t<array>\n${entries}\n\t</array>\n`;
 
   if (content.includes('com.apple.developer.associated-domains')) {
     const updated = content.replace(
@@ -261,24 +263,57 @@ function patchPbxproj(projectPath) {
     console.log('[ios-native] Registered App.entitlements in Xcode project');
   }
 
+  if (
+    pushNotificationsEnabled() &&
+    existsSync(join(root, 'native/firebase', GOOGLE_SERVICE_INFO_FILE)) &&
+    !content.includes(GOOGLE_SERVICE_INFO_FILE)
+  ) {
+    content = content.replace(
+      '504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };',
+      `504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
+\t\t${GOOGLE_SERVICE_INFO_BUILD_FILE_ID} /* ${GOOGLE_SERVICE_INFO_FILE} in Resources */ = {isa = PBXBuildFile; fileRef = ${GOOGLE_SERVICE_INFO_REF_ID} /* ${GOOGLE_SERVICE_INFO_FILE} */; };`
+    );
+
+    content = content.replace(
+      '504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };',
+      `504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+\t\t${GOOGLE_SERVICE_INFO_REF_ID} /* ${GOOGLE_SERVICE_INFO_FILE} */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ${GOOGLE_SERVICE_INFO_FILE}; sourceTree = "<group>"; };`
+    );
+
+    content = content.replace(
+      '504EC3131FED79650016851F /* Info.plist */,',
+      `504EC3131FED79650016851F /* Info.plist */,
+\t\t\t\t${GOOGLE_SERVICE_INFO_REF_ID} /* ${GOOGLE_SERVICE_INFO_FILE} */,`
+    );
+
+    content = content.replace(
+      '504EC30F1FED79650016851F /* Assets.xcassets in Resources */,',
+      `504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
+\t\t\t\t${GOOGLE_SERVICE_INFO_BUILD_FILE_ID} /* ${GOOGLE_SERVICE_INFO_FILE} in Resources */,`
+    );
+
+    changed = true;
+    console.log('[ios-native] Registered GoogleService-Info.plist in Xcode Copy Bundle Resources');
+  }
+
   if (changed) {
     writeFileSync(projectPath, content);
   }
 }
 
 function copyFirebaseIosConfig(iosAppDir) {
-  const source = join(root, 'native/firebase/GoogleService-Info.plist');
-  const target = join(iosAppDir, 'GoogleService-Info.plist');
+  const source = join(root, 'native/firebase', GOOGLE_SERVICE_INFO_FILE);
+  const target = join(iosAppDir, GOOGLE_SERVICE_INFO_FILE);
 
   if (!existsSync(source)) {
     console.warn(
-      '[ios-native] Missing native/firebase/GoogleService-Info.plist — FCM push will not work until you add it'
+      `[ios-native] Missing native/firebase/${GOOGLE_SERVICE_INFO_FILE} — FCM push will not work until you add it`
     );
     return false;
   }
 
   copyFileSync(source, target);
-  console.log('[ios-native] Copied GoogleService-Info.plist to ios/App/App/');
+  console.log(`[ios-native] Copied ${GOOGLE_SERVICE_INFO_FILE} to ios/App/App/`);
   return true;
 }
 

@@ -65,8 +65,8 @@ const ENV_CONFIGS: Record<Environment, Partial<RuntimeConfig>> = {
     debug: true,
     adsEnabled: true,
     iapEnabled: true,
-    analyticsEnabled: false,
-    apiUrl: 'http://localhost:3000/api',
+    analyticsEnabled: true,
+    apiUrl: 'https://game-api-s5kn.onrender.com/api',
   },
   production: {
     ...notificationEnvConfigs.production,
