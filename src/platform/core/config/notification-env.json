@@ -1,6 +1,6 @@
 {
   "dev": {
-    "pushNotificationsEnabled": false,
+    "pushNotificationsEnabled": true,
     "localNotificationsEnabled": true
   },
   "production": {
