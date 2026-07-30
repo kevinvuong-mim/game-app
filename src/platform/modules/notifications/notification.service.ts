@@ -17,7 +17,7 @@ class NotificationService {
   private pushInitialized = false;
   private localInitialized = false;
 
-  /** Local notifications do not require guest or network. */
+  /** Local notifications do not require guest or network. Retries until success. */
   async initializeLocal(): Promise<void> {
     const config = getConfig();
 
@@ -29,7 +29,11 @@ class NotificationService {
       return;
     }
 
-    await localNotificationService.initialize();
+    const ok = await localNotificationService.initialize();
+    if (!ok) {
+      return;
+    }
+
     this.localInitialized = true;
     logger.info('[Notification] Local notifications initialized');
   }
@@ -87,6 +91,7 @@ class NotificationService {
       return;
     }
 
+    await this.initializeLocal();
     await localNotificationService.scheduleDailyRewardReminder();
   }
 
@@ -97,6 +102,7 @@ class NotificationService {
       return;
     }
 
+    await this.initializeLocal();
     await localNotificationService.reconcileDailyRewardSchedule(canClaim);
   }
 
