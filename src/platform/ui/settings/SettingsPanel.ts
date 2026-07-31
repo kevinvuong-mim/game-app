@@ -19,7 +19,9 @@ import { settings } from '@platform/modules/settings';
 import { shop } from '@platform/modules/shop';
 import { ads } from '@platform/core/advertising';
 import { iap } from '@platform/modules/iap';
-import { REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
+import { eventBus } from '@platform/core/events';
+import { IAP_EVENTS } from '@platform/modules/iap/iap.events';
+import { ENTITLEMENT_REMOVE_ADS, REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
 const LANGUAGE_GLOBE_KEY = 'language-globe-icon';
 const NO_ADS_ICON_KEY = 'no-ads-icon';
 
@@ -72,6 +74,8 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
   private languageLabel?: Phaser.GameObjects.Text;
   private purchaseModal?: Phaser.GameObjects.Container;
   private buyAdsButton?: UIButton;
+  private hideAdsToggle?: SettingsToggle;
+  private readonly eventUnsubscribers: Array<() => void> = [];
 
   constructor(
     scene: Phaser.Scene,
@@ -85,6 +89,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     this.onNavigate = options.onNavigate;
     scene.add.existing(this);
     this.build();
+    this.bindIapUi();
   }
 
   destroy(fromScene?: boolean): void {
@@ -95,6 +100,9 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
   private cleanup(): void {
     if (this.disposed) return;
     this.disposed = true;
+
+    for (const unsub of this.eventUnsubscribers) unsub();
+    this.eventUnsubscribers.length = 0;
 
     this.focusCheckTimer?.remove(false);
     this.focusCheckTimer = undefined;
@@ -108,9 +116,34 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     this.languageOpen = false;
     this.purchaseModal = undefined;
     this.buyAdsButton = undefined;
+    this.hideAdsToggle = undefined;
     this.nameFieldText = undefined;
     this.nameCaret = undefined;
     this.languageLabel = undefined;
+  }
+
+  private bindIapUi(): void {
+    this.eventUnsubscribers.push(
+      eventBus.on(IAP_EVENTS.ENTITLEMENT_CHANGED, () => {
+        this.refreshHideAdsToggle();
+      }),
+      eventBus.on(IAP_EVENTS.PURCHASE_RESTORED, () => {
+        this.refreshHideAdsToggle();
+      })
+    );
+  }
+
+  /** Keep Hide ads toggle in sync when IAP init/restore finishes after Settings opened. */
+  private refreshHideAdsToggle(): void {
+    if (this.disposed || !this.hideAdsToggle) return;
+
+    const owned = shop.isOwned(REMOVE_ADS_ITEM_ID);
+    this.hideAdsToggle.setLocked(!owned);
+    this.hideAdsToggle.setEnabled(owned && ads.isAdsRemoved());
+
+    if (owned) {
+      this.hidePurchaseModal();
+    }
   }
 
   /**
@@ -612,18 +645,17 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
         .setOrigin(0, 0.5)
     );
 
-    this.add(
-      createToggle(this.scene, right - TOGGLE_WIDTH / 2, centerY, {
-        initial: hasRemoveAds && ads.isAdsRemoved(),
-        locked: !hasRemoveAds,
-        onChange: (hideAds) => {
-          ads.setAdsRemoved(hideAds);
-        },
-        onLockedTap: () => {
-          this.showRemoveAdsPurchaseModal();
-        },
-      })
-    );
+    this.hideAdsToggle = createToggle(this.scene, right - TOGGLE_WIDTH / 2, centerY, {
+      initial: hasRemoveAds && ads.isAdsRemoved(),
+      locked: !hasRemoveAds,
+      onChange: (hideAds) => {
+        ads.setAdsRemoved(hideAds);
+      },
+      onLockedTap: () => {
+        this.showRemoveAdsPurchaseModal();
+      },
+    });
+    this.add(this.hideAdsToggle);
 
     return y + rowHeight + 8;
   }
@@ -641,24 +673,18 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
         return;
       }
 
-      const restoredSomething = result.restoredEntitlements.length > 0;
-      const restoreToast: ToastOptions = {
-        type: restoredSomething ? 'success' : 'info',
-        message: restoredSomething
+      // Modal entry is remove-ads only — success means that entitlement is owned after restore.
+      const restoredRemoveAds =
+        result.restoredEntitlements.includes(ENTITLEMENT_REMOVE_ADS) ||
+        iap.has(ENTITLEMENT_REMOVE_ADS);
+      this.refreshHideAdsToggle();
+
+      toast.show({
+        type: restoredRemoveAds ? 'success' : 'info',
+        message: restoredRemoveAds
           ? t('settings.restorePurchasesSuccess')
           : t('settings.restorePurchasesEmpty'),
-      };
-
-      if (
-        restoredSomething &&
-        !this.disposed &&
-        this.scene.sys.isActive() &&
-        this.scene.scene.key === 'Settings'
-      ) {
-        this.restartThenShowToast(restoreToast);
-      } else {
-        toast.show(restoreToast);
-      }
+      });
     } finally {
       this.restoringPurchases = false;
     }
@@ -1049,10 +1075,10 @@ function createToggle(
     onChange: (enabled: boolean) => void;
     onLockedTap?: () => void;
   }
-): Phaser.GameObjects.Container {
+): SettingsToggle {
   let enabled = options.initial;
-  const locked = !!options.locked;
-  const container = scene.add.container(x, y);
+  let locked = !!options.locked;
+  const container = scene.add.container(x, y) as SettingsToggle;
   const track = scene.add.graphics();
   const knob = scene.add.circle(0, 0, TOGGLE_KNOB, 0xffffff);
   knob.setStrokeStyle(2, 0xdfe8df);
@@ -1082,11 +1108,13 @@ function createToggle(
     knob.setPosition(knobX, 0);
   };
 
+  const applyLockedVisual = (): void => {
+    container.setAlpha(locked ? TOGGLE_LOCKED_ALPHA : 1);
+  };
+
   draw();
+  applyLockedVisual();
   container.add([track, knob]);
-  if (locked) {
-    container.setAlpha(TOGGLE_LOCKED_ALPHA);
-  }
 
   const hit = scene.add
     .rectangle(0, 0, TOGGLE_WIDTH + 8, TOGGLE_HEIGHT + 8, 0x000000, 0)
@@ -1103,5 +1131,19 @@ function createToggle(
   });
   container.add(hit);
 
+  container.setEnabled = (next: boolean) => {
+    enabled = next;
+    draw();
+  };
+  container.setLocked = (next: boolean) => {
+    locked = next;
+    applyLockedVisual();
+  };
+
   return container;
+}
+
+interface SettingsToggle extends Phaser.GameObjects.Container {
+  setEnabled: (enabled: boolean) => void;
+  setLocked: (locked: boolean) => void;
 }

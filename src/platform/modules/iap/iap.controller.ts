@@ -33,6 +33,8 @@ export function bindIapController(events: IEventBus): () => void {
     }),
 
     events.on(IAP_EVENTS.PURCHASE_RESTORED, () => {
+      // Re-sync even when entitlements were already known (no ENTITLEMENT_CHANGED).
+      syncAdsWithEntitlements();
       events.emit('shop:restore', undefined);
     }),
   ];

@@ -99,6 +99,11 @@ class IapService {
 
       this.ready = true;
       logger.info('[IAP] Ready', { provider: this.provider.name, entitlements: stored });
+
+      // Init may finish after bindIapController's first sync — notify so ads/UI catch up.
+      for (const entitlement of this.entitlements) {
+        this.emitEntitlementChanged(entitlement, true);
+      }
     } catch (error) {
       logger.error('[IAP] Initialization failed', error);
       throw error;
@@ -324,9 +329,17 @@ class IapService {
           continue;
         }
 
+        // Always report store-confirmed non-consumables so Settings can refresh
+        // even when the entitlement was already loaded before ads/UI synced.
         const wasNew = !this.has(product.entitlement);
         await this.grantEntitlement(product.entitlement, { emitChange: wasNew });
-        if (wasNew) restoredEntitlements.push(product.entitlement);
+        if (!wasNew) {
+          // Already owned in memory — still notify so Settings/ads can catch up.
+          this.emitEntitlementChanged(product.entitlement, true);
+        }
+        if (!restoredEntitlements.includes(product.entitlement)) {
+          restoredEntitlements.push(product.entitlement);
+        }
       }
 
       this.emit(IAP_EVENTS.PURCHASE_RESTORED, { restoredEntitlements });
