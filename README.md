@@ -70,7 +70,7 @@ game-apps/
 │       └── scenes/            # Boot → Preload → Home + feature scenes
 ├── public/assets/             # Static game assets (create per project)
 │   ├── images/                # UI/game art
-│   └── audio/                 # SFX (e.g. pop-sound-effect, coin-drop)
+│   └── audio/                 # SFX + BGM (see Audio below)
 ├── native/                    # Native templates: fullscreen, FCM, AdMob (applied by scripts/)
 ├── scripts/                   # native-ops, apply-*-native, run-*-emulator/simulator, verify-game-config, …
 ├── documents/                 # Module + setup guides (linked below)
@@ -189,7 +189,26 @@ button.setBadgeVisible(true);
 
 // Play SFX directly (respects settings.soundEnabled)
 soundManager.playCoinDrop();
+soundManager.playCombine();
 ```
+
+### Audio
+
+Assets live in `public/assets/audio/` and are preloaded in `PreloadScene`. Playback goes through `soundManager` (`src/platform/ui/audio/SoundManager.ts`) and respects `settings.soundEnabled` / `settings.musicEnabled`.
+
+| File | Method | When |
+| ---- | ------ | ---- |
+| `pop.mp3` | `playPop()` | UI button press (default) |
+| `coin-drop.mp3` | `playCoinDrop()` | Coin reward / coin-drop buttons |
+| `combine.mp3` | `playCombine()` | Two fruits merge |
+| `disappear.mp3` | `playDisappear()` | Explosive Hammer destroys a fruit |
+| `change-turns.mp3` | `playChangeTurns()` | Change Fruit swaps current ↔ next |
+| `swoosh.mp3` | `playSwoosh()` | Swap exchanges two fruits |
+| `increase-size.mp3` | `playIncreaseSize()` | Size Increase upgrades a fruit |
+| `reverse.mp3` | `playReverse()` | Undo restores the last move |
+| `background-music.mp3` | `syncMusic()` | Looping BGM (music setting) |
+
+Change Fruit and Undo buttons use `sound: false` so only their skill SFX plays (no default pop).
 
 `ScreenManager` is available for custom overlay screens. Built-in user-facing scenes: Home, Gameplay, GameOver, Shop, Missions, Leaderboard, DailyReward, Settings, HowToPlay, Legal.
 

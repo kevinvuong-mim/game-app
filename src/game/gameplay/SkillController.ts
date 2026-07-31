@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 
 import { t } from '@platform/ui';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 import { toast } from '@platform/ui/toast/ToastManager';
 import { FRUIT_TYPES } from '@game/fruits';
 import { type SkillId, getSkillQuantity, consumeSkill } from '@game/skills/skillInventory';
@@ -65,6 +66,7 @@ export class SkillController {
       this.callbacks.refreshDropper();
       this.skillBar.refreshInventory(id);
       this.skillBar.setHint('');
+      soundManager.playChangeTurns();
       return;
     }
 
@@ -78,6 +80,7 @@ export class SkillController {
       this.clear();
       this.skillBar.refreshInventory(id);
       this.skillBar.setHint('');
+      soundManager.playReverse();
       return;
     }
 
@@ -118,6 +121,7 @@ export class SkillController {
       this.factory.burst(fruit);
       this.skillBar.refreshInventory(skillId);
       this.clear();
+      soundManager.playDisappear();
       return;
     }
 
@@ -132,6 +136,7 @@ export class SkillController {
       this.factory.spawn(x, y, next, multiplier);
       this.skillBar.refreshInventory(skillId);
       this.clear();
+      soundManager.playIncreaseSize();
       return;
     }
 
@@ -183,6 +188,7 @@ export class SkillController {
 
     this.skillBar.refreshInventory(skillId);
     this.clear();
+    soundManager.playSwoosh();
   }
 
   private clearSelectionTint(): void {

@@ -393,6 +393,8 @@ export class SkillBarView {
       position: { x: 0, y: 0 },
       size: { width: btnSize, height: btnSize },
       background: { key: SKILL_ICONS[id] },
+      // Instant skills play their own SFX — skip the default button pop.
+      sound: id === 'boost_change' || id === 'boost_undo' ? false : 'pop',
       badge: {
         content: String(qty),
         visible: true,

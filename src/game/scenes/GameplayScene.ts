@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { gameConfig } from '@game/config';
 import { eventBus } from '@platform/core/events';
 import { getHighScore } from '@platform/ui';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 import { randomSpawnLevel } from '@game/fruits';
 import { GameplayHUD } from '@game/ui/GameplayHUD';
 import {
@@ -104,6 +105,7 @@ export class GameplayScene extends Phaser.Scene {
       onScore: (points) => this.addScore(points),
       onMerge: () => {
         this.merges += 1;
+        soundManager.playCombine();
       },
     });
     this.mergeSystem.reset();

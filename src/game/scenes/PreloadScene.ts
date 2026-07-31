@@ -8,6 +8,12 @@ import {
   SOUND_POP_KEY,
   SOUND_BGM_KEY,
   SOUND_COIN_DROP_KEY,
+  SOUND_COMBINE_KEY,
+  SOUND_DISAPPEAR_KEY,
+  SOUND_CHANGE_TURNS_KEY,
+  SOUND_SWOOSH_KEY,
+  SOUND_INCREASE_SIZE_KEY,
+  SOUND_REVERSE_KEY,
   soundManager,
 } from '@platform/ui/audio/SoundManager';
 
@@ -152,7 +158,13 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     this.load.audio(SOUND_COIN_DROP_KEY, '/assets/audio/coin-drop.mp3');
-    this.load.audio(SOUND_POP_KEY, '/assets/audio/pop-sound-effect.mp3');
+    this.load.audio(SOUND_POP_KEY, '/assets/audio/pop.mp3');
+    this.load.audio(SOUND_COMBINE_KEY, '/assets/audio/combine.mp3');
+    this.load.audio(SOUND_DISAPPEAR_KEY, '/assets/audio/disappear.mp3');
+    this.load.audio(SOUND_CHANGE_TURNS_KEY, '/assets/audio/change-turns.mp3');
+    this.load.audio(SOUND_SWOOSH_KEY, '/assets/audio/swoosh.mp3');
+    this.load.audio(SOUND_INCREASE_SIZE_KEY, '/assets/audio/increase-size.mp3');
+    this.load.audio(SOUND_REVERSE_KEY, '/assets/audio/reverse.mp3');
     this.load.audio(SOUND_BGM_KEY, '/assets/audio/background-music.mp3');
   }
 
