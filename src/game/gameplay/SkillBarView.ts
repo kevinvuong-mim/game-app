@@ -40,7 +40,7 @@ export class SkillBarView {
   private skillRightArrowZone?: Phaser.GameObjects.Zone;
   private skillScrollIndex = 0;
   private skillSlotSpacing = 110;
-  private skillBtnSize = 72;
+  private skillBtnSize = 84;
   private skillBarTop = 0;
   private skillBarBottom = 0;
   private skillPanelLeft = 0;
@@ -53,13 +53,14 @@ export class SkillBarView {
   private layoutScreenWidth = 0;
   private layoutScreenHeight = 0;
   private readonly skillVisibleCount = 4;
-  private readonly selectedSkillScale = 1.16;
+  private readonly selectedSkillScale = 1.24;
   private readonly arrowPad = 36;
-  private readonly panelPadTop = 16;
-  private readonly panelPadBottom = 18;
+  private readonly panelPadTop = 18;
+  private readonly panelPadBottom = 20;
   private readonly idealSlotSpacing = 110;
   private readonly maxPanelWidthPx = 520;
   private readonly maxPanelWidthRatio = 0.85;
+  private readonly baseBtnSize = 84;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -97,7 +98,7 @@ export class SkillBarView {
     this.layoutScreenWidth = width;
     this.layoutScreenHeight = height;
 
-    const btnSize = 72;
+    const btnSize = this.baseBtnSize;
     this.skillBtnSize = btnSize;
     const slotHeight = btnSize;
 
@@ -192,7 +193,7 @@ export class SkillBarView {
     this.skillSlotSpacing = innerWidth / slotCount;
 
     const panelHeight = this.panelPadTop + this.skillBtnSize + this.panelPadBottom;
-    this.skillBarTop = this.layoutScreenHeight - panelHeight - 110;
+    this.skillBarTop = this.layoutScreenHeight - panelHeight - 90;
     this.skillBarBottom = this.skillBarTop + panelHeight;
   }
 
@@ -395,12 +396,12 @@ export class SkillBarView {
       badge: {
         content: String(qty),
         visible: true,
-        position: { x: btnSize - 24, y: btnSize - 24 },
-        minSize: { width: 26, height: 26 },
+        position: { x: btnSize - 30, y: btnSize - 30 },
+        minSize: { width: 28, height: 28 },
         padding: { horizontal: 4, vertical: 2 },
-        background: { color: '#e53935', radius: 13 },
+        background: { color: '#e53935', radius: 14 },
         textStyle: {
-          fontSize: 13,
+          fontSize: 14,
           fontStyle: 'bold',
           color: '#ffffff',
           border: { width: 2, color: '#000000' },
