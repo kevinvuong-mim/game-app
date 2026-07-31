@@ -19,7 +19,9 @@ interface ReminderNotification {
   title: string;
   body: string;
   channelId: string;
-  schedule: { at: Date; allowWhileIdle: true } | { on: { hour: number; minute: number }; allowWhileIdle: true };
+  schedule:
+    | { at: Date; allowWhileIdle: true }
+    | { on: { hour: number; minute: number }; allowWhileIdle: true };
   extra: { route: 'DailyReward' };
 }
 
