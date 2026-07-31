@@ -52,7 +52,7 @@
       "productKey": "REMOVE_ADS",
       "id": "remove_ads",
       "name": "Remove Ads",
-      "icon": "coin-icon",
+      "icon": "no-ads-icon",
       "description": "Remove all ads permanently"
     },
     {

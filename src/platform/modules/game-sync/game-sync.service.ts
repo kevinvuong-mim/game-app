@@ -127,19 +127,17 @@ export class GameSyncService {
 
     let queue = await this.repository.loadQueue();
 
-    // Re-bind orphans from a previous guest on this install (e.g. after 401 recovery).
-    // Signatures are recomputed below with the current guestId.
+    // Drop orphans from a previous guest on this install (e.g. leftover after a failed recovery).
+    // Never rebind — that would attribute another identity's scores to the current guest.
     const orphanCount = queue.filter(
       (item) => !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
     ).length;
     if (orphanCount > 0) {
-      logger.warn('[GameSync] Rebinding orphaned results to current guest', {
+      logger.warn('[GameSync] Dropping orphaned results from previous guest', {
         count: orphanCount,
       });
-      queue = queue.map((item) =>
-        !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
-          ? { ...item, guestId, syncAttempts: 0, nextAttemptAt: undefined }
-          : item
+      queue = queue.filter(
+        (item) => item.synced || item.gameId !== gameId || !item.guestId || item.guestId === guestId
       );
     }
 
@@ -248,9 +246,9 @@ export class GameSyncService {
 
       const rejectReason = rejectedById.get(item.clientResultId);
       if (rejectReason === 'invalid_signature') {
-        // Likely config/secret mismatch or stale guest HMAC — keep queue, back off.
+        // Secret mismatch — count toward drop; do not retry forever.
         logger.error(
-          '[GameSync] Result rejected (invalid_signature) — keeping in queue; check VITE_REPLAY_SECRET',
+          '[GameSync] Result rejected (invalid_signature) — will drop after max attempts; check VITE_REPLAY_SECRET',
           { clientResultId: item.clientResultId }
         );
         return [this.markAttemptFailed(item, 'invalid_signature')];

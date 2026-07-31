@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { resolvePushNotificationsEnabled } from './notification-config.mjs';
 import { resolveDeepLinkHosts, resolveDeepLinkScheme } from './deeplink-config.mjs';
+import { loadEnvFile } from './env-file.mjs';
 import { rmSync, existsSync, unlinkSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -17,32 +18,11 @@ const GOOGLE_SERVICE_INFO_BUILD_FILE_ID = 'F5LL5CRN5FED79650016851F';
 const GOOGLE_SAMPLE_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
 const ENTITLEMENTS_BUILD_SETTING = 'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;';
 
-function loadEnvFile(name) {
-  const envPath = join(root, name);
-  if (!existsSync(envPath)) return;
-  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim();
-    const value = trimmed
-      .slice(eq + 1)
-      .trim()
-      .replace(/^["']|["']$/g, '');
-    if (!(key in process.env)) process.env[key] = value;
-  }
-}
-
 function resolveAdMobAppId() {
   const configured = process.env.VITE_ADMOB_IOS_APP_ID?.trim();
   if (configured) return configured;
   if (process.env.VITE_ADS_PROVIDER === 'admob') return GOOGLE_SAMPLE_IOS_APP_ID;
   return '';
-}
-
-function pushNotificationsEnabled() {
-  return resolvePushNotificationsEnabled();
 }
 
 function resetIosPods(podDir) {
@@ -86,7 +66,7 @@ function patchPodfile(podfilePath) {
     console.log('[ios-native] Upgraded GoogleUserMessagingPlatform pin to 3.0.0');
   }
 
-  if (pushNotificationsEnabled() && !content.includes("pod 'FirebaseMessaging'")) {
+  if (resolvePushNotificationsEnabled() && !content.includes("pod 'FirebaseMessaging'")) {
     content = content.replace(
       /(target 'App' do\n(?:.*\n)*? {2}# Add your Pods here\n(?:.*\n)*?)/,
       `$1  pod 'FirebaseMessaging'\n`
@@ -156,13 +136,38 @@ function patchAdMobPlist(plistPath, appId) {
   return 'injected';
 }
 
+/** Replace a plist key whose value is an <array>…</array>, respecting nested arrays. */
+function replacePlistArrayKey(content, key, replacement) {
+  const keyTag = `<key>${key}</key>`;
+  const start = content.indexOf(keyTag);
+  if (start === -1) return null;
+
+  const arrayStart = content.indexOf('<array>', start + keyTag.length);
+  if (arrayStart === -1 || arrayStart > start + keyTag.length + 40) return null;
+
+  let depth = 0;
+  let i = arrayStart;
+  while (i < content.length) {
+    if (content.startsWith('<array>', i)) {
+      depth += 1;
+      i += '<array>'.length;
+      continue;
+    }
+    if (content.startsWith('</array>', i)) {
+      depth -= 1;
+      i += '</array>'.length;
+      if (depth === 0) {
+        return content.slice(0, start) + replacement + content.slice(i);
+      }
+      continue;
+    }
+    i += 1;
+  }
+  return null;
+}
+
 function patchDeepLinkInfoPlist(plistPath, scheme) {
   let content = readFileSync(plistPath, 'utf8');
-  const marker = '<!-- deeplink-url-schemes -->';
-
-  if (content.includes('CFBundleURLTypes') && content.includes(scheme)) {
-    return 'present';
-  }
 
   const snippet =
     `\t<key>CFBundleURLTypes</key>\n` +
@@ -175,15 +180,39 @@ function patchDeepLinkInfoPlist(plistPath, scheme) {
     `\t\t\t\t<string>${scheme}</string>\n` +
     `\t\t\t</array>\n` +
     `\t\t</dict>\n` +
-    `\t</array>\n`;
+    `\t</array>`;
 
-  if (!content.includes('CFBundleURLTypes')) {
-    content = content.replace('</dict>\n</plist>', `${snippet}</dict>\n</plist>`);
-    writeFileSync(plistPath, content);
-    return 'injected';
+  if (content.includes('CFBundleURLTypes')) {
+    // Replace any existing URL types (e.g. Capacitor default / old scheme) with the game scheme.
+    // Must match nested <array> (CFBundleURLSchemes) — a naive .*?</array> truncates early and corrupts the plist.
+    const updated = replacePlistArrayKey(content, 'CFBundleURLTypes', snippet);
+    if (updated && updated !== content) {
+      writeFileSync(plistPath, updated);
+      return content.includes(scheme) ? 'present' : 'updated';
+    }
+    return 'present';
   }
 
-  return 'present';
+  content = content.replace('</dict>\n</plist>', `${snippet}\n</dict>\n</plist>`);
+  writeFileSync(plistPath, content);
+  return 'injected';
+}
+
+function setApsEnvironment(entitlementsPath, value) {
+  if (!existsSync(entitlementsPath)) return;
+  let content = readFileSync(entitlementsPath, 'utf8');
+  if (!content.includes('aps-environment')) {
+    content = content.replace(
+      '<dict>\n',
+      `<dict>\n\t<key>aps-environment</key>\n\t<string>${value}</string>\n`
+    );
+  } else {
+    content = content.replace(
+      /(<key>aps-environment<\/key>\s*\n\t*<string>)[^<]*(<\/string>)/,
+      `$1${value}$2`
+    );
+  }
+  writeFileSync(entitlementsPath, content);
 }
 
 function stripApsEnvironment(entitlementsPath) {
@@ -290,7 +319,7 @@ function patchPbxproj(projectPath) {
   }
 
   if (
-    pushNotificationsEnabled() &&
+    resolvePushNotificationsEnabled() &&
     existsSync(join(root, 'native/firebase', GOOGLE_SERVICE_INFO_FILE)) &&
     !content.includes(GOOGLE_SERVICE_INFO_FILE)
   ) {
@@ -343,7 +372,7 @@ function copyFirebaseIosConfig(iosAppDir) {
   return true;
 }
 
-loadEnvFile('.env');
+loadEnvFile(root);
 
 const mode = process.argv[2] ?? 'post-sync';
 const iosAppDir = join(root, 'ios/App/App');
@@ -352,7 +381,6 @@ const nativeDir = join(root, 'native/ios');
 const plistPath = join(iosAppDir, 'Info.plist');
 const podDir = join(root, 'ios/App');
 const podfilePath = join(podDir, 'Podfile');
-const podfileLockPath = join(podDir, 'Podfile.lock');
 
 if (!existsSync(iosAppDir)) {
   console.warn('[ios-native] iOS project not found — run `npx cap add ios` first');
@@ -379,7 +407,7 @@ if (existsSync(nativeDir)) {
   if (existsSync(storyboardTemplate)) {
     copyFileSync(storyboardTemplate, join(iosAppDir, 'Base.lproj/Main.storyboard'));
   }
-  if (pushNotificationsEnabled() && existsSync(appDelegateTemplate)) {
+  if (resolvePushNotificationsEnabled() && existsSync(appDelegateTemplate)) {
     copyFileSync(appDelegateTemplate, join(iosAppDir, 'AppDelegate.swift'));
     console.log('[ios-native] Applied Firebase AppDelegate template');
   }
@@ -387,8 +415,13 @@ if (existsSync(nativeDir)) {
   if (existsSync(entitlementsTemplate)) {
     copyFileSync(entitlementsTemplate, join(iosAppDir, ENTITLEMENTS_FILE));
     console.log('[ios-native] Applied App.entitlements template');
-    if (!pushNotificationsEnabled()) {
+    if (!resolvePushNotificationsEnabled()) {
       stripApsEnvironment(join(iosAppDir, ENTITLEMENTS_FILE));
+    } else {
+      const apsEnv =
+        (process.env.VITE_APP_ENV ?? 'dev') === 'production' ? 'production' : 'development';
+      setApsEnvironment(join(iosAppDir, ENTITLEMENTS_FILE), apsEnv);
+      console.log(`[ios-native] aps-environment set to ${apsEnv}`);
     }
   }
   if (existsSync(iosProject)) {
@@ -398,7 +431,7 @@ if (existsSync(nativeDir)) {
   console.warn('[ios-native] native/ios templates not found — skipping fullscreen storyboard copy');
 }
 
-if (pushNotificationsEnabled()) {
+if (resolvePushNotificationsEnabled()) {
   patchNotificationPlist(plistPath);
   copyFirebaseIosConfig(iosAppDir);
 }
@@ -412,9 +445,6 @@ if (adsProvider === 'admob') {
     process.exit(1);
   }
 
-  const result = patchAdMobPlist(plistPath, admobAppId);
-  console.log(`[ios-native] AdMob GADApplicationIdentifier ${result}: ${admobAppId}`);
-} else if (admobAppId) {
   const result = patchAdMobPlist(plistPath, admobAppId);
   console.log(`[ios-native] AdMob GADApplicationIdentifier ${result}: ${admobAppId}`);
 }

@@ -5,23 +5,14 @@
 
 const DEEP_LINK_CONFIG = {
   scheme: 'fruloop',
-  hostProd: 'fruloop.example.com',
-  hostDev: 'dev.fruloop.example.com',
+  hostProd: 'fruloop.vraxion.com',
+  hostDev: 'dev-fruloop.vraxion.com',
 };
 
 export function resolveDeepLinkScheme() {
   return DEEP_LINK_CONFIG.scheme;
 }
 
-export function resolveDeepLinkHostDev() {
-  return DEEP_LINK_CONFIG.hostDev;
-}
-
-export function resolveDeepLinkHostProd() {
-  return DEEP_LINK_CONFIG.hostProd;
-}
-
 export function resolveDeepLinkHosts() {
-  const hosts = [resolveDeepLinkHostDev(), resolveDeepLinkHostProd()];
-  return [...new Set(hosts.filter(Boolean))];
+  return [...new Set([DEEP_LINK_CONFIG.hostDev, DEEP_LINK_CONFIG.hostProd].filter(Boolean))];
 }

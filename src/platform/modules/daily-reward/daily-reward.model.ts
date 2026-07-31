@@ -52,3 +52,25 @@ export function hasClaimedToday(model: DailyRewardModel, at: number = Date.now()
   if (!model.lastClaimDate) return false;
   return model.lastClaimDate === getLocalDateKey(at);
 }
+
+/** Local calendar key for the day before `at`. */
+export function getYesterdayLocalDateKey(at: number = Date.now()): string {
+  const date = new Date(at);
+  date.setDate(date.getDate() - 1);
+  return getLocalDateKey(date.getTime());
+}
+
+/**
+ * If the player skipped one or more calendar days since the last claim,
+ * restart the 7-day cycle at day 1.
+ */
+export function applyStreakGapReset(
+  model: DailyRewardModel,
+  at: number = Date.now()
+): DailyRewardModel {
+  if (!model.lastClaimDate) return model;
+  if (hasClaimedToday(model, at)) return model;
+  if (model.lastClaimDate === getYesterdayLocalDateKey(at)) return model;
+  if (model.currentDay === 1) return model;
+  return { ...model, currentDay: 1 };
+}

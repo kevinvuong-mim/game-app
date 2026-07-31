@@ -7,6 +7,7 @@ import { join, dirname } from 'node:path';
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolveDeepLinkHosts, resolveDeepLinkScheme } from './deeplink-config.mjs';
 import { readCapacitorAppId, resolveMainActivityPath } from './capacitor-config.mjs';
+import { loadEnvFile } from './env-file.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -22,23 +23,6 @@ const GOOGLE_SAMPLE_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
 const GOOGLE_SERVICES_PLUGIN = "apply plugin: 'com.google.gms.google-services'";
 const GOOGLE_SERVICES_CLASSPATH = "classpath 'com.google.gms:google-services:4.4.2'";
 const FCM_CHANNEL_META = 'com.google.firebase.messaging.default_notification_channel_id';
-
-function loadEnvFile(name) {
-  const envPath = join(root, name);
-  if (!existsSync(envPath)) return;
-  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim();
-    const value = trimmed
-      .slice(eq + 1)
-      .trim()
-      .replace(/^["']|["']$/g, '');
-    if (!(key in process.env)) process.env[key] = value;
-  }
-}
 
 function resolveAdMobAppId() {
   const configured = process.env.VITE_ADMOB_ANDROID_APP_ID?.trim();
@@ -310,7 +294,7 @@ function applyMainActivityTemplate(appId) {
   console.log(`[android-native] Applied MainActivity template → ${targetPath}`);
 }
 
-loadEnvFile('.env');
+loadEnvFile(root);
 
 const appId = readCapacitorAppId(root);
 const manifestPath = join(root, 'android/app/src/main/AndroidManifest.xml');
@@ -334,9 +318,6 @@ if (adsProvider === 'admob') {
     process.exit(1);
   }
 
-  const result = injectAdMobManifest(manifestPath, admobAppId);
-  console.log(`[android-native] AdMob APPLICATION_ID ${result}: ${admobAppId}`);
-} else if (admobAppId && existsSync(manifestPath)) {
   const result = injectAdMobManifest(manifestPath, admobAppId);
   console.log(`[android-native] AdMob APPLICATION_ID ${result}: ${admobAppId}`);
 }

@@ -14,10 +14,11 @@ export const MAX_PENDING_RESULTS = 500;
 /**
  * Transient / retry-forever error codes for the offline queue.
  * These must never permanently drop a queued score (lie-fi, timeouts, 5xx).
+ * `invalid_signature` is NOT transient — wrong secret should eventually drop.
  */
 export function isTransientSyncErrorCode(code: string | undefined): boolean {
   if (!code) return false;
-  if (code === 'network' || code === 'invalid_signature') return true;
+  if (code === 'network') return true;
   const status = Number(code);
   if (!Number.isFinite(status)) return false;
   return status === 0 || status === 408 || status === 429 || status >= 500;

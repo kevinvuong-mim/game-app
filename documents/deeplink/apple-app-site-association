@@ -4,26 +4,7 @@
     "details": [
       {
         "appIDs": [
-          "TEAM_ID.com.vraxion.fruloop.dev"
-        ],
-        "paths": [
-          "/",
-          "/home",
-          "/leaderboard",
-          "/shop",
-          "/settings",
-          "/missions",
-          "/daily-reward",
-          "/how-to-play",
-          "/play",
-          "/gameplay",
-          "/legal",
-          "NOT /api/*"
-        ]
-      },
-      {
-        "appIDs": [
-          "TEAM_ID.com.vraxion.fruloop.prod"
+          "TEAM_ID.com.vraxion.fruloop"
         ],
         "paths": [
           "/",

@@ -2,6 +2,7 @@ import {
   hasClaimedToday,
   type ClaimResult,
   createDefaultModel,
+  applyStreakGapReset,
   type RewardProgress,
   type DailyRewardModel,
 } from './daily-reward.model';
@@ -25,13 +26,18 @@ export class DailyRewardService {
   ) {}
 
   async init(): Promise<void> {
-    const storeState = usePlatformStore.getState().dailyRewards;
-    const migratedFromStore = this.repository.migrateFromStoreState(storeState);
-    const fromRepository = await this.repository.load();
     const hasPrefs = await this.repository.hasPersistedModel();
+    if (hasPrefs) {
+      this.model = await this.repository.load();
+    } else {
+      // One-time migration from legacy game-save snapshot, then Preferences is sole durable store.
+      const migrated = this.repository.migrateFromStoreState(
+        usePlatformStore.getState().dailyRewards
+      );
+      this.model = migrated ?? (await this.repository.load());
+    }
 
-    // Preferences is the durable source of truth; game-save is a fallback when Preferences is empty.
-    this.model = hasPrefs ? fromRepository : (migratedFromStore ?? fromRepository);
+    this.model = applyStreakGapReset(this.model);
 
     if (this.detectTimeManipulation()) {
       this.model.timeManipulated = true;
@@ -86,6 +92,8 @@ export class DailyRewardService {
   }
 
   refreshSessionTimestamp(): void {
+    this.model = applyStreakGapReset(this.model);
+
     if (this.detectTimeManipulation()) {
       this.model.timeManipulated = true;
     } else {
@@ -119,8 +127,10 @@ export class DailyRewardService {
   }
 
   private async persist(): Promise<void> {
+    // Preferences is the only durable store for daily-reward; game-save no longer mirrors it.
     await this.repository.save(this.model);
     usePlatformStore.getState().setDailyRewardState(this.repository.toStoreState(this.model));
+    // Persist currency/other store changes (e.g. coins from claim).
     await saveService.saveLocal();
   }
 }

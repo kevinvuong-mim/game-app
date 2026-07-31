@@ -27,7 +27,7 @@ Nếu offline / create fail ở bước 3–4, guest ở `pending` và tự retr
 Khi API trả 401, `guest.recoverFromUnauthorized()`:
 
 - Xóa credentials cũ (`gsk:guest`) và reset notification state (`notification-state-v1`)
-- **Giữ** queue `game-sync:pending` — lần flush sau sẽ gắn `guestId` mới và ký lại HMAC
+- **Xóa** queue `game-sync:pending` — score cũ không được gắn sang guest mới (tránh orphan HMAC)
 - Tạo guest mới qua `init()`, rồi re-bind FCM device token cho guest mới
 - `ApiClient` **không** replay request cũ sau recovery (tránh HMAC ký với guest cũ)
 

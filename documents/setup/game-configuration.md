@@ -10,6 +10,14 @@ export const gameConfig: GameConfig = {
   name: 'Fruloop',
   id: import.meta.env.VITE_GAME_ID ?? '',
   replaySecret: import.meta.env.VITE_REPLAY_SECRET ?? '',
+  // Suika demo uses Matter; replace or remove when cloning a non-physics game.
+  physics: {
+    default: 'matter',
+    matter: {
+      gravity: { x: 0, y: 1.4 },
+      debug: false,
+    },
+  },
 };
 ```
 
@@ -21,6 +29,7 @@ export const gameConfig: GameConfig = {
 | `width`        | File                 | Chiều rộng canvas Phaser                                |
 | `height`       | File                 | Chiều cao canvas Phaser                                 |
 | `version`      | File                 | Phiên bản game (semver)                                 |
+| `physics`      | File                 | Optional Phaser physics (`matter` / omit for none)      |
 
 > **Game mới:** không chỉ đổi env trên kit. Mỗi game mới cần **1 PR `game-api`** (`GameId` + `GAME_CONFIG` + migrate) rồi mới set `VITE_GAME_ID` / `VITE_REPLAY_SECRET`. Chi tiết: [Adding a new game](../../../game-api/documents/setup/adding-new-game.md).
 

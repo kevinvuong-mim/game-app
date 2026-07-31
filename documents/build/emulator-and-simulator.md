@@ -139,15 +139,15 @@ Chi tiết biến môi trường: [Environment Variables](../setup/environment-v
 
 ### 3. Backend API (tuỳ chọn nhưng khuyến nghị)
 
-App gọi guest init, leaderboard, game sync qua API URL theo `VITE_APP_ENV` trong `src/platform/core/config/index.ts`. Preset `dev` là `http://localhost:3000/api`. iOS Simulator truy cập trực tiếp host localhost; Android Emulator cần reverse cổng ADB:
+App gọi guest init, leaderboard, game sync qua API URL theo `VITE_APP_ENV` trong `src/platform/core/config/index.ts`. Preset `dev` và `production` đều dùng `https://game-api-s5kn.onrender.com/api` (khớp `scripts/verify-game-config.mjs`).
 
-Chạy `game-api` trước khi test các flow online:
+Để test với `game-api` local, tạm sửa `apiUrl` trong config rồi (nếu Android emulator) reverse cổng:
 
 ```bash
 cd ../game-api
 npm run start:dev
 
-# Terminal khác, sau khi Android emulator đã boot:
+# Terminal khác, sau khi Android emulator đã boot (chỉ khi apiUrl trỏ localhost):
 adb reverse tcp:3000 tcp:3000
 ```
 
@@ -195,12 +195,12 @@ Thứ tự thực thi:
 1. `npm run build` — typecheck + Vite build → `dist/`
 2. `cap add ios` (nếu chưa có `ios/`)
 3. `capacitor-assets generate` — icon/splash
-4. **`node scripts/apply-ios-native.mjs pre-sync`** — pin `GoogleUserMessagingPlatform ~> 2.3` trong Podfile **trước** `pod install`
+4. **`node scripts/apply-ios-native.mjs pre-sync`** — pin `GoogleUserMessagingPlatform 3.0.0` trong Podfile **trước** `pod install`
 5. `pod install --repo-update` trong `ios/App`
 6. `cap sync ios` — copy web assets + cập nhật plugins
 7. `node scripts/apply-ios-native.mjs` — copy storyboard/Swift/`App.entitlements`, inject AdMob + Associated Domains (Universal Links)
 
-> **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@6.x` không tương thích UMP 3.x. Script `pre-sync` pin UMP `~> 2.3`. Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
+> **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@7.x` cần UMP **3.0.0**. Script `pre-sync` pin đúng phiên bản (và upgrade pin cũ `~> 2.3` nếu còn). Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
 >
 > ```bash
 > cd ios/App
@@ -469,7 +469,7 @@ xcrun simctl launch booted com.vraxion.fruloop
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Android crash ngay khi mở, log AdMob SDK          | Thiếu `com.google.android.gms.ads.APPLICATION_ID` → chạy lại `npm run build:android` (script `apply-android-native.mjs`) |
 | iOS crash AdMob lúc launch                        | Thiếu `GADApplicationIdentifier` → chạy lại `npm run build:ios`                                                          |
-| iOS `pod install` conflict UMP 3.x                | Chạy `apply-ios-native.mjs pre-sync` **trước** `cap sync`; xóa `Podfile.lock` + `pod install`                            |
+| iOS `pod install` conflict UMP / AdMob            | Chạy `apply-ios-native.mjs pre-sync` (pin UMP `3.0.0`) **trước** `cap sync`; xóa `Podfile.lock` + `pod install` |
 | `No connected devices!` (Gradle)                  | Emulator/device chưa boot — `adb devices` phải thấy `device`                                                             |
 | Emulator không hiện trong `adb devices`           | Process emulator chết sớm — chạy lại với `-gpu swiftshader_indirect` hoặc mở từ Android Studio                           |
 | API guest/leaderboard fail trên Android emulator  | Start API trên host, chạy `adb reverse tcp:3000 tcp:3000`, rồi mở lại app                                                |
@@ -489,7 +489,7 @@ Scripts đọc `.env` và apply template từ `native/`:
 | MainActivity            | `native/android/MainActivity.java` → `android/.../MainActivity.java` | —                                                                    |
 | AdMob App ID            | `AndroidManifest.xml` meta-data                                      | `Info.plist` `GADApplicationIdentifier`                              |
 | Fullscreen / status bar | —                                                                    | `native/ios/FullscreenBridgeViewController.swift`, `Main.storyboard` |
-| CocoaPods pin           | —                                                                    | `GoogleUserMessagingPlatform ~> 2.3` (pre-sync)                      |
+| CocoaPods pin           | —                                                                    | `GoogleUserMessagingPlatform 3.0.0` (pre-sync)                      |
 
 Chi tiết build scripts: [Mobile Build](../setup/mobile-build.md).
 

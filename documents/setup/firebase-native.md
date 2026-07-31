@@ -56,12 +56,12 @@ native/firebase/GoogleService-Info.plist
 
 Push/local bật theo `src/platform/core/config/notification-env.json`, merge vào `ENV_CONFIGS` trong `src/platform/core/config/index.ts`:
 
-| Env          | Push | Local |
-| ------------ | ---- | ----- |
-| `dev`        | off  | on    |
-| `production` | on\* | on    |
+| Env          | Push\* | Local\* |
+| ------------ | ------ | ------- |
+| `dev`        | on     | on      |
+| `production` | on     | on      |
 
-\* Push chỉ thực sự bật khi native **và** đủ 5 biến Firebase sau:
+\* Push chỉ thực sự bật khi native **và** đủ 5 biến Firebase sau. Local cũng bị tắt trên web vì `resolveLocalNotificationsEnabled()` yêu cầu native.
 
 ```env
 VITE_FIREBASE_APP_ID=
@@ -135,7 +135,7 @@ Kiểm tra:
 3. `GoogleService-Info.plist` có trong target **App** → Build Phases → Copy Bundle Resources
 4. `App.entitlements` được gán trong Build Settings → Code Signing Entitlements (`aps-environment` + Associated Domains)
 
-> Nếu build release và bật push, đổi `aps-environment` trong `native/ios/App.entitlements` thành `production` hoặc dùng entitlements riêng cho release.
+> Nếu build release (`VITE_APP_ENV=production`) và bật push, `apply-ios-native.mjs` tự set `aps-environment` = `production` trên bản copy trong `ios/`. Template `native/ios/App.entitlements` mặc định vẫn là `development` cho local.
 
 ---
 

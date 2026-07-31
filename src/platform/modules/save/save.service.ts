@@ -83,7 +83,7 @@ class SaveService {
       progress: state.progress,
       settings: state.settings,
       missions: state.missions,
-      dailyRewards: state.dailyRewards,
+      // dailyRewards lives only in Preferences (`daily-reward-v2`) — avoid dual-write.
     };
   }
 }

@@ -17,7 +17,8 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 ## Missions
 
 - Definitions: `missions.json`; progress trong Zustand + `game-save`.
-- `resetPolicy`: chỉ `'daily'` | `'never'` được implement.
+- `resetPolicy`: `'daily'` | `'never'` | `'onClaim'` (xem `missions.json`).
+- `DAILY_LOGIN` hoàn thành khi mở / resume app trong ngày (không phụ thuộc Daily reward claim).
 - Demo: mission `WATCH_AD` (xem rewarded ads).
 
 ## Related

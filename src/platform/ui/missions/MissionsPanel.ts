@@ -60,8 +60,8 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     this.build();
     if (
       missions.applyResets() ||
-      missions.recordDailyLogin() ||
-      missions.syncReachScoreFromHighScore()
+      missions.syncReachScoreFromHighScore() ||
+      missions.recordDailyLogin()
     ) {
       void saveService.saveLocal();
     }

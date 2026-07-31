@@ -72,7 +72,7 @@ Backend trả REST envelope; client unwrap `.data` bằng `unwrapSuccessEnvelope
 
 Khi sync thành công, `game-sync.service` emit `game:sync:completed` với `rank`/`bestScore` và cập nhật leaderboard cache.
 
-`invalid_signature` trong `rejected[]` → **giữ trong queue** + backoff (thường do sai `VITE_REPLAY_SECRET`). Reject reason khác → loại khỏi queue.
+`invalid_signature` trong `rejected[]` → **giữ tạm** + backoff (thường do sai `VITE_REPLAY_SECRET`), rồi **drop sau `MAX_SYNC_ATTEMPTS` (10)**. Reject reason khác → loại khỏi queue ngay.
 
 Lỗi mạng thoáng qua (`status` 0 / 408 / 429 / 5xx, hoặc `network`) **không** bị drop sau `MAX_SYNC_ATTEMPTS` — queue được bảo toàn và retry với backoff. Chỉ lỗi client/server “cứng” (4xx khác) mới bị drop sau đủ attempt.
 

@@ -24,10 +24,12 @@ VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 
 Preset API URL trong code (`src/platform/core/config/index.ts`):
 
-| Env          | API URL                                  |
-| ------------ | ---------------------------------------- |
-| `dev`        | `http://localhost:3000/api`              |
-| `production` | `https://game-api-s5kn.onrender.com/api` |
+| Env          | API URL                                      |
+| ------------ | -------------------------------------------- |
+| `dev`        | `https://game-api-s5kn.onrender.com/api`     |
+| `production` | `https://game-api-s5kn.onrender.com/api`     |
+
+Cả hai preset hiện trỏ Render. Để dùng API local, tạm sửa `apiUrl` trong `src/platform/core/config/index.ts` (client không đọc `VITE_API_URL`).
 
 `VITE_REPLAY_SECRET` phải là **64-char lowercase hex** (`/^[0-9a-f]{64}$/`). Secret sai/thiếu → client **không sync** và **giữ** offline queue (không xóa im lặng).
 
@@ -104,7 +106,7 @@ VITE_FIREBASE_MEASUREMENT_ID=
 
 | Env          | Analytics                  | Push (native) | Local notifications |
 | ------------ | -------------------------- | ------------- | ------------------- |
-| `dev`        | off (`analyticsEnabled`)   | off           | on\*                |
+| `dev`        | on (`analyticsEnabled`)    | on\*\*        | on\*                |
 | `production` | on                         | on\*\*        | on\*                |
 
 \* Local chỉ active trên native (`resolveLocalNotificationsEnabled()`).  

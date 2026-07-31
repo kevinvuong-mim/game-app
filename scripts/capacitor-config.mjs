@@ -14,7 +14,7 @@ export function readCapacitorAppId(root) {
   return match[1];
 }
 
-export function appIdToJavaPackagePath(appId) {
+function appIdToJavaPackagePath(appId) {
   return appId.replace(/\./g, '/');
 }
 

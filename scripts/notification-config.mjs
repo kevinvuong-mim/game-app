@@ -15,13 +15,13 @@ const FIREBASE_ENV_KEYS = [
   'VITE_FIREBASE_MEASUREMENT_ID',
 ];
 
-export function resolveEnvironment() {
+function resolveEnvironment() {
   const env = process.env.VITE_APP_ENV;
   if (env && env in NOTIFICATION_ENV_CONFIGS) return env;
   return process.env.NODE_ENV === 'production' ? 'production' : 'dev';
 }
 
-export function isFirebaseConfigured(env = process.env) {
+function isFirebaseConfigured(env = process.env) {
   return FIREBASE_ENV_KEYS.every((key) => Boolean(env[key]?.trim()));
 }
 

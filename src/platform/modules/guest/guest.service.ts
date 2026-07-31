@@ -284,9 +284,11 @@ export class GuestService {
     this.guestId = null;
     this.playerName = null;
 
-    // Offline score queue is keyed by guestId — flush rebinds orphans after identity change.
+    // Offline score queue must not follow a new identity — drop orphans instead of rebinding.
+    const { gameSyncRepository } = await import('@platform/modules/game-sync/game-sync.repository');
+    await gameSyncRepository.clear();
     await notificationRepository.saveState(createDefaultNotificationState());
-    logger.info('[Guest] Auth recovery — credentials cleared');
+    logger.info('[Guest] Auth recovery — credentials and sync queue cleared');
 
     await this.init();
     const recovered = this.getStatus() === 'ready';

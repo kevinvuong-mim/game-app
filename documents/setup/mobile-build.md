@@ -2,7 +2,7 @@
 
 ## Overview
 
-`fruloop` dùng Capacitor 6 để build native Android/iOS. Thư mục `android/` và `ios/` có thể được generate lại bằng scripts, còn native templates nằm trong `native/` và được apply sau `cap sync`.
+`fruloop` dùng Capacitor 7 để build native Android/iOS. Thư mục `android/` và `ios/` có thể được generate lại bằng scripts, còn native templates nằm trong `native/` và được apply sau `cap sync`.
 
 ---
 
@@ -66,7 +66,7 @@ node scripts/apply-android-native.mjs
 npm run build
 # cap add ios (nếu chưa có ios/)
 npm run assets:generate
-node scripts/apply-ios-native.mjs pre-sync   # pin UMP trước pod install
+node scripts/apply-ios-native.mjs pre-sync   # pin UMP 3.0.0 trước pod install
 (cd ios/App && pod install --repo-update)    # native-ops thực thi bước này
 npx cap sync ios
 node scripts/apply-ios-native.mjs            # post-sync: templates + AdMob + entitlements/deeplink

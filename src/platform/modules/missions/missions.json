@@ -7,7 +7,7 @@
     "goScene": "Gameplay",
     "resetPolicy": "daily",
     "titleKey": "missions.reachScore2000",
-    "reward": { "type": "coins", "amount": 500 }
+    "reward": { "type": "coins", "amount": 1000 }
   },
   {
     "id": "merge_fruit_15",
@@ -43,7 +43,6 @@
     "type": "DAILY_LOGIN",
     "target": 1,
     "icon": "mission-item-5",
-    "goScene": "DailyReward",
     "resetPolicy": "daily",
     "titleKey": "missions.dailyLogin",
     "reward": { "type": "coins", "amount": 300 }

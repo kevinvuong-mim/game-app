@@ -7,14 +7,14 @@ Fruloop is a mobile game that allows you to play with your friends and family.
 | Layer       | Technology                                                       |
 | ----------- | ---------------------------------------------------------------- |
 | Game Engine | Phaser 3                                                         |
-| Mobile      | Capacitor 6                                                      |
+| Mobile      | Capacitor 7                                                      |
 | Language    | TypeScript (strict)                                              |
 | Bundler     | Vite 6                                                           |
 | State       | Zustand (vanilla, in-memory)                                     |
 | Storage     | IndexedDB (web) / Capacitor Preferences (native)                 |
 | Networking  | Fetch API (NestJS-compatible REST envelope)                      |
-| Analytics   | Console (dev) + Firebase Analytics (production)                  |
-| Push        | FCM via `@capacitor/push-notifications` (production)             |
+| Analytics   | Console or Firebase via `VITE_ANALYTICS_PROVIDER` (gated by `analyticsEnabled`) |
+| Push        | FCM via `@capacitor/push-notifications` (native; gated by `notification-env.json` + Firebase web config) |
 | Local notif | `@capacitor/local-notifications` (daily reward reminder)         |
 | Ads         | Mock (web/dev) + AdMob via `@capacitor-community/admob` (native) |
 
@@ -153,7 +153,7 @@ this.add.circle(120, height - 160, 24, getEquippedPlayerColor());
 
 ## UI Framework
 
-Feature screens are **Phaser scenes** that compose reusable **panels**. Five panel scenes (`Shop`, `Missions`, `Leaderboard`, `DailyReward`, `Legal`) share `BasePanelScene` for title, close button, and `app:back` handling.
+Feature screens are **Phaser scenes** that compose reusable **panels**. Seven panel scenes (`Shop`, `Missions`, `Leaderboard`, `DailyReward`, `Settings`, `HowToPlay`, `Legal`) share `BasePanelScene` for title, close button, and `app:back` handling.
 
 Fonts: **Fredoka** is the only UI font (`FREDOKA_FONT`). Home’s Play button badge uses i18n key `home.playBadge` (`"NEW"` / `"MỚI"`).
 
@@ -191,7 +191,7 @@ button.setBadgeVisible(true);
 soundManager.playCoinDrop();
 ```
 
-`ScreenManager` is available for custom overlay screens. Built-in user-facing scenes: Home, Gameplay, GameOver, Shop, Missions, Leaderboard, DailyReward, Settings, Legal.
+`ScreenManager` is available for custom overlay screens. Built-in user-facing scenes: Home, Gameplay, GameOver, Shop, Missions, Leaderboard, DailyReward, Settings, HowToPlay, Legal.
 
 ## Environment Config
 

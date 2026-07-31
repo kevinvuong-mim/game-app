@@ -2,6 +2,7 @@ import { i18n } from '../i18n/i18n.service';
 import { eventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
 import type { SettingsState } from '@platform/core/state';
+import { saveService } from '@platform/modules/save';
 
 class SettingsService {
   async init(): Promise<void> {
@@ -15,6 +16,7 @@ class SettingsService {
 
   async setLanguage(language: string): Promise<void> {
     await i18n.setLanguage(language);
+    await saveService.saveLocal();
     eventBus.emit('settings:change', { key: 'language', value: i18n.getCurrentLanguage() });
   }
 

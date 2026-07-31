@@ -68,7 +68,7 @@ export class MissionService {
     return changed;
   }
 
-  /** Marks daily-login missions complete for the current local day. */
+  /** Marks daily-login missions complete for the current calendar day (opening the app). */
   recordDailyLogin(): boolean {
     return this.setProgressByType('DAILY_LOGIN', 1);
   }

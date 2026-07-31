@@ -17,7 +17,7 @@ class MissionController {
       }),
 
       events.on('app:resume', () => {
-        void this.handleResetsAndLogin();
+        void this.handleResets();
       }),
     ];
 
@@ -41,13 +41,13 @@ class MissionController {
     logger.debug('[MissionController] Progress saved', { type, amount, mode });
   }
 
-  private async handleResetsAndLogin(): Promise<void> {
-    const resetChanged = this.service.applyResets();
-    const loginChanged = this.service.recordDailyLogin();
-    if (!resetChanged && !loginChanged) return;
+  private async handleResets(): Promise<void> {
+    let changed = this.service.applyResets();
+    if (this.service.recordDailyLogin()) changed = true;
+    if (!changed) return;
 
     await saveService.saveLocal();
-    logger.debug('[MissionController] Reset/login saved');
+    logger.debug('[MissionController] Reset saved');
   }
 }
 

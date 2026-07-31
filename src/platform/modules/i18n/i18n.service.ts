@@ -1,5 +1,4 @@
 import { logger } from '@platform/core/error';
-import { storage } from '@platform/core/storage';
 import { usePlatformStore } from '@platform/core/state';
 
 interface TranslationNode {
@@ -23,9 +22,9 @@ class LocalizationService {
   async init(language?: string): Promise<void> {
     await this.loadLanguage(this.fallbackLanguage);
 
-    const stored = language == null ? await storage.load<string>('settings:language') : null;
-    const resolved = language ?? stored ?? this.detectDeviceLanguage();
-    await this.setLanguage(resolved);
+    // Before hydrate, use device locale (or explicit override).
+    // `settings.init()` re-applies `settings.language` from game-save after loadLocal.
+    await this.setLanguage(language ?? this.detectDeviceLanguage());
   }
 
   async setLanguage(language: string): Promise<void> {
@@ -43,7 +42,6 @@ class LocalizationService {
 
     this.currentLanguage = lang;
     usePlatformStore.getState().updateSettings({ language: lang });
-    await storage.save('settings:language', lang);
     logger.info(`[i18n] Language set to: ${lang}`);
   }
 

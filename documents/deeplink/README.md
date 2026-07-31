@@ -7,10 +7,10 @@ Dev là subdomain của prod, nên **một bộ file** dùng chung — chỉ kh�
 | `apple-app-site-association` | `https://<domain>/.well-known/apple-app-site-association` |
 | `assetlinks.json`            | `https://<domain>/.well-known/assetlinks.json`            |
 
-| Environment | Domain                    |
-| ----------- | ------------------------- |
-| Dev         | `dev.fruloop.example.com` |
-| Prod        | `fruloop.example.com`     |
+| Environment | Domain                     |
+| ----------- | -------------------------- |
+| Dev         | `dev-fruloop.vraxion.com`  |
+| Prod        | `fruloop.vraxion.com`      |
 
 Upload **cùng nội dung** lên `.well-known/` của từng domain (HTTPS, không redirect).
 
@@ -27,21 +27,21 @@ Hai file phải khớp nhau. Host active theo `VITE_APP_ENV` (`production` → p
 
 ## iOS (Universal Links)
 
-1. Replace `TEAM_ID` trong `apple-app-site-association` bằng Apple Team ID.
-2. Align `appIDs` bundle ids với `capacitor.config.ts` `appId` (hiện tại `com.vraxion.fruloop`). Sample file dùng suffix `.dev` / `.prod` như placeholder — đổi cho khớp build thật trước khi publish.
+1. Replace `TEAM_ID` trong `apple-app-site-association` bằng Apple Team ID thật trước khi publish.
+2. `appIDs` phải khớp Capacitor `appId` (`com.vraxion.fruloop`) — dạng `TEAM_ID.com.vraxion.fruloop`.
 3. Publish file giống nhau tại:
-   - `https://dev.fruloop.example.com/.well-known/apple-app-site-association`
-   - `https://fruloop.example.com/.well-known/apple-app-site-association`
+   - `https://dev-fruloop.vraxion.com/.well-known/apple-app-site-association`
+   - `https://fruloop.vraxion.com/.well-known/apple-app-site-association`
 4. Content-Type: `application/json` (không có extension `.json` trong URL).
-5. Associated Domains entitlement được apply bởi `scripts/apply-ios-native.mjs` (cả hai host) — luôn chạy, không phụ thuộc push; khi push tắt script strip `aps-environment`.
+5. Associated Domains entitlement được apply bởi `scripts/apply-ios-native.mjs` (cả hai host) — luôn chạy, không phụ thuộc push; khi push tắt script strip `aps-environment`. Khi `VITE_APP_ENV=production` và push bật, script set `aps-environment` = `production`.
 
 ## Android (App Links)
 
 1. Replace `sha256_cert_fingerprints` bằng SHA-256 của keystore (release và/hoặc debug nếu cần test).
-2. Align `package_name` với Capacitor `appId` (hiện tại `com.vraxion.fruloop`). Sample `assetlinks.json` dùng `.dev` / `.prod` placeholder.
+2. `package_name` phải khớp Capacitor `appId`: `com.vraxion.fruloop`.
 3. Publish file giống nhau tại:
-   - `https://dev.fruloop.example.com/.well-known/assetlinks.json`
-   - `https://fruloop.example.com/.well-known/assetlinks.json`
+   - `https://dev-fruloop.vraxion.com/.well-known/assetlinks.json`
+   - `https://fruloop.vraxion.com/.well-known/assetlinks.json`
 4. Intent filters (cả hai host) được inject bởi `scripts/apply-android-native.mjs`.
 
 ## Custom URL Scheme
@@ -65,8 +65,8 @@ Supported paths (`src/platform/modules/deep-link/deep-link.model.ts`):
 Examples:
 
 - `fruloop://leaderboard`
-- `https://dev.fruloop.example.com/shop`
-- `https://fruloop.example.com/daily-reward`
+- `https://dev-fruloop.vraxion.com/shop`
+- `https://fruloop.vraxion.com/daily-reward`
 
 ## App flow
 
