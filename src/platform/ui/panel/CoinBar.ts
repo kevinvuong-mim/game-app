@@ -79,8 +79,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
     this.barY = options.y;
 
     const { width } = scene.cameras.main;
-    this.anchorX =
-      options.x ?? (this.align === 'right' ? width * 0.88 : width / 2);
+    this.anchorX = options.x ?? (this.align === 'right' ? width * 0.88 : width / 2);
 
     scene.add.existing(this);
     this.build();
