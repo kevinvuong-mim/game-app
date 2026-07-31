@@ -11,6 +11,22 @@ export const GUEST_STORAGE_KEY = 'guest';
 /** Pending display name before guest credentials exist (first-install offline). */
 export const GUEST_PENDING_NAME_KEY = 'guest:pending-name';
 
+/** Display name after trim: at least 1 character, at most 26. */
+export const PLAYER_NAME_MIN_LENGTH = 1;
+export const PLAYER_NAME_MAX_LENGTH = 26;
+
+/** Trim and validate a player display name. */
+export function normalizePlayerName(name: string): string {
+  const trimmed = name.trim();
+  if (trimmed.length < PLAYER_NAME_MIN_LENGTH) {
+    throw new Error('[Guest] Name cannot be empty');
+  }
+  if (trimmed.length > PLAYER_NAME_MAX_LENGTH) {
+    throw new Error(`[Guest] Name cannot exceed ${PLAYER_NAME_MAX_LENGTH} characters`);
+  }
+  return trimmed;
+}
+
 export interface GuestCredentials {
   guestId: string;
   secretToken: string;

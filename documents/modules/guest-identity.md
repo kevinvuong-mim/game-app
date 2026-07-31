@@ -88,6 +88,6 @@ Body:
 { "name": "PlayerOne" }
 ```
 
-Client trim tên và từ chối chuỗi rỗng trước khi gửi. Backend giới hạn tên ở 1–32 ký tự.
+Client trim tên và từ chối chuỗi rỗng / dài hơn 26 ký tự trước khi gửi. Backend giới hạn tên ở 1–26 ký tự.
 
 Backend contract đầy đủ: [Guest API](../../../game-api/documents/apis/guest.md).

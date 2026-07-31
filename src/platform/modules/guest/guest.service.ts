@@ -5,6 +5,7 @@ import { getConfig } from '@platform/core/config';
 import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
 import { guestRepository, type GuestRepository } from './guest.repository';
+import { normalizePlayerName } from './guest.model';
 import { notificationRepository } from '@platform/modules/notifications/notification.repository';
 import { createDefaultNotificationState } from '@platform/modules/notifications/notification.model';
 
@@ -88,10 +89,7 @@ export class GuestService {
    * and online; queues until first guest create on fresh offline installs.
    */
   async updateName(name: string): Promise<UpdateNameResult> {
-    const trimmed = name.trim();
-    if (!trimmed) {
-      throw new Error('[Guest] Name cannot be empty');
-    }
+    const trimmed = normalizePlayerName(name);
 
     this.playerName = trimmed;
     usePlatformStore.getState().setUser({ displayName: trimmed });

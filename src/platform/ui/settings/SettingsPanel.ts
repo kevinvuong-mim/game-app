@@ -8,7 +8,7 @@ import {
   PANEL_LIST_PADDING,
 } from '../panel/panelTheme';
 import { toast } from '../toast/ToastManager';
-import { guest } from '@platform/modules/guest';
+import { guest, PLAYER_NAME_MAX_LENGTH } from '@platform/modules/guest';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { drawRoundedRect } from '../panel/graphics';
 import type { UIButton, ToastOptions } from '../types';
@@ -37,7 +37,7 @@ const TOGGLE_ON = 0x1f6b32;
 const TOGGLE_OFF = 0x8a8a8a;
 const TOGGLE_LOCKED_ALPHA = 0.45;
 
-const MAX_NAME_LENGTH = 32;
+const MAX_NAME_LENGTH = PLAYER_NAME_MAX_LENGTH;
 const SAVE_BTN_WIDTH = 100;
 const SAVE_BTN_HEIGHT = 66;
 const INPUT_HEIGHT = 58;
