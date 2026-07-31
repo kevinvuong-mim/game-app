@@ -94,7 +94,7 @@ function patchAdMobBannerExecutor() {
   if (insetsBlock.test(source)) {
     source = source.replace(
       insetsBlock,
-      '// game-starter-kit: skip Android 15+ inset margin override (left-align + bottom gap).\n\n'
+      '// game-apps: skip Android 15+ inset margin override (left-align + bottom gap).\n\n'
     );
   }
 

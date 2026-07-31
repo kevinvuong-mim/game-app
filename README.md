@@ -4,19 +4,19 @@ Fruloop is a mobile game that allows you to play with your friends and family.
 
 ## Tech Stack
 
-| Layer       | Technology                                                       |
-| ----------- | ---------------------------------------------------------------- |
-| Game Engine | Phaser 3                                                         |
-| Mobile      | Capacitor 7                                                      |
-| Language    | TypeScript (strict)                                              |
-| Bundler     | Vite 6                                                           |
-| State       | Zustand (vanilla, in-memory)                                     |
-| Storage     | IndexedDB (web) / Capacitor Preferences (native)                 |
-| Networking  | Fetch API (NestJS-compatible REST envelope)                      |
-| Analytics   | Console or Firebase via `VITE_ANALYTICS_PROVIDER` (gated by `analyticsEnabled`) |
+| Layer       | Technology                                                                                               |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| Game Engine | Phaser 3                                                                                                 |
+| Mobile      | Capacitor 7                                                                                              |
+| Language    | TypeScript (strict)                                                                                      |
+| Bundler     | Vite 6                                                                                                   |
+| State       | Zustand (vanilla, in-memory)                                                                             |
+| Storage     | IndexedDB (web) / Capacitor Preferences (native)                                                         |
+| Networking  | Fetch API (NestJS-compatible REST envelope)                                                              |
+| Analytics   | Console or Firebase via `VITE_ANALYTICS_PROVIDER` (gated by `analyticsEnabled`)                          |
 | Push        | FCM via `@capacitor/push-notifications` (native; gated by `notification-env.json` + Firebase web config) |
-| Local notif | `@capacitor/local-notifications` (daily reward reminder)         |
-| Ads         | Mock (web/dev) + AdMob via `@capacitor-community/admob` (native) |
+| Local notif | `@capacitor/local-notifications` (daily reward reminder)                                                 |
+| Ads         | Mock (web/dev) + AdMob via `@capacitor-community/admob` (native)                                         |
 
 IAP / remove-ads entitlements are client-authoritative in this starter kit. RevenueCat can verify purchases on device, but `game-api` does not store or validate entitlements server-side.
 
@@ -56,7 +56,7 @@ Then customize:
 ## Project Structure
 
 ```
-game-starter-kit/
+game-apps/
 ├── src/
 │   ├── main.ts                # Entry → GameEngine.bootstrap()
 │   ├── platform/              # Reusable platform (keep as-is across games)

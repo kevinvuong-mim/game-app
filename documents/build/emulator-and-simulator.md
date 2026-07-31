@@ -108,7 +108,7 @@ xcodebuild -version
 ### 1. Cài dependency
 
 ```bash
-cd game-starter-kit
+cd game-apps
 npm install
 ```
 
@@ -431,7 +431,7 @@ Verify AdMob trong Info.plist:
 ### Android — full flow CLI
 
 ```bash
-cd game-starter-kit
+cd game-apps
 npm run build:android
 cd android && ./gradlew assembleDebug
 
@@ -447,7 +447,7 @@ adb logcat -s Capacitor/Console
 ### iOS — full flow CLI
 
 ```bash
-cd game-starter-kit
+cd game-apps
 npm run build:ios
 open -a Simulator
 
@@ -469,7 +469,7 @@ xcrun simctl launch booted com.vraxion.fruloop
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Android crash ngay khi mở, log AdMob SDK          | Thiếu `com.google.android.gms.ads.APPLICATION_ID` → chạy lại `npm run build:android` (script `apply-android-native.mjs`) |
 | iOS crash AdMob lúc launch                        | Thiếu `GADApplicationIdentifier` → chạy lại `npm run build:ios`                                                          |
-| iOS `pod install` conflict UMP / AdMob            | Chạy `apply-ios-native.mjs pre-sync` (pin UMP `3.0.0`) **trước** `cap sync`; xóa `Podfile.lock` + `pod install` |
+| iOS `pod install` conflict UMP / AdMob            | Chạy `apply-ios-native.mjs pre-sync` (pin UMP `3.0.0`) **trước** `cap sync`; xóa `Podfile.lock` + `pod install`          |
 | `No connected devices!` (Gradle)                  | Emulator/device chưa boot — `adb devices` phải thấy `device`                                                             |
 | Emulator không hiện trong `adb devices`           | Process emulator chết sớm — chạy lại với `-gpu swiftshader_indirect` hoặc mở từ Android Studio                           |
 | API guest/leaderboard fail trên Android emulator  | Start API trên host, chạy `adb reverse tcp:3000 tcp:3000`, rồi mở lại app                                                |
@@ -489,7 +489,7 @@ Scripts đọc `.env` và apply template từ `native/`:
 | MainActivity            | `native/android/MainActivity.java` → `android/.../MainActivity.java` | —                                                                    |
 | AdMob App ID            | `AndroidManifest.xml` meta-data                                      | `Info.plist` `GADApplicationIdentifier`                              |
 | Fullscreen / status bar | —                                                                    | `native/ios/FullscreenBridgeViewController.swift`, `Main.storyboard` |
-| CocoaPods pin           | —                                                                    | `GoogleUserMessagingPlatform 3.0.0` (pre-sync)                      |
+| CocoaPods pin           | —                                                                    | `GoogleUserMessagingPlatform 3.0.0` (pre-sync)                       |
 
 Chi tiết build scripts: [Mobile Build](../setup/mobile-build.md).
 
