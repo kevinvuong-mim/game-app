@@ -3,8 +3,12 @@ import Phaser from 'phaser';
 import { t, canClaimDailyReward, getClaimableMissionCount } from '@platform/ui/index';
 import { eventBus } from '@platform/core/events';
 import { createUIButton } from '@platform/ui/button/UIButton';
+import { CoinBar } from '@platform/ui/panel/CoinBar';
 
 export class HomeScene extends Phaser.Scene {
+  private coinBar?: CoinBar;
+  private unsubscribers: Array<() => void> = [];
+
   constructor() {
     super({ key: 'Home' });
   }
@@ -15,11 +19,21 @@ export class HomeScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.cleanupEventListeners();
+    this.events.off('shutdown', this.shutdown, this);
+    this.events.once('shutdown', this.shutdown, this);
+
     eventBus.emit('ad:context:change', { context: 'HOME' });
 
     const { width, height } = this.cameras.main;
 
     this.addBackgroundImage(width, height);
+
+    this.coinBar = new CoinBar(this, {
+      y: height * 0.08,
+      align: 'center',
+      onNavigate: (sceneKey) => this.openScreen(sceneKey),
+    });
 
     createUIButton({
       scene: this,
@@ -133,6 +147,25 @@ export class HomeScene extends Phaser.Scene {
       },
       onClick: () => this.openScreen('DailyReward'),
     });
+
+    this.unsubscribers.push(
+      eventBus.on('app:back', () => {
+        if (this.coinBar?.isGetCoinsModalOpen()) {
+          this.coinBar.hideGetCoinsModal();
+        }
+      })
+    );
+  }
+
+  shutdown(): void {
+    this.cleanupEventListeners();
+    this.coinBar?.destroy();
+    this.coinBar = undefined;
+  }
+
+  private cleanupEventListeners(): void {
+    for (const unsub of this.unsubscribers) unsub();
+    this.unsubscribers = [];
   }
 
   private addBackgroundImage(width: number, height: number): void {
