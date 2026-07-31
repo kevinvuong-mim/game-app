@@ -2,6 +2,7 @@ import { ApiError } from '@platform/core/api';
 import { logger } from '@platform/core/error';
 import { apiClient } from '@platform/core/api';
 import { getConfig } from '@platform/core/config';
+import { eventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
 import { guestRepository, type GuestRepository } from './guest.repository';
@@ -94,6 +95,7 @@ export class GuestService {
     this.playerName = trimmed;
     usePlatformStore.getState().setUser({ displayName: trimmed });
     await saveService.saveLocal();
+    eventBus.emit('player:name:updated', { name: trimmed });
 
     const stored = await this.repository.loadCredentials();
     if (!stored) {

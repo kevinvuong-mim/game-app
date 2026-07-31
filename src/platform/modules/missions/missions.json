@@ -46,5 +46,15 @@
     "resetPolicy": "daily",
     "titleKey": "missions.dailyLogin",
     "reward": { "type": "coins", "amount": 300 }
+  },
+  {
+    "id": "update_player_name",
+    "type": "UPDATE_NAME",
+    "target": 1,
+    "icon": "mission-item-6",
+    "goScene": "Settings",
+    "resetPolicy": "never",
+    "titleKey": "missions.updatePlayerName",
+    "reward": { "type": "coins", "amount": 500 }
   }
 ]

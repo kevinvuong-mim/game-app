@@ -1,7 +1,12 @@
 import { getLocalDateKey, now } from '@platform/core/utils';
 
 export type MissionBehaviorType =
-  'MERGE' | 'WATCH_AD' | 'PLAY_GAME' | 'REACH_SCORE' | 'DAILY_LOGIN';
+  | 'MERGE'
+  | 'WATCH_AD'
+  | 'PLAY_GAME'
+  | 'REACH_SCORE'
+  | 'DAILY_LOGIN'
+  | 'UPDATE_NAME';
 
 type MissionStatus = 'active' | 'completed' | 'claimed';
 

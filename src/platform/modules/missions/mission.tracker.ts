@@ -29,6 +29,10 @@ export class MissionTracker {
       events.on('merge', ({ count }) => {
         onProgress('MERGE', count ?? 1);
       }),
+
+      events.on('player:name:updated', () => {
+        onProgress('UPDATE_NAME', 1, 'set');
+      }),
     ];
 
     return () => {

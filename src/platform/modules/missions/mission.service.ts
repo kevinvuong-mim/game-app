@@ -10,6 +10,7 @@ import { eventBus } from '@platform/core/events';
 import { getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
+import { guest } from '@platform/modules/guest';
 
 export class MissionService {
   private definitions: MissionDefinition[] = missionsData as MissionDefinition[];
@@ -24,11 +25,12 @@ export class MissionService {
     }
   }
 
-  getMissions(): MissionProgress[] {
+  getMissions(options?: { retainClaimedIds?: ReadonlySet<string> }): MissionProgress[] {
     const { missions } = usePlatformStore.getState().missions;
     return this.definitions
       .map((def) => missions[def.id])
-      .filter((mission): mission is MissionProgress => !!mission);
+      .filter((mission): mission is MissionProgress => !!mission)
+      .filter((mission) => this.isMissionVisible(mission, options?.retainClaimedIds));
   }
 
   getDefinition(id: string): MissionDefinition | undefined {
@@ -136,6 +138,24 @@ export class MissionService {
 
     logger.info('mission_claimed', { missionId: id });
     return true;
+  }
+
+  /**
+   * UPDATE_NAME is one-shot: hide after claim (unless retained for the current
+   * panel session so the player can see "Claimed"), and hide when the player
+   * already has a custom name (unless awaiting claim after just renaming).
+   */
+  private isMissionVisible(
+    mission: MissionProgress,
+    retainClaimedIds?: ReadonlySet<string>
+  ): boolean {
+    const def = this.getDefinition(mission.id);
+    if (def?.type !== 'UPDATE_NAME') return true;
+    if (mission.status === 'claimed') {
+      return retainClaimedIds?.has(mission.id) ?? false;
+    }
+    if (mission.status === 'completed') return true;
+    return !guest.getName();
   }
 
   private initializeMissions(): void {

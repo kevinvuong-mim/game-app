@@ -134,7 +134,8 @@
     "mergeFruit15": "Merge fruits 15 times",
     "watchAd": "Watch an ad video",
     "playGames3": "Play 3 matches",
-    "dailyLogin": "Log in every day"
+    "dailyLogin": "Log in every day",
+    "updatePlayerName": "Update your player name"
   },
   "dailyReward": {
     "title": "Daily Reward",

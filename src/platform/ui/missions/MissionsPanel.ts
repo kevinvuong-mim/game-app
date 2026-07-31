@@ -45,6 +45,8 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
   private header?: PanelHeader;
   private unsubscribers: Array<() => void> = [];
   private listContainer?: Phaser.GameObjects.Container;
+  /** One-shot missions claimed this visit — keep showing "Claimed" until leave. */
+  private readonly retainedClaimedIds = new Set<string>();
 
   constructor(
     scene: Phaser.Scene,
@@ -88,6 +90,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     this.unsubscribers.push(
       eventBus.on('mission:update', () => this.renderMissions()),
       eventBus.on('mission:complete', () => this.renderMissions()),
+      eventBus.on('player:name:updated', () => this.renderMissions()),
       eventBus.on('ad:reward:result', ({ success, message }) => {
         if (success) {
           this.renderMissions();
@@ -103,7 +106,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
   private build(): void {
     const { width, height } = this.scene.cameras.main;
     const panelWidth = Math.min(width * 0.97, 460);
-    const itemCount = Math.max(missions.getMissions().length, 1);
+    const itemCount = Math.max(this.getDisplayMissions().length, 1);
     const panelHeight =
       PANEL_LIST_PADDING * 2 + ITEM_ROW_HEIGHT * (itemCount - 1) + ITEM_ROW_HEIGHT * 0.85;
     const panelTop = height * 0.24;
@@ -142,7 +145,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     this.listContainer.removeAll(true);
 
     const { width } = this.scene.cameras.main;
-    const items = missions.getMissions();
+    const items = this.getDisplayMissions();
     const rowWidth = Math.min(width * 0.91, 430);
 
     items.forEach((mission, index) => {
@@ -162,6 +165,10 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
         );
       }
     });
+  }
+
+  private getDisplayMissions(): MissionProgress[] {
+    return missions.getMissions({ retainClaimedIds: this.retainedClaimedIds });
   }
 
   private createMissionRow(
@@ -189,19 +196,22 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     const rewardX = actionX - ACTION_BTN_WIDTH / 2 - 28;
     const contentLeft = iconX + iconSize / 2 + 10;
     const barWidth = Math.max(90, rewardX - contentLeft - 48);
+    const titleTop = -28;
+    const titleToBarGap = 5;
 
-    container.add(
-      this.scene.add.text(contentLeft, -28, title, {
-        fontSize: '18px',
-        fontStyle: 'bold',
-        color: TEXT_COLOR,
-        fontFamily: FREDOKA_FONT,
-        wordWrap: { width: barWidth + 20 },
-      })
-    );
+    const titleText = this.scene.add.text(contentLeft, titleTop, title, {
+      fontSize: '18px',
+      fontStyle: 'bold',
+      color: TEXT_COLOR,
+      fontFamily: FREDOKA_FONT,
+      wordWrap: { width: barWidth + 20 },
+    });
+    container.add(titleText);
 
+    const progressY =
+      titleText.y + titleText.height + titleToBarGap + PROGRESS_BAR_HEIGHT / 2;
     container.add(
-      this.createProgressBar(contentLeft, 10, barWidth, progress, mission.target, ratio)
+      this.createProgressBar(contentLeft, progressY, barWidth, progress, mission.target, ratio)
     );
     container.add(this.createReward(rewardX, coins));
     container.add(this.createActionButton(mission, def?.type, def?.goScene, actionX));
@@ -344,6 +354,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
   private handleClaim(missionId: string): void {
     const success = missions.claimMission(missionId);
     if (success) {
+      this.retainedClaimedIds.add(missionId);
       void saveService.saveLocal();
       this.renderMissions();
     } else {
