@@ -33,6 +33,13 @@ export interface RecordResultParams {
 export class GameSyncService {
   private dirty = false;
   private flushPromise: Promise<number | null> | null = null;
+  /** Serializes load→mutate→save on the offline queue (avoids wipe races). */
+  private queueLock: Promise<void> = Promise.resolve();
+  /**
+   * In-flight `game:over` queue+flush. Assigned synchronously when a match ends so
+   * GameOver can await it before reading rank.
+   */
+  private latestResultSync: Promise<number | null> = Promise.resolve(null);
   /** Last `data.rank` from a successful `/results` response (this process). */
   private lastApiRank: number | null = null;
 
@@ -47,6 +54,22 @@ export class GameSyncService {
   }
 
   /**
+   * Queue a finished match and flush. Starts synchronously so callers that run
+   * right after `game:over` (e.g. GameOverScene) can await `flushAndGetRank`.
+   */
+  queueAndFlushResult(params: RecordResultParams): void {
+    this.latestResultSync = (async () => {
+      this.clearLastApiRank();
+      await this.recordResult(params);
+      try {
+        return await this.flush();
+      } catch {
+        return this.lastApiRank;
+      }
+    })();
+  }
+
+  /**
    * Flush pending results and return `data.rank` from `/results` when online.
    * Returns null when offline, guest not ready, or the API omits rank.
    */
@@ -55,35 +78,48 @@ export class GameSyncService {
       return null;
     }
 
+    // Wait for the matching game:over pipeline (record → flush) when present.
+    await this.latestResultSync.catch(() => null);
     await this.flush();
     return this.lastApiRank;
   }
 
   async recordResult(params: RecordResultParams): Promise<void> {
-    const { gameId } = getConfig();
-    // Empty guestId is an unsigned marker; flush() rebinds when guest becomes ready.
-    const guestId = this.guestService.getGuestId() ?? '';
-    const score = toNonNegativeInt(params.score);
-    const playedAt = params.playedAt ?? new Date().toISOString();
-    const clientResultId = generateId('result');
+    await this.withQueueLock(async () => {
+      const { gameId } = getConfig();
+      // Empty guestId is an unsigned marker; flush() rebinds when guest becomes ready.
+      const guestId = this.guestService.getGuestId() ?? '';
+      const score = toNonNegativeInt(params.score);
+      const playedAt = params.playedAt ?? new Date().toISOString();
+      const clientResultId = generateId('result');
 
-    const result: PendingGameResult = {
-      localId: clientResultId,
-      clientResultId,
-      gameId,
-      guestId,
-      score,
-      playedAt,
-      metadata: params.metadata,
-      synced: false,
-      syncAttempts: 0,
-      createdAt: playedAt,
-    };
+      const result: PendingGameResult = {
+        localId: clientResultId,
+        clientResultId,
+        gameId,
+        guestId,
+        score,
+        playedAt,
+        metadata: params.metadata,
+        synced: false,
+        syncAttempts: 0,
+        createdAt: playedAt,
+      };
 
-    const queue = await this.repository.loadQueue();
-    queue.push(result);
-    await this.repository.saveQueue(queue);
-    logger.debug('[GameSync] Result queued', { clientResultId, score });
+      const queue = await this.repository.loadQueue();
+      queue.push(result);
+      await this.repository.saveQueue(queue);
+      logger.debug('[GameSync] Result queued', { clientResultId, score });
+    });
+  }
+
+  private withQueueLock<T>(op: () => Promise<T>): Promise<T> {
+    const run = this.queueLock.then(op, op);
+    this.queueLock = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
   }
 
   async flush(): Promise<number | null> {
@@ -125,43 +161,65 @@ export class GameSyncService {
       return;
     }
 
-    let queue = await this.repository.loadQueue();
+    const prepared = await this.withQueueLock(async () => {
+      let queue = await this.repository.loadQueue();
+      let mutated = false;
 
-    // Drop orphans from a previous guest on this install (e.g. leftover after a failed recovery).
-    // Never rebind — that would attribute another identity's scores to the current guest.
-    const orphanCount = queue.filter(
-      (item) => !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
-    ).length;
-    if (orphanCount > 0) {
-      logger.warn('[GameSync] Dropping orphaned results from previous guest', {
-        count: orphanCount,
+      // Drop orphans from a previous guest on this install (e.g. leftover after a failed recovery).
+      // Never rebind — that would attribute another identity's scores to the current guest.
+      const orphanCount = queue.filter(
+        (item) =>
+          !item.synced && item.gameId === gameId && !!item.guestId && item.guestId !== guestId
+      ).length;
+      if (orphanCount > 0) {
+        logger.warn('[GameSync] Dropping orphaned results from previous guest', {
+          count: orphanCount,
+        });
+        queue = queue.filter(
+          (item) =>
+            item.synced || item.gameId !== gameId || !item.guestId || item.guestId === guestId
+        );
+        mutated = true;
+      }
+
+      // Bind unsigned/local rows that never got a guestId to the current identity.
+      queue = queue.map((item) => {
+        if (!item.synced && item.gameId === gameId && !item.guestId) {
+          mutated = true;
+          return { ...item, guestId };
+        }
+        return item;
       });
-      queue = queue.filter(
-        (item) => item.synced || item.gameId !== gameId || !item.guestId || item.guestId === guestId
+
+      const now = Date.now();
+      const pending = queue.filter(
+        (r) =>
+          !r.synced &&
+          r.gameId === gameId &&
+          r.guestId === guestId &&
+          (r.syncAttempts < MAX_SYNC_ATTEMPTS || isTransientSyncErrorCode(r.lastErrorCode)) &&
+          (!r.nextAttemptAt || Date.parse(r.nextAttemptAt) <= now)
       );
-    }
 
-    // Bind unsigned/local rows that never got a guestId to the current identity.
-    queue = queue.map((item) =>
-      !item.synced && item.gameId === gameId && !item.guestId ? { ...item, guestId } : item
-    );
+      if (pending.length === 0) {
+        // Never rewrite an unchanged snapshot — a concurrent recordResult must not be wiped.
+        if (mutated) {
+          await this.repository.saveQueue(queue);
+        }
+        return null;
+      }
 
-    const now = Date.now();
-    const pending = queue.filter(
-      (r) =>
-        !r.synced &&
-        r.gameId === gameId &&
-        r.guestId === guestId &&
-        (r.syncAttempts < MAX_SYNC_ATTEMPTS || isTransientSyncErrorCode(r.lastErrorCode)) &&
-        (!r.nextAttemptAt || Date.parse(r.nextAttemptAt) <= now)
-    );
-    if (pending.length === 0) {
-      await this.repository.saveQueue(queue);
-      return;
-    }
+      if (mutated) {
+        await this.repository.saveQueue(queue);
+      }
 
-    for (let i = 0; i < pending.length; i += MAX_BATCH_SIZE) {
-      const batch = pending.slice(i, i + MAX_BATCH_SIZE);
+      return pending;
+    });
+
+    if (!prepared) return;
+
+    for (let i = 0; i < prepared.length; i += MAX_BATCH_SIZE) {
+      const batch = prepared.slice(i, i + MAX_BATCH_SIZE);
       const signedBatch = await Promise.all(
         batch.map(async (item) => ({
           ...item,
@@ -189,15 +247,21 @@ export class GameSyncService {
           }))
         );
 
-        queue = this.applyBatchSyncResults(queue, batch, response, gameId, guestId);
-        this.applyRankFromApi(response);
-        queue = this.pruneQueue(queue);
-        await this.repository.saveQueue(queue);
+        await this.withQueueLock(async () => {
+          let queue = await this.repository.loadQueue();
+          queue = this.applyBatchSyncResults(queue, batch, response, gameId, guestId);
+          this.applyRankFromApi(response);
+          queue = this.pruneQueue(queue);
+          await this.repository.saveQueue(queue);
+        });
       } catch (error) {
         this.logExpectedApiErrors(error);
-        queue = this.incrementAttempts(queue, batch, gameId, error);
-        queue = this.pruneQueue(queue);
-        await this.repository.saveQueue(queue);
+        await this.withQueueLock(async () => {
+          let queue = await this.repository.loadQueue();
+          queue = this.incrementAttempts(queue, batch, gameId, error);
+          queue = this.pruneQueue(queue);
+          await this.repository.saveQueue(queue);
+        });
         logger.warn('[GameSync] Batch sync failed, will retry later', error);
         throw error;
       }
