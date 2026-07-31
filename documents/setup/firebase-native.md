@@ -156,8 +156,8 @@ Kiểm tra:
 
 ### Daily Reward (Local Notification)
 
-1. Claim daily reward
-2. Notification được schedule lúc **07:00 ngày hôm sau** (local time)
+1. Mở app (cold start) hoặc resume → arm reminder **07:00 mỗi sáng** nếu chưa claim
+2. Claim trước 07:00 → bỏ nudge hôm nay, giữ các sáng tiếp theo
 3. Tap notification → mở `DailyReward` scene
 
 ### Push — scheduled rank (`rank_push`)

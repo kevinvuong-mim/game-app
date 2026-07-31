@@ -9,7 +9,7 @@ Module quản lý **push notification** (FCM) và **local notification** (daily 
 | Push — Top 100 exited | Backend FCM                 | Player rời Top 100 (tự rớt hoặc bị đẩy)                                                          |
 | Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (FRULOOP mặc định: 9:00 Thứ 7 VN); FCM type `rank_push` |
 | Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                            |
-| Local — Daily reward  | Client schedule             | 07:00 ngày hôm sau sau khi claim; giữ pending nếu vẫn có thể claim (không hủy khi mở app sớm)   |
+| Local — Daily reward  | Client schedule             | 07:00 mỗi sáng khi chưa claim (calendar cron); claim trước 07:00 thì bỏ hôm nay và arm horizon các sáng tiếp theo |
 
 Push cần Firebase native + backend `FIREBASE_*`. Local chỉ cần `@capacitor/local-notifications`.
 
@@ -41,12 +41,25 @@ Preset trong `src/platform/core/config/notification-env.json`, merge vào `ENV_C
 ## Init flow
 
 1. `App.init()` → `notificationController.bind(events)`.
-2. Nếu `localNotificationsEnabled` → `notificationService.initializeLocal()` ngay khi bind.
+2. Nếu `localNotificationsEnabled` → `reconcileDailyRewardSchedule(canClaim)` ngay khi bind (cold start).
 3. `guest.onReady` → `notificationService.initializePush()` (khi `pushNotificationsEnabled`).
 4. Push: xin quyền → `PushNotifications.register()` → listener `registration` → `POST /api/devices`.
-5. Local: `LocalNotifications.requestPermissions()`.
+5. Local: `LocalNotifications.requestPermissions()` rồi arm reminder 07:00 theo `canClaim`.
 
 Chỉ chạy trên `Capacitor.isNativePlatform()`.
+
+## Local daily reward reminder
+
+Mục tiêu: **07:00 mỗi sáng nếu chưa claim** — không phụ thuộc “vừa claim hôm qua”.
+
+| Trạng thái | Schedule |
+| ---------- | -------- |
+| `canClaim === true` | Capacitor `on: { hour: 7, minute: 0 }` (calendar cron, lặp hàng ngày) |
+| Đã claim **sau** 07:00 | Giữ / re-arm cùng cron (lần fire tiếp theo = sáng mai) |
+| Đã claim **trước** 07:00 | Cancel cron hôm nay; arm one-shot 07:00 cho **7 sáng tiếp theo** (horizon) |
+| Cold start / `app:resume` / đổi ngôn ngữ | `reconcileDailyRewardSchedule(canClaim)` |
+
+`at` + `repeats: true` **không** dùng: trên Android/iOS interval lặp = thời gian tới lần fire đầu (sai với daily).
 
 ## Device token lifecycle (client)
 
@@ -103,9 +116,10 @@ Khi callback tap được giao trước lúc Phaser preload xong, `navigationSer
 
 | Event                               | Handler                                                                        |
 | ----------------------------------- | ------------------------------------------------------------------------------ |
-| `app:resume`                        | Push: refresh token + flush pending sync; local: (re)schedule daily reminder khi đã claim hôm nay |
-| `daily:claim`                       | Schedule local reminder ngày hôm sau                                           |
-| `settings:change` (`language`)      | Push: `PATCH /api/devices` với locale mới                                      |
+| cold start (`bind`)                 | Local: reconcile theo `canClaim`                                               |
+| `app:resume`                        | Push: refresh token + flush pending sync; local: reconcile theo `canClaim`     |
+| `daily:claim`                       | Local: reconcile với `canClaim=false` (bỏ 07:00 hôm nay nếu còn sớm)           |
+| `settings:change` (`language`)      | Push: `PATCH /api/devices`; local: re-arm title/body theo locale mới           |
 | `boot:preload-complete`             | `markBootComplete()` + clear pending (PreloadScene navigate tới target)        |
 
 ## API backend

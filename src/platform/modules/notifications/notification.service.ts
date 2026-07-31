@@ -86,15 +86,6 @@ class NotificationService {
     logger.info('[Notification] Re-bound push device token after guest recovery');
   }
 
-  async scheduleDailyRewardReminder(): Promise<void> {
-    if (!getConfig().localNotificationsEnabled) {
-      return;
-    }
-
-    await this.initializeLocal();
-    await localNotificationService.scheduleDailyRewardReminder();
-  }
-
   async reconcileDailyRewardSchedule(canClaim: boolean): Promise<void> {
     const config = getConfig();
 
@@ -119,15 +110,18 @@ class NotificationService {
     }
   }
 
-  async onLocaleChanged(): Promise<void> {
+  async onLocaleChanged(canClaimDailyReward: boolean): Promise<void> {
     const config = getConfig();
 
-    if (!config.pushNotificationsEnabled) {
-      return;
+    if (config.pushNotificationsEnabled) {
+      await pushNotificationService.refreshTokenIfNeeded();
+      void deviceSyncService.flush().catch(() => undefined);
     }
 
-    await pushNotificationService.refreshTokenIfNeeded();
-    void deviceSyncService.flush().catch(() => undefined);
+    if (config.localNotificationsEnabled) {
+      // Re-arm so pending title/body pick up the new locale.
+      await this.reconcileDailyRewardSchedule(canClaimDailyReward);
+    }
   }
 
   handleNotificationTap(payload: PushNotificationPayload): void {

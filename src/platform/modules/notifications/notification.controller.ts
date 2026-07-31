@@ -34,11 +34,12 @@ class NotificationController {
     );
 
     if (config.localNotificationsEnabled) {
-      void notificationService.initializeLocal();
+      void notificationService.reconcileDailyRewardSchedule(dailyRewards.canClaim());
 
       unsubs.push(
         events.on('daily:claim', () => {
-          void notificationService.scheduleDailyRewardReminder();
+          // Just claimed — skip today's 07:00 if still pending, keep future mornings armed.
+          void notificationService.reconcileDailyRewardSchedule(false);
         })
       );
 
@@ -60,7 +61,7 @@ class NotificationController {
     unsubs.push(
       events.on('settings:change', ({ key }) => {
         if (key === 'language') {
-          void notificationService.onLocaleChanged();
+          void notificationService.onLocaleChanged(dailyRewards.canClaim());
         }
       })
     );

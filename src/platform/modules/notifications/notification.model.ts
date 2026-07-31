@@ -8,6 +8,9 @@ export const NOTIFICATION_IDS = {
   DAILY_REWARD: 1001,
 } as const;
 
+/** Extra one-shot ids used when claim happens before 07:00 (1001..1001+N-1). */
+export const DAILY_REWARD_REMINDER_HORIZON_DAYS = 7;
+
 /** Android notification channel — must match FCM default channel in native manifest. */
 export const NOTIFICATION_CHANNEL = {
   ID: 'game_alerts',
@@ -35,8 +38,8 @@ export const NOTIFICATION_TYPES = {
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
 
-const DAILY_REWARD_REMINDER_HOUR = 7;
-const DAILY_REWARD_REMINDER_MINUTE = 0;
+export const DAILY_REWARD_REMINDER_HOUR = 7;
+export const DAILY_REWARD_REMINDER_MINUTE = 0;
 
 export type DeviceLocale = 'EN' | 'VI';
 export type DevicePlatform = 'IOS' | 'ANDROID';
@@ -114,11 +117,37 @@ export function mapLocaleToDeviceLocale(language: string): DeviceLocale {
   return language.toLowerCase().startsWith('vi') ? 'VI' : 'EN';
 }
 
-export function getNextDailyRewardReminderAt(now = new Date()): Date {
-  const scheduled = new Date(now);
-  scheduled.setDate(scheduled.getDate() + 1);
+/** Today's reminder wall-clock (local), regardless of whether it is still in the future. */
+export function getDailyRewardReminderTimeOnDate(day: Date): Date {
+  const scheduled = new Date(day);
   scheduled.setHours(DAILY_REWARD_REMINDER_HOUR, DAILY_REWARD_REMINDER_MINUTE, 0, 0);
+  scheduled.setSeconds(0, 0);
   return scheduled;
+}
+
+export function isBeforeDailyRewardReminderHour(now = new Date()): boolean {
+  return now.getTime() < getDailyRewardReminderTimeOnDate(now).getTime();
+}
+
+/**
+ * Next 07:00 local. If `skipToday` (already claimed today) or 07:00 has passed,
+ * returns tomorrow 07:00.
+ */
+export function getNextDailyRewardReminderAt(
+  now = new Date(),
+  options?: { skipToday?: boolean }
+): Date {
+  const todayAtSeven = getDailyRewardReminderTimeOnDate(now);
+  if (options?.skipToday || todayAtSeven.getTime() <= now.getTime()) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return getDailyRewardReminderTimeOnDate(tomorrow);
+  }
+  return todayAtSeven;
+}
+
+export function dailyRewardReminderNotificationId(dayOffset: number): number {
+  return NOTIFICATION_IDS.DAILY_REWARD + dayOffset;
 }
 
 export function resolveNotificationRoute(
