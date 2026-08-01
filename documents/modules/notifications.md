@@ -4,11 +4,11 @@ Module quản lý **push notification** (FCM) và **local notification** (daily 
 
 ## Phạm vi
 
-| Loại                  | Nguồn                       | Khi nào                                                                                          |
-| --------------------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
-| Push — Top 100 exited | Backend FCM                 | Player rời Top 100 (tự rớt hoặc bị đẩy)                                                          |
-| Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (FRULOOP mặc định: 9:00 Thứ 7 VN); FCM type `rank_push` |
-| Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                            |
+| Loại                  | Nguồn                       | Khi nào                                                                                                           |
+| --------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Push — Top 100 exited | Backend FCM                 | Player rời Top 100 (tự rớt hoặc bị đẩy)                                                                           |
+| Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (FRULOOP mặc định: 9:00 Thứ 7 VN); FCM type `rank_push`                  |
+| Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                                             |
 | Local — Daily reward  | Client schedule             | 07:00 mỗi sáng khi chưa claim (calendar cron); claim trước 07:00 thì bỏ hôm nay và arm horizon các sáng tiếp theo |
 
 Push cần Firebase native + backend `FIREBASE_*`. Local chỉ cần `@capacitor/local-notifications`.
@@ -52,12 +52,12 @@ Chỉ chạy trên `Capacitor.isNativePlatform()`.
 
 Mục tiêu: **07:00 mỗi sáng nếu chưa claim** — không phụ thuộc “vừa claim hôm qua”.
 
-| Trạng thái | Schedule |
-| ---------- | -------- |
-| `canClaim === true` | Capacitor `on: { hour: 7, minute: 0 }` (calendar cron, lặp hàng ngày) |
-| Đã claim **sau** 07:00 | Giữ / re-arm cùng cron (lần fire tiếp theo = sáng mai) |
-| Đã claim **trước** 07:00 | Cancel cron hôm nay; arm one-shot 07:00 cho **7 sáng tiếp theo** (horizon) |
-| Cold start / `app:resume` / đổi ngôn ngữ | `reconcileDailyRewardSchedule(canClaim)` |
+| Trạng thái                               | Schedule                                                                   |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| `canClaim === true`                      | Capacitor `on: { hour: 7, minute: 0 }` (calendar cron, lặp hàng ngày)      |
+| Đã claim **sau** 07:00                   | Giữ / re-arm cùng cron (lần fire tiếp theo = sáng mai)                     |
+| Đã claim **trước** 07:00                 | Cancel cron hôm nay; arm one-shot 07:00 cho **7 sáng tiếp theo** (horizon) |
+| Cold start / `app:resume` / đổi ngôn ngữ | `reconcileDailyRewardSchedule(canClaim)`                                   |
 
 `at` + `repeats: true` **không** dùng: trên Android/iOS interval lặp = thời gian tới lần fire đầu (sai với daily).
 
@@ -96,11 +96,11 @@ Luồng:
 
 Khi nhận push trong foreground (`pushNotificationReceived`), `notificationService` hiển thị toast i18n (copy EN/VI khớp `game-api` notification templates):
 
-| `type`           | Toast key |
-| ---------------- | --------- |
-| `top_100_exited` | `notifications.top100Exited.body` |
+| `type`                       | Toast key                                    |
+| ---------------------------- | -------------------------------------------- |
+| `top_100_exited`             | `notifications.top100Exited.body`            |
 | `rank_push` (có `data.rank`) | `notifications.rankPush.body` với `{ rank }` |
-| `rank_push` (thiếu rank) | `notifications.rankPush.bodyFallback` |
+| `rank_push` (thiếu rank)     | `notifications.rankPush.bodyFallback`        |
 
 ### Cold start (pending navigation)
 
@@ -114,13 +114,13 @@ Khi callback tap được giao trước lúc Phaser preload xong, `navigationSer
 
 ## Events liên quan
 
-| Event                               | Handler                                                                        |
-| ----------------------------------- | ------------------------------------------------------------------------------ |
-| cold start (`bind`)                 | Local: reconcile theo `canClaim`                                               |
-| `app:resume`                        | Push: refresh token + flush pending sync; local: reconcile theo `canClaim`     |
-| `daily:claim`                       | Local: reconcile với `canClaim=false` (bỏ 07:00 hôm nay nếu còn sớm)           |
-| `settings:change` (`language`)      | Push: `PATCH /api/devices`; local: re-arm title/body theo locale mới           |
-| `boot:preload-complete`             | `markBootComplete()` + clear pending (PreloadScene navigate tới target)        |
+| Event                          | Handler                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| cold start (`bind`)            | Local: reconcile theo `canClaim`                                           |
+| `app:resume`                   | Push: refresh token + flush pending sync; local: reconcile theo `canClaim` |
+| `daily:claim`                  | Local: reconcile với `canClaim=false` (bỏ 07:00 hôm nay nếu còn sớm)       |
+| `settings:change` (`language`) | Push: `PATCH /api/devices`; local: re-arm title/body theo locale mới       |
+| `boot:preload-complete`        | `markBootComplete()` + clear pending (PreloadScene navigate tới target)    |
 
 ## API backend
 

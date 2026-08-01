@@ -19,10 +19,10 @@ export const PRODUCTS = {
 
 export type ProductKey = keyof typeof PRODUCTS;
 
-export const ENTITLEMENT_REMOVE_ADS = PRODUCTS.REMOVE_ADS.entitlement;
 export const REMOVE_ADS_PRICE = '$3.99';
 export const COINS_10000_AMOUNT = 10_000;
 export const COINS_10000_PRICE = '$0.99';
+export const ENTITLEMENT_REMOVE_ADS = PRODUCTS.REMOVE_ADS.entitlement;
 
 /** Default purchase timeout (ms). */
 export const IAP_PURCHASE_TIMEOUT_MS = 60_000;

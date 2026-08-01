@@ -1,18 +1,18 @@
 import {
   GUEST_STORAGE_KEY,
-  GUEST_PENDING_NAME_KEY,
   type GuestCredentials,
   type InitGuestPayload,
+  GUEST_PENDING_NAME_KEY,
   isValidGuestCredentials,
   type GuestProfilePayload,
 } from './guest.model';
 import { Capacitor } from '@capacitor/core';
+import { logger } from '@platform/core/error';
 import { storage } from '@platform/core/storage';
 import { getConfig } from '@platform/core/config';
 import type { ApiEnvelope } from '@platform/core/api';
 import type { StorageProviderType } from '@platform/core/storage';
 import { apiClient, unwrapSuccessEnvelope } from '@platform/core/api';
-import { logger } from '@platform/core/error';
 
 function guestStorageProvider(): StorageProviderType {
   return storage.getDurableProviderType();

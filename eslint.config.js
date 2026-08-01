@@ -3,12 +3,9 @@ import tseslint from 'typescript-eslint';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
+  eslintConfigPrettier,
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
-  eslintConfigPrettier,
-  {
-    ignores: ['ios/**', 'dist/**', 'android/**', 'node_modules/**'],
-  },
   {
     files: ['src/**/*.ts'],
     rules: {
@@ -17,6 +14,9 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
     },
+  },
+  {
+    ignores: ['ios/**', 'dist/**', 'android/**', 'node_modules/**'],
   },
   {
     files: ['src/game/**/*.ts'],

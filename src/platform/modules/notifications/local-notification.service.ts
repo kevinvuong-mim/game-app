@@ -3,11 +3,11 @@ import {
   NOTIFICATION_CHANNEL,
   DAILY_REWARD_REMINDER_HOUR,
   DAILY_REWARD_REMINDER_MINUTE,
-  DAILY_REWARD_REMINDER_HORIZON_DAYS,
   getNextDailyRewardReminderAt,
   isBeforeDailyRewardReminderHour,
-  dailyRewardReminderNotificationId,
   getDailyRewardReminderTimeOnDate,
+  dailyRewardReminderNotificationId,
+  DAILY_REWARD_REMINDER_HORIZON_DAYS,
 } from './notification.model';
 import { t } from '@platform/modules/i18n';
 import { Capacitor } from '@capacitor/core';
@@ -16,13 +16,13 @@ import { ensureAndroidNotificationChannel } from './android-notification-channel
 
 interface ReminderNotification {
   id: number;
-  title: string;
   body: string;
+  title: string;
   channelId: string;
+  extra: { route: 'DailyReward' };
   schedule:
     | { at: Date; allowWhileIdle: true }
     | { on: { hour: number; minute: number }; allowWhileIdle: true };
-  extra: { route: 'DailyReward' };
 }
 
 class LocalNotificationService {

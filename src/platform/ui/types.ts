@@ -84,7 +84,7 @@ export interface UIButtonBadge {
   textStyle?: UIButtonTextStyle;
 }
 
-export type UIButtonSound = 'pop' | 'coin-drop' | false;
+export type UIButtonSound = 'pop' | false | 'coin-drop';
 
 export interface UIButtonOptions {
   origin?: {

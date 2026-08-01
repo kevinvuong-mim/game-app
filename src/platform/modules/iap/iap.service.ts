@@ -1,3 +1,16 @@
+import type {
+  IAPProvider,
+  RestoreResult,
+  PurchaseResult,
+  ProductDefinition,
+  ProviderPurchase,
+} from './iap.types';
+import {
+  PRODUCTS,
+  getProductById,
+  IAP_PURCHASE_TIMEOUT_MS,
+  IAP_TIMEOUT_RECOVERY_MS,
+} from './iap.config';
 import { IapError } from './iap.types';
 import { IAP_EVENTS } from './iap.events';
 import { logger } from '@platform/core/error';
@@ -6,19 +19,6 @@ import { getConfig } from '@platform/core/config';
 import { MockIapAdapter } from './iap.mock-adapter';
 import type { IEventBus } from '@platform/core/events';
 import { purchaseStorage, type PurchaseStorage } from './purchase.storage';
-import {
-  PRODUCTS,
-  getProductById,
-  IAP_PURCHASE_TIMEOUT_MS,
-  IAP_TIMEOUT_RECOVERY_MS,
-} from './iap.config';
-import type {
-  IAPProvider,
-  RestoreResult,
-  PurchaseResult,
-  ProductDefinition,
-  ProviderPurchase,
-} from './iap.types';
 
 interface IapServiceDeps {
   emit?: IEventBus['emit'];

@@ -2,9 +2,9 @@ import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { services } from '@platform/core/services';
-import { trackSessionEnd } from '@platform/core/analytics/events';
 import { saveService } from '@platform/modules/save';
 import { gameRunService } from '@platform/modules/game-run';
+import { trackSessionEnd } from '@platform/core/analytics/events';
 import { initAppBridge } from '@platform/modules/deep-link/app-bridge';
 
 let capacitorInitialized = false;

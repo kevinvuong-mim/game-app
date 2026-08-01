@@ -5,8 +5,9 @@ import {
   settings,
   leaderboard,
   saveService,
-  gameRunService,
   dailyRewards,
+  shopController,
+  gameRunService,
   guestController,
   bindAdsController,
   bindIapController,
@@ -16,21 +17,20 @@ import {
   dailyRewardController,
   leaderboardController,
   notificationController,
-  shopController,
 } from '@platform/modules';
 import {
   registerAdsProvider,
   registerIapProvider,
   registerAnalyticsProviders,
 } from '@platform/bootstrap/providers';
+import { iap } from '@platform/modules/iap';
 import { logger } from '@platform/core/error';
 import { apiClient } from '@platform/core/api';
 import { services } from '@platform/core/services';
 import { usePlatformStore } from '@platform/core/state';
-import { iap } from '@platform/modules/iap';
 import { trackSessionEnd } from '@platform/core/analytics/events';
-import { bindAppEvents, bindAppLifecycle } from '@platform/bootstrap/app-events';
 import { bindNavigationEvents } from '@platform/modules/navigation';
+import { bindAppEvents, bindAppLifecycle } from '@platform/bootstrap/app-events';
 import { syncGuestToStore, bindGuestStoreSync } from '@platform/modules/guest/guest-store-sync';
 
 const { ads, config, events, analytics } = services;

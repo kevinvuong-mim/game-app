@@ -1,21 +1,21 @@
 import Phaser from 'phaser';
 
-import { FRUIT_TYPES, fruitImagePath, fruitTextureKey } from '@game/fruits';
-import { eventBus, getBootNavigationTarget } from '@platform/core/events';
-import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { t } from '@platform/ui';
 import {
+  soundManager,
   SOUND_POP_KEY,
   SOUND_BGM_KEY,
-  SOUND_COIN_DROP_KEY,
+  SOUND_SWOOSH_KEY,
+  SOUND_REVERSE_KEY,
   SOUND_COMBINE_KEY,
+  SOUND_COIN_DROP_KEY,
   SOUND_DISAPPEAR_KEY,
   SOUND_CHANGE_TURNS_KEY,
-  SOUND_SWOOSH_KEY,
   SOUND_INCREASE_SIZE_KEY,
-  SOUND_REVERSE_KEY,
-  soundManager,
 } from '@platform/ui/audio/SoundManager';
+import { FREDOKA_FONT } from '@platform/ui/fonts';
+import { eventBus, getBootNavigationTarget } from '@platform/core/events';
+import { FRUIT_TYPES, fruitImagePath, fruitTextureKey } from '@game/fruits';
 
 type ImageAsset = { key: string; path: string };
 type FallbackTexture = { key: string; width: number; height: number; color: number };
@@ -44,34 +44,33 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'shop-item-3', path: '/assets/images/shop-item-3.png' },
   { key: 'shop-item-4', path: '/assets/images/shop-item-4.png' },
   { key: 'shop-item-5', path: '/assets/images/shop-item-5.png' },
+  { key: 'no-ads-icon', path: '/assets/images/no-ads-icon.png' },
+  { key: 'speaker-icon', path: '/assets/images/speaker-icon.png' },
   { key: 'checked-icon', path: '/assets/images/checked-icon.png' },
+  { key: 'firework-icon', path: '/assets/images/firework-icon.png' },
   { key: 'missions-icon', path: '/assets/images/missions-icon.png' },
+  { key: 'how-to-play-icon', path: '/assets/images/how-to-play.png' },
   { key: 'mission-item-1', path: '/assets/images/mission-item-1.png' },
   { key: 'mission-item-2', path: '/assets/images/mission-item-2.png' },
   { key: 'mission-item-3', path: '/assets/images/mission-item-3.png' },
   { key: 'mission-item-4', path: '/assets/images/mission-item-4.png' },
   { key: 'mission-item-5', path: '/assets/images/mission-item-5.png' },
   { key: 'mission-item-6', path: '/assets/images/mission-item-6.png' },
-  { key: 'daily-reward-icon', path: '/assets/images/daily-reward-icon.png' },
-  { key: 'how-to-play-icon', path: '/assets/images/how-to-play.png' },
-  { key: 'watermelon-character', path: '/assets/images/watermelon-character.png' },
-  // home-background-image is loaded in BootScene for the preload UI.
-  { key: 'play-button-background', path: '/assets/images/play-button-background.png' },
-  { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
-  { key: 'glass-container', path: '/assets/images/glass-container.png' },
-  { key: 'settings-button-background', path: '/assets/images/settings-button-background.png' },
-  { key: 'home-button-background', path: '/assets/images/home-button-background.png' },
-  { key: 'share-button-background', path: '/assets/images/share-button-background.png' },
-  { key: 'best-score-background-image', path: '/assets/images/best-score-background-image.png' },
-  { key: 'firework-icon', path: '/assets/images/firework-icon.png' },
   { key: 'gameover-banner', path: '/assets/images/gameover-banner.png' },
+  { key: 'glass-container', path: '/assets/images/glass-container.png' },
   { key: 'musical-note-icon', path: '/assets/images/musical-note-icon.png' },
-  { key: 'speaker-icon', path: '/assets/images/speaker-icon.png' },
-  { key: 'language-globe-icon', path: '/assets/images/language-globe-icon.png' },
-  { key: 'no-ads-icon', path: '/assets/images/no-ads-icon.png' },
   { key: 'golden-crown-icon', path: '/assets/images/golden-crown-icon.png' },
   { key: 'silver-crown-icon', path: '/assets/images/silver-crown-icon.png' },
   { key: 'bronze-crown-icon', path: '/assets/images/bronze-crown-icon.png' },
+  { key: 'daily-reward-icon', path: '/assets/images/daily-reward-icon.png' },
+  { key: 'language-globe-icon', path: '/assets/images/language-globe-icon.png' },
+  { key: 'watermelon-character', path: '/assets/images/watermelon-character.png' },
+  { key: 'play-button-background', path: '/assets/images/play-button-background.png' },
+  { key: 'home-button-background', path: '/assets/images/home-button-background.png' },
+  { key: 'share-button-background', path: '/assets/images/share-button-background.png' },
+  { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
+  { key: 'settings-button-background', path: '/assets/images/settings-button-background.png' },
+  { key: 'best-score-background-image', path: '/assets/images/best-score-background-image.png' },
 ];
 
 const FALLBACK_TEXTURES: FallbackTexture[] = [
@@ -87,59 +86,59 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'shop-item-4', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-item-5', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-banner', width: 360, height: 80, color: 0xc62828 },
+  { key: 'checked-icon', width: 48, height: 48, color: 0x3cb043 },
+  { key: 'chest-icon', width: 256, height: 160, color: 0xc62828 },
+  { key: 'speaker-icon', width: 75, height: 72, color: 0x3cb043 },
   { key: 'missions-icon', width: 80, height: 82, color: 0x4a90d9 },
+  { key: 'no-ads-icon', width: 126, height: 129, color: 0xc62828 },
   { key: 'mission-item-1', width: 96, height: 96, color: 0xffd700 },
   { key: 'mission-item-2', width: 96, height: 96, color: 0xff6b6b },
   { key: 'mission-item-3', width: 96, height: 96, color: 0x4a90d9 },
   { key: 'mission-item-4', width: 96, height: 96, color: 0x3cb043 },
   { key: 'mission-item-5', width: 96, height: 96, color: 0xffc107 },
   { key: 'mission-item-6', width: 96, height: 96, color: 0x9b59b6 },
-  { key: 'daily-reward-icon', width: 80, height: 82, color: 0x4a90d9 },
-  { key: 'how-to-play-icon', width: 80, height: 80, color: 0x3cb043 },
-  { key: 'watermelon-character', width: 255, height: 168, color: 0x3cb043 },
-  { key: 'checked-icon', width: 48, height: 48, color: 0x3cb043 },
-  { key: 'chest-icon', width: 256, height: 160, color: 0xc62828 },
-  { key: 'home-background-image', width: 16, height: 16, color: 0x7cbc3a },
-  { key: 'play-button-background', width: 256, height: 78, color: 0x4a90d9 },
-  { key: 'general-background-image', width: 16, height: 16, color: 0x16213e },
-  { key: 'glass-container', width: 479, height: 592, color: 0x88aacc },
-  { key: 'settings-button-background', width: 256, height: 78, color: 0x4a90d9 },
-  { key: 'home-button-background', width: 265, height: 98, color: 0x8e44ad },
-  { key: 'share-button-background', width: 265, height: 98, color: 0xe67e22 },
-  { key: 'best-score-background-image', width: 265, height: 97, color: 0xe74c3c },
   { key: 'firework-icon', width: 120, height: 116, color: 0xff9800 },
+  { key: 'how-to-play-icon', width: 80, height: 80, color: 0x3cb043 },
   { key: 'gameover-banner', width: 400, height: 313, color: 0xc62828 },
-  { key: 'leaderboard-button-background', width: 256, height: 78, color: 0x4a90d9 },
   { key: 'musical-note-icon', width: 81, height: 95, color: 0x3cb043 },
-  { key: 'speaker-icon', width: 75, height: 72, color: 0x3cb043 },
-  { key: 'language-globe-icon', width: 64, height: 64, color: 0x3cb043 },
-  { key: 'no-ads-icon', width: 126, height: 129, color: 0xc62828 },
   { key: 'golden-crown-icon', width: 48, height: 48, color: 0xf5c518 },
   { key: 'silver-crown-icon', width: 48, height: 48, color: 0xc0c7d1 },
   { key: 'bronze-crown-icon', width: 48, height: 48, color: 0xd4894a },
+  { key: 'daily-reward-icon', width: 80, height: 82, color: 0x4a90d9 },
+  { key: 'glass-container', width: 479, height: 592, color: 0x88aacc },
+  { key: 'language-globe-icon', width: 64, height: 64, color: 0x3cb043 },
+  { key: 'home-background-image', width: 16, height: 16, color: 0x7cbc3a },
+  { key: 'watermelon-character', width: 255, height: 168, color: 0x3cb043 },
+  { key: 'play-button-background', width: 256, height: 78, color: 0x4a90d9 },
+  { key: 'home-button-background', width: 265, height: 98, color: 0x8e44ad },
+  { key: 'general-background-image', width: 16, height: 16, color: 0x16213e },
+  { key: 'share-button-background', width: 265, height: 98, color: 0xe67e22 },
+  { key: 'settings-button-background', width: 256, height: 78, color: 0x4a90d9 },
+  { key: 'best-score-background-image', width: 265, height: 97, color: 0xe74c3c },
+  { key: 'leaderboard-button-background', width: 256, height: 78, color: 0x4a90d9 },
 ];
 
+const TRACK_PAD = 5;
 const BAR_WIDTH = 420;
 const BAR_HEIGHT = 28;
 const BAR_RADIUS = 14;
-const TRACK_PAD = 5;
-const PRELOAD_DELAY_MS = 0;
 const FILL_COLORS = {
   rim: 0xfff6d8,
-  rimEdge: 0xc9a227,
   track: 0x2f4a1c,
-  trackInner: 0x1a2e10,
-  fillWarm: 0xffb020,
-  fillHot: 0xffe566,
   shine: 0xffffff,
+  rimEdge: 0xc9a227,
+  fillHot: 0xffe566,
+  fillWarm: 0xffb020,
+  trackInner: 0x1a2e10,
 };
+const PRELOAD_DELAY_MS = 0;
 
 export class PreloadScene extends Phaser.Scene {
   private progress = 0;
-  private fillGfx!: Phaser.GameObjects.Graphics;
-  private shine!: Phaser.GameObjects.Rectangle;
-  private percentText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
+  private shine!: Phaser.GameObjects.Rectangle;
+  private fillGfx!: Phaser.GameObjects.Graphics;
+  private percentText!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'Preload' });
@@ -159,15 +158,15 @@ export class PreloadScene extends Phaser.Scene {
       this.load.image(image.key, image.path);
     }
 
-    this.load.audio(SOUND_COIN_DROP_KEY, '/assets/audio/coin-drop.mp3');
     this.load.audio(SOUND_POP_KEY, '/assets/audio/pop.mp3');
-    this.load.audio(SOUND_COMBINE_KEY, '/assets/audio/combine.mp3');
-    this.load.audio(SOUND_DISAPPEAR_KEY, '/assets/audio/disappear.mp3');
-    this.load.audio(SOUND_CHANGE_TURNS_KEY, '/assets/audio/change-turns.mp3');
     this.load.audio(SOUND_SWOOSH_KEY, '/assets/audio/swoosh.mp3');
-    this.load.audio(SOUND_INCREASE_SIZE_KEY, '/assets/audio/increase-size.mp3');
+    this.load.audio(SOUND_COMBINE_KEY, '/assets/audio/combine.mp3');
     this.load.audio(SOUND_REVERSE_KEY, '/assets/audio/reverse.mp3');
+    this.load.audio(SOUND_COIN_DROP_KEY, '/assets/audio/coin-drop.mp3');
+    this.load.audio(SOUND_DISAPPEAR_KEY, '/assets/audio/disappear.mp3');
     this.load.audio(SOUND_BGM_KEY, '/assets/audio/background-music.mp3');
+    this.load.audio(SOUND_CHANGE_TURNS_KEY, '/assets/audio/change-turns.mp3');
+    this.load.audio(SOUND_INCREASE_SIZE_KEY, '/assets/audio/increase-size.mp3');
   }
 
   create(): void {

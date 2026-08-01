@@ -1,6 +1,6 @@
 import { logger } from '@platform/core/error';
-import type { IEventBus } from '@platform/core/events';
 import { saveService } from '@platform/modules/save';
+import type { IEventBus } from '@platform/core/events';
 import { missions, type MissionService } from './mission.service';
 import { missionTracker, type MissionTracker } from './mission.tracker';
 

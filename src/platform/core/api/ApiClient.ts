@@ -1,5 +1,5 @@
-import type { IApiClient, ApiResponse, RequestConfig, AuthRecoveryHandler } from './types';
 import { ApiError as ApiErrorClass } from './types';
+import type { IApiClient, ApiResponse, RequestConfig, AuthRecoveryHandler } from './types';
 
 const DEFAULT_RETRIES = 2;
 const DEFAULT_TIMEOUT = 15_000;

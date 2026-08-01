@@ -1,25 +1,25 @@
 import Phaser from 'phaser';
 
-import { FRUIT_TYPES, fruitTextureKey } from '@game/fruits';
 import type { ContainerBounds } from './types';
+import { FRUIT_TYPES, fruitTextureKey } from '@game/fruits';
 
 export type DropControllerCallbacks = {
-  isActive: () => boolean;
   canDrop: () => boolean;
-  setCanDrop: (value: boolean) => void;
-  hasActiveSkill: () => boolean;
-  onBeforeDrop: () => void;
+  isActive: () => boolean;
   onFirstDrop: () => void;
-  onDropped: (level: number) => void;
-  getCurrentLevel: () => number;
+  onBeforeDrop: () => void;
   advanceLevels: () => void;
+  hasActiveSkill: () => boolean;
+  getCurrentLevel: () => number;
+  onDropped: (level: number) => void;
+  setCanDrop: (value: boolean) => void;
 };
 
 export class DropController {
+  private dropY = 0;
+  private dropperX = 0;
   private dropperFruit?: Phaser.GameObjects.Image;
   private dropGuide?: Phaser.GameObjects.Graphics;
-  private dropperX = 0;
-  private dropY = 0;
   private bounds: ContainerBounds = { left: 0, right: 0, top: 0, bottom: 0, centerX: 0 };
 
   constructor(

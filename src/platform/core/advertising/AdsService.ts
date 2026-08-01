@@ -7,11 +7,11 @@ import type {
   AdsProviderConfig,
 } from './types';
 import { logger } from '../error';
-import { getConfig, getEnvironment } from '../config';
+import { Capacitor } from '@capacitor/core';
 import { createAdsProvider } from './providers';
+import { getConfig, getEnvironment } from '../config';
 import { AdFormatManager, BannerStateMachine } from './AdStateMachine';
 import { BANNER_ALLOWED_PLACEMENTS, DEFAULT_REMOTE_CONFIG } from './types';
-import { Capacitor } from '@capacitor/core';
 
 class AdsService {
   private readonly formats = {

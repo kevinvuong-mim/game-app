@@ -1,9 +1,9 @@
 import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
-import { getConfig, getEnvironment } from '@platform/core/config';
 import { services } from '@platform/core/services';
 import { iap, createIapProvider } from '@platform/modules/iap';
 import { createAdsProvider } from '@platform/core/advertising';
+import { getConfig, getEnvironment } from '@platform/core/config';
 import { ConsoleAnalyticsProvider, FirebaseAnalyticsProvider } from '@platform/core/analytics';
 
 const { ads, config, analytics } = services;

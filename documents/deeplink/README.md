@@ -7,10 +7,10 @@ Dev là subdomain của prod, nên **một bộ file** dùng chung — chỉ kh�
 | `apple-app-site-association` | `https://<domain>/.well-known/apple-app-site-association` |
 | `assetlinks.json`            | `https://<domain>/.well-known/assetlinks.json`            |
 
-| Environment | Domain                     |
-| ----------- | -------------------------- |
-| Dev         | `dev-fruloop.vraxion.com`  |
-| Prod        | `fruloop.vraxion.com`      |
+| Environment | Domain                    |
+| ----------- | ------------------------- |
+| Dev         | `dev-fruloop.vraxion.com` |
+| Prod        | `fruloop.vraxion.com`     |
 
 Upload **cùng nội dung** lên `.well-known/` của từng domain (HTTPS, không redirect).
 
@@ -18,10 +18,10 @@ Upload **cùng nội dung** lên `.well-known/` của từng domain (HTTPS, khô
 
 Sửa scheme + hosts tại:
 
-| File | Dùng cho |
-| ---- | -------- |
-| `src/platform/modules/deep-link/deep-link.config.ts` | Runtime (parser / `allowedHosts`) |
-| `scripts/deeplink-config.mjs` | Native apply (`apply-ios-native` / `apply-android-native`) |
+| File                                                 | Dùng cho                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| `src/platform/modules/deep-link/deep-link.config.ts` | Runtime (parser / `allowedHosts`)                          |
+| `scripts/deeplink-config.mjs`                        | Native apply (`apply-ios-native` / `apply-android-native`) |
 
 Hai file phải khớp nhau. Host active theo `VITE_APP_ENV` (`production` → prod, còn lại → dev).
 

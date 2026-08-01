@@ -9,8 +9,8 @@ export interface GamePhysicsConfig {
   /** Phaser physics system. Omit or set false for no physics. */
   default?: 'matter' | false;
   matter?: {
-    gravity?: { x: number; y: number };
     debug?: boolean;
+    gravity?: { x: number; y: number };
   };
 }
 
@@ -27,15 +27,15 @@ export interface GameConfig {
 export const gameConfig: GameConfig = {
   width: 720,
   height: 1280,
-  version: '1.0.0',
   name: 'Fruloop',
+  version: '1.0.0',
   id: import.meta.env.VITE_GAME_ID ?? '',
   // Suika demo uses Matter; replace or remove when cloning a non-physics game.
   physics: {
     default: 'matter',
     matter: {
-      gravity: { x: 0, y: 1.4 },
       debug: false,
+      gravity: { x: 0, y: 1.4 },
     },
   },
 };

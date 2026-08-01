@@ -1,12 +1,12 @@
 import catalog from './catalog.json';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
+import { saveService } from '@platform/modules/save';
 import { usePlatformStore } from '@platform/core/state';
 import type { ProductKey } from '@platform/modules/iap';
 import { iap, getProductByKey } from '@platform/modules/iap';
-import { saveService } from '@platform/modules/save';
 
-type ShopItemType = 'boost' | 'entitlement' | 'coins';
+type ShopItemType = 'coins' | 'boost' | 'entitlement';
 
 export interface ShopItem {
   id: string;
@@ -14,10 +14,10 @@ export interface ShopItem {
   icon: string;
   price: number;
   type: ShopItemType;
-  description: string;
-  productKey?: ProductKey;
   /** Coins granted after a successful IAP coin-pack purchase. */
   coinAmount?: number;
+  description: string;
+  productKey?: ProductKey;
   currency: 'iap' | 'coins';
 }
 

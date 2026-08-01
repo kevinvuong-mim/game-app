@@ -1,14 +1,14 @@
 import Phaser from 'phaser';
 
+import type { FruitBody } from './types';
 import { FRUIT_TYPES } from '@game/fruits';
 import { eventBus } from '@platform/core/events';
 import type { FruitFactory } from './FruitFactory';
-import type { FruitBody } from './types';
 
 export type MergeSystemCallbacks = {
+  onMerge: () => void;
   isActive: () => boolean;
   onScore: (points: number) => void;
-  onMerge: () => void;
 };
 
 export class MergeSystem {

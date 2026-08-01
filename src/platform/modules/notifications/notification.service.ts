@@ -6,12 +6,12 @@ import {
 import { t } from '@platform/modules/i18n';
 import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
-import { getConfig } from '@platform/core/config';
 import { eventBus } from '@platform/core/events';
+import { getConfig } from '@platform/core/config';
 import { deviceSyncService } from './device-sync.service';
+import { navigationService } from '@platform/modules/navigation';
 import { pushNotificationService } from './push-notification.service';
 import { localNotificationService } from './local-notification.service';
-import { navigationService } from '@platform/modules/navigation';
 
 class NotificationService {
   private pushInitialized = false;

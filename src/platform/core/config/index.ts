@@ -1,18 +1,18 @@
 import { Capacitor } from '@capacitor/core';
 
 import {
-  type DeepLinkConfig,
-  resolveDeepLinkConfig,
-} from '@platform/modules/deep-link/deep-link.config';
-import {
   type StoreListingConfig,
   resolveStoreListingConfig,
 } from '@platform/modules/share/share.config';
+import {
+  type DeepLinkConfig,
+  resolveDeepLinkConfig,
+} from '@platform/modules/deep-link/deep-link.config';
 import notificationEnvConfigs from './notification-env.json';
 
 type IapProvider = 'mock' | 'revenuecat';
-type AnalyticsProvider = 'console' | 'firebase';
 export type Environment = 'dev' | 'production';
+type AnalyticsProvider = 'console' | 'firebase';
 
 interface FirebaseConfig {
   appId: string;
@@ -60,19 +60,19 @@ interface AdsConfig {
 
 const ENV_CONFIGS: Record<Environment, Partial<RuntimeConfig>> = {
   dev: {
-    ...notificationEnvConfigs.dev,
     debug: true,
     adsEnabled: true,
     iapEnabled: true,
     analyticsEnabled: true,
+    ...notificationEnvConfigs.dev,
     apiUrl: 'https://game-api-s5kn.onrender.com/api',
   },
   production: {
-    ...notificationEnvConfigs.production,
     debug: false,
     adsEnabled: true,
     iapEnabled: true,
     analyticsEnabled: true,
+    ...notificationEnvConfigs.production,
     apiUrl: 'https://game-api-s5kn.onrender.com/api',
   },
 };

@@ -1,8 +1,8 @@
 export {
-  BACKWARD_CLOCK_TOLERANCE_MS,
-  FORWARD_CLOCK_TOLERANCE_MS,
   ClockIntegritySession,
   detectTimeManipulation,
+  FORWARD_CLOCK_TOLERANCE_MS,
+  BACKWARD_CLOCK_TOLERANCE_MS,
 } from './clock-integrity';
 export type { ClockCheckPoint } from './clock-integrity';
 

@@ -1,29 +1,28 @@
 import Phaser from 'phaser';
 
+import {
+  PANEL_BG,
+  TEXT_COLOR,
+  PANEL_BORDER,
+  PANEL_CORNER_RADIUS,
+} from '@platform/ui/panel/panelTheme';
 import { gameConfig } from '@game/config';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { t, toast, RateAppModal, i18n, shareService, rateService, gameSync } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect, measureTextWidth } from '@platform/ui/panel/graphics';
-import {
-  PANEL_BG,
-  PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
-  TEXT_COLOR,
-} from '@platform/ui/panel/panelTheme';
+import { t, i18n, toast, RateAppModal, shareService, rateService, gameSync } from '@platform/ui';
 
 const BUTTON_WIDTH = 300;
 const BUTTON_HEIGHT = 96;
+const COINS_PILL_GAP = 10;
+const COIN_ICON_SIZE = 36;
 const NEW_RECORD_GAP = 36;
+const COINS_PILL_PAD_X = 18;
+const COINS_PILL_HEIGHT = 52;
 const NEW_RECORD_WIDTH = 200;
 const NEW_RECORD_HEIGHT = 58;
 const PANEL_BOTTOM_PADDING = 48;
-
-const COIN_ICON_SIZE = 36;
-const COINS_PILL_HEIGHT = 52;
-const COINS_PILL_PAD_X = 18;
-const COINS_PILL_GAP = 10;
 const COINS_PILL_FILL = 0xfff0d4;
 const COINS_PILL_STROKE = 0xd4a84b;
 const COINS_AMOUNT_COLOR = '#8a5a00';
@@ -34,10 +33,10 @@ const LAYOUT = {
   scoreValue: 98,
   /** Gap below score number before coins section. */
   coinsLabel: 152,
-  /** Label → pill center (must clear label height + gap). */
-  coinsPillFromLabel: 52,
   /** Pill bottom → rank. */
   rankAfterPill: 28,
+  /** Label → pill center (must clear label height + gap). */
+  coinsPillFromLabel: 52,
   /**
    * Rank center → first control center.
    * Play Again is taller (96) than the New Record badge (58), so gaps differ.
@@ -48,9 +47,9 @@ const LAYOUT = {
 
 export class GameOverScene extends Phaser.Scene {
   private returnTo = 'Home';
-  private rankText?: Phaser.GameObjects.Text;
-  private rateModal?: RateAppModal;
   private rankRequestId = 0;
+  private rateModal?: RateAppModal;
+  private rankText?: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'GameOver' });

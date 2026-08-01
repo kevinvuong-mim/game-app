@@ -1,18 +1,18 @@
 import Phaser from 'phaser';
 
 import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { createUIButton } from '@platform/ui/button/UIButton';
 import type { UIButton } from '@platform/ui/types';
+import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
-import { PANEL_BG, PANEL_BORDER, PANEL_CORNER_RADIUS } from '@platform/ui/panel/panelTheme';
 import { SKILL_IDS, type SkillId, getSkillQuantity } from '@game/skills/skillInventory';
+import { PANEL_BG, PANEL_BORDER, PANEL_CORNER_RADIUS } from '@platform/ui/panel/panelTheme';
 
 const SKILL_ICONS: Record<SkillId, string> = {
-  boost_hammer: 'shop-item-1',
-  boost_change: 'shop-item-2',
   boost_swap: 'shop-item-3',
   boost_size: 'shop-item-4',
   boost_undo: 'shop-item-5',
+  boost_hammer: 'shop-item-1',
+  boost_change: 'shop-item-2',
 };
 
 export type SkillBarViewCallbacks = {
@@ -25,42 +25,43 @@ export type SkillBarViewCallbacks = {
  * Panel width grows with owned skills (up to a max), then scrolls.
  */
 export class SkillBarView {
-  private skillButtons = new Map<SkillId, UIButton>();
-  private skillSlots = new Map<SkillId, Phaser.GameObjects.Container>();
-  private ownedSkillIds: SkillId[] = [];
-  private skillHint?: Phaser.GameObjects.Text;
-  private skillPanel?: Phaser.GameObjects.Graphics;
-  private skillTrack?: Phaser.GameObjects.Container;
-  private skillTrackMask?: Phaser.GameObjects.Graphics;
-  private skillTrackBaseX = 0;
-  private skillTrackCenterY = 0;
-  private skillLeftArrow?: Phaser.GameObjects.Text;
-  private skillRightArrow?: Phaser.GameObjects.Text;
-  private skillLeftArrowZone?: Phaser.GameObjects.Zone;
-  private skillRightArrowZone?: Phaser.GameObjects.Zone;
-  private skillScrollIndex = 0;
-  private skillSlotSpacing = 110;
-  private skillBtnSize = 84;
+  private readonly arrowPad = 36;
+  private readonly panelPadTop = 18;
+  private readonly baseBtnSize = 84;
+  private readonly panelPadBottom = 20;
+  private readonly skillVisibleCount = 4;
+  private readonly maxPanelWidthPx = 520;
+  private readonly idealSlotSpacing = 110;
+  private readonly maxPanelWidthRatio = 0.85;
+  private readonly selectedSkillScale = 1.24;
+
+  private visible = false;
   private skillBarTop = 0;
+  private skillBtnSize = 84;
   private skillBarBottom = 0;
   private skillPanelLeft = 0;
   private skillPanelWidth = 0;
+  private skillTrackBaseX = 0;
+  private skillScrollIndex = 0;
   private skillSwipeStartX = 0;
-  private skillSwipeActive = false;
+  private skillTrackCenterY = 0;
   private skillDidSwipe = false;
-  private skillNavConsumed = false;
-  private visible = false;
   private layoutScreenWidth = 0;
   private layoutScreenHeight = 0;
-  private readonly skillVisibleCount = 4;
-  private readonly selectedSkillScale = 1.24;
-  private readonly arrowPad = 36;
-  private readonly panelPadTop = 18;
-  private readonly panelPadBottom = 20;
-  private readonly idealSlotSpacing = 110;
-  private readonly maxPanelWidthPx = 520;
-  private readonly maxPanelWidthRatio = 0.85;
-  private readonly baseBtnSize = 84;
+  private skillSlotSpacing = 110;
+  private skillNavConsumed = false;
+  private skillSwipeActive = false;
+  private ownedSkillIds: SkillId[] = [];
+  private skillHint?: Phaser.GameObjects.Text;
+  private skillPanel?: Phaser.GameObjects.Graphics;
+  private skillLeftArrow?: Phaser.GameObjects.Text;
+  private skillTrack?: Phaser.GameObjects.Container;
+  private skillRightArrow?: Phaser.GameObjects.Text;
+  private skillButtons = new Map<SkillId, UIButton>();
+  private skillTrackMask?: Phaser.GameObjects.Graphics;
+  private skillLeftArrowZone?: Phaser.GameObjects.Zone;
+  private skillRightArrowZone?: Phaser.GameObjects.Zone;
+  private skillSlots = new Map<SkillId, Phaser.GameObjects.Container>();
 
   constructor(
     private readonly scene: Phaser.Scene,

@@ -1,35 +1,35 @@
 import Phaser from 'phaser';
 
-import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from '../panel/panelTheme';
+import {
+  LABEL_COLOR,
+  TOGGLE_WIDTH,
+  ROW_ICON_SIZE,
+  REMOVE_ADS_ITEM_ID,
+  SECTION_TITLE_COLOR,
+  type SettingsToggle,
+  createSettingsToggle,
+} from './settingsShared';
+import { iap } from '@platform/modules/iap';
+import { shop } from '@platform/modules/shop';
 import { toast } from '../toast/ToastManager';
+import { ads } from '@platform/core/advertising';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
+import { createUIButton } from '../button/UIButton';
 import { drawRoundedRect } from '../panel/graphics';
 import type { UIButton, ToastOptions } from '../types';
-import { createUIButton } from '../button/UIButton';
 import { t } from '@platform/modules/i18n/i18n.service';
-import { shop } from '@platform/modules/shop';
-import { ads } from '@platform/core/advertising';
-import { iap } from '@platform/modules/iap';
+import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from '../panel/panelTheme';
 import { ENTITLEMENT_REMOVE_ADS, REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
-import {
-  SECTION_TITLE_COLOR,
-  LABEL_COLOR,
-  ROW_ICON_SIZE,
-  TOGGLE_WIDTH,
-  REMOVE_ADS_ITEM_ID,
-  createSettingsToggle,
-  type SettingsToggle,
-} from './settingsShared';
 
 const NO_ADS_ICON_KEY = 'no-ads-icon';
 
 export class SettingsAdsSection {
   private disposed = false;
   private purchasingAds = false;
-  private restoringPurchases = false;
-  private purchaseModal?: Phaser.GameObjects.Container;
   private buyAdsButton?: UIButton;
+  private restoringPurchases = false;
   private hideAdsToggle?: SettingsToggle;
+  private purchaseModal?: Phaser.GameObjects.Container;
 
   constructor(
     private readonly scene: Phaser.Scene,

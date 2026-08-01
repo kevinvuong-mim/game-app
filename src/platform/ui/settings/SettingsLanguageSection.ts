@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
 
+import type { ToastOptions } from '../types';
 import { TEXT_COLOR } from '../panel/panelTheme';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { drawRoundedRect } from '../panel/graphics';
-import type { ToastOptions } from '../types';
-import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import { settings } from '@platform/modules/settings';
-import { SECTION_TITLE_COLOR, DIVIDER_COLOR } from './settingsShared';
+import { t, i18n } from '@platform/modules/i18n/i18n.service';
+import { DIVIDER_COLOR, SECTION_TITLE_COLOR } from './settingsShared';
 
 const LANGUAGE_GLOBE_KEY = 'language-globe-icon';
 const LANGUAGES = [
@@ -17,8 +17,8 @@ const LANGUAGES = [
 export class SettingsLanguageSection {
   private disposed = false;
   private languageOpen = false;
-  private languageMenu?: Phaser.GameObjects.Container;
   private languageLabel?: Phaser.GameObjects.Text;
+  private languageMenu?: Phaser.GameObjects.Container;
 
   constructor(
     private readonly scene: Phaser.Scene,

@@ -1,32 +1,33 @@
 import Phaser from 'phaser';
 
-import { t, toast } from '@platform/ui';
-import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { createUIButton } from '@platform/ui/button/UIButton';
-import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import {
   PANEL_BG,
+  TEXT_COLOR,
   PANEL_BORDER,
   PANEL_CORNER_RADIUS,
-  TEXT_COLOR,
 } from '@platform/ui/panel/panelTheme';
+import { t, toast } from '@platform/ui';
+import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { rateService } from '@platform/modules/rate';
+import { createUIButton } from '@platform/ui/button/UIButton';
+import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 
-const STAR_FILL = 0xff8a1a;
-const STAR_STROKE = 0x8b4513;
-const STAR_EMPTY = 0xe8d4b0;
 const MODAL_DEPTH = 50;
+const STAR_FILL = 0xff8a1a;
+const STAR_EMPTY = 0xe8d4b0;
+const STAR_STROKE = 0x8b4513;
 
 export class RateAppModal {
   private readonly scene: Phaser.Scene;
   private readonly root: Phaser.GameObjects.Container;
-  private selectedStars = 0;
-  private starsCenterX = 0;
+
   private starsY = 0;
-  private starGfx: Phaser.GameObjects.Graphics[] = [];
-  private starHits: Phaser.GameObjects.Zone[] = [];
+  private starsCenterX = 0;
+  private selectedStars = 0;
   private submitting = false;
+  private starHits: Phaser.GameObjects.Zone[] = [];
+  private starGfx: Phaser.GameObjects.Graphics[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;

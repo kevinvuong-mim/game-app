@@ -4,10 +4,10 @@ import {
 } from './notification-config.mjs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { loadEnvFile } from './env-file.mjs';
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolveDeepLinkHosts, resolveDeepLinkScheme } from './deeplink-config.mjs';
 import { readCapacitorAppId, resolveMainActivityPath } from './capacitor-config.mjs';
-import { loadEnvFile } from './env-file.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 

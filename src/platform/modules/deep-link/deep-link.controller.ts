@@ -1,9 +1,8 @@
 import { logger } from '@platform/core/error';
-import type { IEventBus } from '@platform/core/events';
-import { navigationService } from '@platform/modules/navigation/navigation.service';
-
 import { deepLinkService } from './deep-link.service';
+import type { IEventBus } from '@platform/core/events';
 import { buildDeepLinkSceneData } from './deep-link.model';
+import { navigationService } from '@platform/modules/navigation/navigation.service';
 
 class DeepLinkController {
   bind(events: IEventBus): () => void {

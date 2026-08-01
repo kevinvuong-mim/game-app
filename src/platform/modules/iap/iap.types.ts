@@ -49,9 +49,9 @@ export interface IAPProvider {
   fetchEntitlements(): Promise<string[]>;
   restore(): Promise<ProviderPurchase[]>;
   getProducts(): Promise<ProviderProduct[]>;
-  purchase(productId: string): Promise<ProviderPurchase>;
   /** Link store account to app user id (RevenueCat logIn). */
   linkAppUser?(appUserId: string): Promise<void>;
+  purchase(productId: string): Promise<ProviderPurchase>;
   /**
    * Look up a recent store purchase of `productId` (used to recover after client timeout).
    * Optional — mock / providers without history omit this.

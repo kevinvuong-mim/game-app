@@ -3,23 +3,23 @@ import Phaser from 'phaser';
 import { eventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
 
-export const SOUND_COIN_DROP_KEY = 'coin-drop';
 export const SOUND_POP_KEY = 'pop';
-export const SOUND_COMBINE_KEY = 'combine';
-export const SOUND_DISAPPEAR_KEY = 'disappear';
-export const SOUND_CHANGE_TURNS_KEY = 'change-turns';
 export const SOUND_SWOOSH_KEY = 'swoosh';
-export const SOUND_INCREASE_SIZE_KEY = 'increase-size';
+export const SOUND_COMBINE_KEY = 'combine';
 export const SOUND_REVERSE_KEY = 'reverse';
+export const SOUND_COIN_DROP_KEY = 'coin-drop';
+export const SOUND_DISAPPEAR_KEY = 'disappear';
 export const SOUND_BGM_KEY = 'background-music';
+export const SOUND_CHANGE_TURNS_KEY = 'change-turns';
+export const SOUND_INCREASE_SIZE_KEY = 'increase-size';
 
 class SoundManager {
-  private game: Phaser.Game | null = null;
-  private bgm: Phaser.Sound.BaseSound | null = null;
   private unlockBound = false;
-  private settingsUnsub?: () => void;
   private pauseUnsub?: () => void;
   private resumeUnsub?: () => void;
+  private settingsUnsub?: () => void;
+  private game: Phaser.Game | null = null;
+  private bgm: Phaser.Sound.BaseSound | null = null;
 
   init(game: Phaser.Game): void {
     this.game = game;

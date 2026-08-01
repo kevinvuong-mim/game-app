@@ -3,9 +3,9 @@
  * avoiding Phaser hit-target destruction mid-tap.
  */
 export class DeferredListRebuild {
+  private locked = false;
   private pending = false;
   private scheduled = false;
-  private locked = false;
 
   constructor(private readonly rebuild: () => void) {
     ensurePointerDownTracking();

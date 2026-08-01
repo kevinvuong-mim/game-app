@@ -1,12 +1,12 @@
 import { ApiError } from '@platform/core/api';
 import { logger } from '@platform/core/error';
 import { apiClient } from '@platform/core/api';
-import { getConfig } from '@platform/core/config';
 import { eventBus } from '@platform/core/events';
-import { usePlatformStore } from '@platform/core/state';
-import { saveService } from '@platform/modules/save';
-import { guestRepository, type GuestRepository } from './guest.repository';
+import { getConfig } from '@platform/core/config';
 import { normalizePlayerName } from './guest.model';
+import { saveService } from '@platform/modules/save';
+import { usePlatformStore } from '@platform/core/state';
+import { guestRepository, type GuestRepository } from './guest.repository';
 import { notificationRepository } from '@platform/modules/notifications/notification.repository';
 import { createDefaultNotificationState } from '@platform/modules/notifications/notification.model';
 

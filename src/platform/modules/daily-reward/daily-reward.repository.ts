@@ -5,9 +5,9 @@ import {
   DAILY_REWARD_MODEL_VERSION,
   DAILY_REWARD_LEGACY_PREFERENCES_KEY,
 } from './daily-reward.model';
-import { Preferences } from '@capacitor/preferences';
-import { storage } from '@platform/core/storage';
 import { logger } from '@platform/core/error';
+import { storage } from '@platform/core/storage';
+import { Preferences } from '@capacitor/preferences';
 
 /** Legacy shape formerly mirrored onto PlatformState / game-save. */
 export interface LegacyDailyRewardSnapshot {

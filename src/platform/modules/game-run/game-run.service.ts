@@ -8,10 +8,10 @@ const RUN_KEY = 'gameplay-run';
  * Platform only persists JSON — validation happens in `@game/gameplay/GameRunSave`.
  */
 class GameRunService {
-  private cache: unknown = null;
-  private hydrated = false;
-  private writing = false;
   private dirty = false;
+  private writing = false;
+  private hydrated = false;
+  private cache: unknown = null;
 
   async load(): Promise<void> {
     const durable = storage.getDurableProviderType();

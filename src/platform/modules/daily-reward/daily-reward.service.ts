@@ -8,17 +8,18 @@ import {
 } from './daily-reward.model';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
-import { ClockIntegritySession, getLocalDateKey } from '@platform/core/utils';
-import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
+import { usePlatformStore } from '@platform/core/state';
+import { ClockIntegritySession, getLocalDateKey } from '@platform/core/utils';
 import { rewardResolver, type RewardResolver, type ResolvedReward } from './reward-resolver';
 import { dailyRewardRepository, type DailyRewardRepository } from './daily-reward.repository';
 
 export class DailyRewardService {
+  private readonly clockSession = new ClockIntegritySession();
+
   private initialized = false;
   private claimInFlight = false;
   private model: DailyRewardModel = createDefaultModel();
-  private readonly clockSession = new ClockIntegritySession();
 
   constructor(
     private readonly repository: DailyRewardRepository = dailyRewardRepository,

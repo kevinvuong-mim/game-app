@@ -1,8 +1,8 @@
 /**
  * Shared helpers for Node scripts under `scripts/`.
  */
-import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
 
 /**
  * Load `.env`-style KEY=VALUE lines into `process.env` without overriding

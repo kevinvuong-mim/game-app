@@ -20,8 +20,8 @@ import { notificationRepository, type NotificationRepository } from './notificat
  * when guest is ready and network is available.
  */
 class DeviceSyncService {
-  private flushing = false;
   private dirty = false;
+  private flushing = false;
 
   constructor(
     private readonly repository: NotificationRepository = notificationRepository,

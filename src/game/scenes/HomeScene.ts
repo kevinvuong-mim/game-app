@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 
 import { t } from '@platform/ui';
+import { eventBus } from '@platform/core/events';
+import { CoinBar } from '@platform/ui/panel/CoinBar';
+import { createUIButton } from '@platform/ui/button/UIButton';
 import { canClaimDailyReward } from '@platform/ui/dailyReward';
 import { getClaimableMissionCount } from '@platform/ui/missionsStatus';
-import { eventBus } from '@platform/core/events';
-import { createUIButton } from '@platform/ui/button/UIButton';
-import { CoinBar } from '@platform/ui/panel/CoinBar';
 
 export class HomeScene extends Phaser.Scene {
   private coinBar?: CoinBar;

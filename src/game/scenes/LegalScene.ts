@@ -1,5 +1,5 @@
-import { BasePanelScene, type PanelSceneData } from '@platform/ui/BasePanelScene';
 import { LegalPanel, type LegalTab } from '@platform/ui';
+import { BasePanelScene, type PanelSceneData } from '@platform/ui/BasePanelScene';
 
 interface LegalSceneData extends PanelSceneData {
   tab?: LegalTab;

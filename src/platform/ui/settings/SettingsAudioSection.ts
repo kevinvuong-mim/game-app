@@ -1,16 +1,16 @@
 import Phaser from 'phaser';
 
-import { TEXT_COLOR } from '../panel/panelTheme';
-import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { soundManager } from '@platform/ui/audio/SoundManager';
-import { t } from '@platform/modules/i18n/i18n.service';
-import { settings } from '@platform/modules/settings';
 import {
-  SECTION_TITLE_COLOR,
-  ROW_ICON_SIZE,
   TOGGLE_WIDTH,
+  ROW_ICON_SIZE,
+  SECTION_TITLE_COLOR,
   createSettingsToggle,
 } from './settingsShared';
+import { TEXT_COLOR } from '../panel/panelTheme';
+import { FREDOKA_FONT } from '@platform/ui/fonts';
+import { settings } from '@platform/modules/settings';
+import { t } from '@platform/modules/i18n/i18n.service';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 
 export class SettingsAudioSection {
   constructor(

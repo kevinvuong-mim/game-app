@@ -14,8 +14,8 @@ type AdMobConsentInfo = {
 };
 
 type AdMobModule = {
-  AdmobConsentStatus: { REQUIRED: string };
   BannerAdSize: { BANNER: string };
+  AdmobConsentStatus: { REQUIRED: string };
   BannerAdPosition: { BOTTOM_CENTER: string };
   BannerAdPluginEvents: { Loaded: string; FailedToLoad: string };
   AdMob: {
@@ -32,14 +32,14 @@ type AdMobModule = {
       event: string,
       handler: (event: AdMobRewardItem) => void
     ) => Promise<{ remove: () => void }>;
+    showConsentForm: () => Promise<AdMobConsentInfo>;
     showRewardVideoAd: () => Promise<AdMobRewardItem>;
-    prepareInterstitial: (opts: { adId: string }) => Promise<void>;
-    prepareRewardVideoAd: (opts: { adId: string }) => Promise<void>;
-    initialize: (opts: { initializeForTesting?: boolean }) => Promise<void>;
-    trackingAuthorizationStatus: () => Promise<{ status: string }>;
     requestTrackingAuthorization: () => Promise<void>;
     requestConsentInfo: () => Promise<AdMobConsentInfo>;
-    showConsentForm: () => Promise<AdMobConsentInfo>;
+    prepareInterstitial: (opts: { adId: string }) => Promise<void>;
+    trackingAuthorizationStatus: () => Promise<{ status: string }>;
+    prepareRewardVideoAd: (opts: { adId: string }) => Promise<void>;
+    initialize: (opts: { initializeForTesting?: boolean }) => Promise<void>;
   };
   RewardAdPluginEvents: { Rewarded: string; Dismissed: string; FailedToLoad: string };
   InterstitialAdPluginEvents: { Loaded: string; Dismissed: string; FailedToLoad: string };

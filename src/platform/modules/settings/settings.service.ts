@@ -1,8 +1,8 @@
 import { i18n } from '../i18n/i18n.service';
 import { eventBus } from '@platform/core/events';
+import { saveService } from '@platform/modules/save';
 import { usePlatformStore } from '@platform/core/state';
 import type { SettingsState } from '@platform/core/state';
-import { saveService } from '@platform/modules/save';
 
 class SettingsService {
   async init(): Promise<void> {

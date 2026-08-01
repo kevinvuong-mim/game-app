@@ -5,49 +5,49 @@ import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import { PANEL_BG, PANEL_BORDER, TEXT_COLOR } from '@platform/ui/panel/panelTheme';
 import type { UIToastType, ToastOptions, ToastPosition } from '@platform/ui/types';
 
-const TOAST_EDGE_MARGIN = 100;
-const TOAST_ANIMATION_OFFSET = 28;
-const TOAST_CORNER_RADIUS = 18;
+const ICON_GAP = 12;
+const ICON_SIZE = 28;
+const ACCENT_WIDTH = 8;
+const SHADOW_OFFSET = 4;
 const TOAST_PADDING_X = 22;
 const TOAST_PADDING_Y = 14;
 const TOAST_MIN_WIDTH = 200;
+const TOAST_EDGE_MARGIN = 100;
+const TOAST_CORNER_RADIUS = 18;
+const TOAST_ANIMATION_OFFSET = 28;
 const TOAST_MAX_WIDTH_RATIO = 0.88;
-const ACCENT_WIDTH = 8;
-const ICON_SIZE = 28;
-const ICON_GAP = 12;
-const SHADOW_OFFSET = 4;
 
 type ToastPalette = {
   accent: number;
   iconBg: number;
-  iconBorder: number;
   iconGlyph: string;
+  iconBorder: number;
 };
 
 const TOAST_PALETTE: Record<UIToastType, ToastPalette> = {
   info: {
+    iconGlyph: 'i',
     accent: 0x3d7ea6,
     iconBg: 0xd6ebf5,
     iconBorder: 0x2f6a8c,
-    iconGlyph: 'i',
   },
   success: {
+    iconGlyph: '✓',
     accent: 0x1f6b32,
     iconBg: 0xd8f0dc,
     iconBorder: 0x145024,
-    iconGlyph: '✓',
   },
   warning: {
+    iconGlyph: '!',
     accent: 0xc4841a,
     iconBg: 0xffe8c2,
     iconBorder: 0x9a6410,
-    iconGlyph: '!',
   },
   error: {
+    iconGlyph: '×',
     accent: 0xb33a2e,
     iconBg: 0xf8d6d2,
     iconBorder: 0x8c2a20,
-    iconGlyph: '×',
   },
 };
 

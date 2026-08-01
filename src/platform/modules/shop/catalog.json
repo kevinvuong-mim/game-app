@@ -5,8 +5,8 @@
       "type": "boost",
       "currency": "coins",
       "id": "boost_hammer",
-      "name": "Explosive Hammer",
       "icon": "shop-item-1",
+      "name": "Explosive Hammer",
       "description": "Destroy the fruit you choose!"
     },
     {
@@ -14,57 +14,57 @@
       "type": "boost",
       "currency": "coins",
       "id": "boost_change",
-      "name": "Change Fruit",
       "icon": "shop-item-2",
+      "name": "Change Fruit",
       "description": "Swap the current fruit with the next one!"
     },
     {
       "price": 1500,
-      "type": "boost",
-      "currency": "coins",
-      "id": "boost_swap",
       "name": "Swap",
+      "type": "boost",
+      "id": "boost_swap",
+      "currency": "coins",
       "icon": "shop-item-3",
       "description": "Swap the positions of any fruits!"
     },
     {
       "price": 500,
       "type": "boost",
-      "currency": "coins",
       "id": "boost_size",
-      "name": "Size Increase",
+      "currency": "coins",
       "icon": "shop-item-4",
+      "name": "Size Increase",
       "description": "Increase the size of the fruit!"
     },
     {
       "price": 300,
-      "type": "boost",
-      "currency": "coins",
-      "id": "boost_undo",
       "name": "Undo",
+      "type": "boost",
+      "id": "boost_undo",
+      "currency": "coins",
       "icon": "shop-item-5",
       "description": "Undo your last move!"
     },
     {
       "price": 3.99,
-      "type": "entitlement",
       "currency": "iap",
-      "productKey": "REMOVE_ADS",
       "id": "remove_ads",
       "name": "Remove Ads",
       "icon": "no-ads-icon",
+      "type": "entitlement",
+      "productKey": "REMOVE_ADS",
       "description": "Remove all ads permanently"
     },
     {
       "price": 0.99,
       "type": "coins",
       "currency": "iap",
-      "productKey": "COINS_10000",
+      "coinAmount": 10000,
       "id": "coins_10000",
-      "name": "10000 Coins",
       "icon": "coin-icon",
-      "description": "Get 10000 coins",
-      "coinAmount": 10000
+      "name": "10000 Coins",
+      "productKey": "COINS_10000",
+      "description": "Get 10000 coins"
     }
   ]
 }

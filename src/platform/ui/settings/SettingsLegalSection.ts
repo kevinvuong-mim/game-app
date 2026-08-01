@@ -2,11 +2,11 @@ import Phaser from 'phaser';
 
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '../button/UIButton';
-import { t } from '@platform/modules/i18n/i18n.service';
 import { SECTION_TITLE_COLOR } from './settingsShared';
+import { t } from '@platform/modules/i18n/i18n.service';
 
-const LEGAL_BTN_HEIGHT = 78;
 const LEGAL_BTN_GAP = 12;
+const LEGAL_BTN_HEIGHT = 78;
 
 export class SettingsLegalSection {
   constructor(

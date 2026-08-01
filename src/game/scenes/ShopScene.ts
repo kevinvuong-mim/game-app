@@ -1,5 +1,5 @@
-import { BasePanelScene } from '@platform/ui/BasePanelScene';
 import { ShopPanel } from '@platform/ui';
+import { BasePanelScene } from '@platform/ui/BasePanelScene';
 
 export class ShopScene extends BasePanelScene {
   private panel?: ShopPanel;
@@ -7,8 +7,8 @@ export class ShopScene extends BasePanelScene {
   constructor() {
     super({
       sceneKey: 'Shop',
-      defaultReturnTo: 'Home',
       adContext: 'SHOP',
+      defaultReturnTo: 'Home',
     });
   }
 

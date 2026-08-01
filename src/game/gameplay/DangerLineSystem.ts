@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 
-import { FRUIT_TYPES } from '@game/fruits';
 import type { FruitBody } from './types';
+import { FRUIT_TYPES } from '@game/fruits';
 
 export type DangerLineCallbacks = {
   isActive: () => boolean;

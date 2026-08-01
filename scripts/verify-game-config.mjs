@@ -1,5 +1,5 @@
-import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { loadEnvFile } from './env-file.mjs';
 
 const SHA256_HEX_PATTERN = /^[a-f0-9]{64}$/;

@@ -4,28 +4,27 @@ import {
   PANEL_BG,
   TEXT_COLOR,
   PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
   PANEL_LIST_PADDING,
+  PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
 import type { UIButton } from '../types';
 import { toast } from '../toast/ToastManager';
+import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { PanelHeader } from '../panel/PanelHeader';
 import { createUIButton } from '../button/UIButton';
 import { formatNumber } from '@platform/core/utils';
 import { t } from '@platform/modules/i18n/i18n.service';
 import { usePlatformStore } from '@platform/core/state';
-import { drawRoundedRect, measureTextWidth } from '../panel/graphics';
 import { shop, type ShopItem } from '@platform/modules/shop';
-import { eventBus } from '@platform/core/events';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
-
-const ITEM_ROW_HEIGHT = 146;
+import { drawRoundedRect, measureTextWidth } from '../panel/graphics';
 
 const PRICE_BTN_GAP = 6;
 const PRICE_BTN_PAD_X = 14;
 const PRICE_ICON_SIZE = 22;
 const PRICE_BTN_HEIGHT = 60;
+const ITEM_ROW_HEIGHT = 146;
 const PRICE_BTN_MIN_WIDTH = 100;
 const PRICE_BTN_RIGHT_MARGIN = 4;
 const FALLBACK_ITEM_ICON = 'shop-item-1';
@@ -35,14 +34,14 @@ const FALLBACK_ITEM_ICON = 'shop-item-1';
  */
 export class ShopPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
+  private readonly unsubscribers: Array<() => void> = [];
   private readonly onNavigate: (sceneKey: string) => void;
+  private readonly listRebuild = new DeferredListRebuild(() => this.rebuildItems());
 
   private header?: PanelHeader;
-  private listContainer?: Phaser.GameObjects.Container;
-  private priceButtons: UIButton[] = [];
   private purchaseUiLocked = false;
-  private readonly unsubscribers: Array<() => void> = [];
-  private readonly listRebuild = new DeferredListRebuild(() => this.rebuildItems());
+  private priceButtons: UIButton[] = [];
+  private listContainer?: Phaser.GameObjects.Container;
 
   constructor(
     scene: Phaser.Scene,

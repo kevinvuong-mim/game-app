@@ -9,10 +9,10 @@ import {
 import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { services } from '@platform/core/services';
-import { usePlatformStore } from '@platform/core/state';
-import { hideNativeSplash } from '@platform/bootstrap/capacitor';
 import { saveService } from '@platform/modules/save';
+import { usePlatformStore } from '@platform/core/state';
 import { gameRunService } from '@platform/modules/game-run';
+import { hideNativeSplash } from '@platform/bootstrap/capacitor';
 
 const { events, analytics } = services;
 

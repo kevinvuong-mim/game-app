@@ -3,23 +3,23 @@ import Phaser from 'phaser';
 import {
   PANEL_BG,
   PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
   PANEL_LIST_PADDING,
+  PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
-import { toast } from '../toast/ToastManager';
-import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { drawRoundedRect } from '../panel/graphics';
 import type { ToastOptions } from '../types';
-import { createUIButton } from '../button/UIButton';
-import { t } from '@platform/modules/i18n/i18n.service';
+import { toast } from '../toast/ToastManager';
 import { eventBus } from '@platform/core/events';
-import { IAP_EVENTS } from '@platform/modules/iap/iap.events';
-import { DIVIDER_COLOR, DIVIDER_GAP } from './settingsShared';
-import { SettingsProfileSection } from './SettingsProfileSection';
-import { SettingsAudioSection } from './SettingsAudioSection';
+import { FREDOKA_FONT } from '@platform/ui/fonts';
+import { createUIButton } from '../button/UIButton';
+import { drawRoundedRect } from '../panel/graphics';
+import { t } from '@platform/modules/i18n/i18n.service';
 import { SettingsAdsSection } from './SettingsAdsSection';
-import { SettingsLanguageSection } from './SettingsLanguageSection';
+import { DIVIDER_COLOR, DIVIDER_GAP } from './settingsShared';
+import { IAP_EVENTS } from '@platform/modules/iap/iap.events';
+import { SettingsAudioSection } from './SettingsAudioSection';
 import { SettingsLegalSection } from './SettingsLegalSection';
+import { SettingsProfileSection } from './SettingsProfileSection';
+import { SettingsLanguageSection } from './SettingsLanguageSection';
 
 /**
  * Settings UI — Shop-style beige panel matching the settings mock.
@@ -27,13 +27,13 @@ import { SettingsLegalSection } from './SettingsLegalSection';
  */
 export class SettingsPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
+  private readonly eventUnsubscribers: Array<() => void> = [];
   private readonly onNavigate: (sceneKey: string, data?: Record<string, unknown>) => void;
 
   private disposed = false;
-  private profileSection?: SettingsProfileSection;
   private adsSection?: SettingsAdsSection;
+  private profileSection?: SettingsProfileSection;
   private languageSection?: SettingsLanguageSection;
-  private readonly eventUnsubscribers: Array<() => void> = [];
 
   constructor(
     scene: Phaser.Scene,

@@ -1,25 +1,25 @@
 import type Phaser from 'phaser';
 
 import { t } from '@platform/ui';
-import { soundManager } from '@platform/ui/audio/SoundManager';
-import { toast } from '@platform/ui/toast/ToastManager';
 import { FRUIT_TYPES } from '@game/fruits';
-import { type SkillId, getSkillQuantity, consumeSkill } from '@game/skills/skillInventory';
 import type { FruitFactory } from './FruitFactory';
 import type { SkillBarView } from './SkillBarView';
 import type { ActiveSkill, FruitBody } from './types';
+import { toast } from '@platform/ui/toast/ToastManager';
+import { soundManager } from '@platform/ui/audio/SoundManager';
+import { type SkillId, getSkillQuantity, consumeSkill } from '@game/skills/skillInventory';
 
 export type SkillControllerCallbacks = {
-  isActive: () => boolean;
   canDrop: () => boolean;
-  getCurrentLevel: () => number;
-  getNextLevel: () => number;
-  setLevels: (current: number, next: number) => void;
-  refreshDropper: () => void;
-  hideDropper: () => void;
-  pushUndoCheckpoint: () => void;
   canUndo: () => boolean;
+  isActive: () => boolean;
+  hideDropper: () => void;
   undoLastMove: () => void;
+  getNextLevel: () => number;
+  refreshDropper: () => void;
+  getCurrentLevel: () => number;
+  pushUndoCheckpoint: () => void;
+  setLevels: (current: number, next: number) => void;
 };
 
 export class SkillController {

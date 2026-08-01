@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
-import { FRUIT_TYPES, fruitTextureKey } from '@game/fruits';
 import type { FruitBody } from './types';
+import { FRUIT_TYPES, fruitTextureKey } from '@game/fruits';
 
 export class FruitFactory {
   private fruitSeq = 0;

@@ -12,9 +12,9 @@ interface SaveData {
 }
 
 class SaveService {
+  private dirty = false;
   /** Blocks saveLocal until loadLocal has run, preventing boot races from wiping progress. */
   private hydrated = false;
-  private dirty = false;
   private writeChain: Promise<void> = Promise.resolve();
 
   /**

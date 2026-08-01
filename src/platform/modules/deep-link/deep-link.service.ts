@@ -1,14 +1,13 @@
-import { logger } from '@platform/core/error';
-import { eventBus } from '@platform/core/events';
-import { getConfig } from '@platform/core/config';
-import { navigationService } from '@platform/modules/navigation/navigation.service';
-
 import {
   type DeepLinkSource,
   type DeepLinkPayload,
   buildDeepLinkSceneData,
 } from './deep-link.model';
+import { logger } from '@platform/core/error';
+import { eventBus } from '@platform/core/events';
+import { getConfig } from '@platform/core/config';
 import { parseDeepLinkUrl } from './deep-link.parser';
+import { navigationService } from '@platform/modules/navigation/navigation.service';
 
 class DeepLinkService {
   private bootComplete = false;

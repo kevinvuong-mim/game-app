@@ -8,9 +8,9 @@ import { t } from '@platform/modules/i18n/i18n.service';
 export interface PanelHeaderOptions {
   titleKey: string;
   bannerKey?: string;
+  onBack: () => void;
   /** Target banner display width in px. Defaults to min(screen*0.72, 360). */
   bannerWidth?: number;
-  onBack: () => void;
   /** Hide the + button / get-coins modal (e.g. when already offering coin sources). */
   showGetCoins?: boolean;
   /** Scene keys to omit from the get-coins modal (e.g. hide Missions while already there). */

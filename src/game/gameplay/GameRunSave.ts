@@ -1,19 +1,19 @@
-import { FRUIT_TYPES, SPAWN_MAX_LEVEL } from '@game/fruits';
 import {
-  clearPersistedGameRun,
   getPersistedGameRun,
   setPersistedGameRun,
+  clearPersistedGameRun,
 } from '@platform/ui/gameRun';
+import { FRUIT_TYPES, SPAWN_MAX_LEVEL } from '@game/fruits';
 
 const LEGACY_SESSION_KEY = 'gsk:gameplay-run';
 
 export type SavedFruit = {
   x: number;
   y: number;
-  level: number;
-  scoreMultiplier: number;
   vx: number;
   vy: number;
+  level: number;
+  scoreMultiplier: number;
   angularVelocity: number;
 };
 
@@ -21,12 +21,12 @@ export type GameRunSnapshot = {
   version: 1;
   score: number;
   merges: number;
-  elapsedMs: number;
-  sessionStarted: boolean;
-  currentLevel: number;
-  nextLevel: number;
   dropperX: number;
+  elapsedMs: number;
+  nextLevel: number;
+  currentLevel: number;
   fruits: SavedFruit[];
+  sessionStarted: boolean;
 };
 
 let memory: GameRunSnapshot | null = null;

@@ -1,8 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { loadEnvFile } from './env-file.mjs';
 import { resolvePushNotificationsEnabled } from './notification-config.mjs';
 import { resolveDeepLinkHosts, resolveDeepLinkScheme } from './deeplink-config.mjs';
-import { loadEnvFile } from './env-file.mjs';
 import { rmSync, existsSync, unlinkSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');

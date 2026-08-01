@@ -1,28 +1,28 @@
 import Phaser from 'phaser';
 
 import { toast } from '../toast/ToastManager';
-import { guest, PLAYER_NAME_MAX_LENGTH } from '@platform/modules/guest';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { drawRoundedRect } from '../panel/graphics';
 import { createUIButton } from '../button/UIButton';
+import { drawRoundedRect } from '../panel/graphics';
 import { t } from '@platform/modules/i18n/i18n.service';
+import { guest, PLAYER_NAME_MAX_LENGTH } from '@platform/modules/guest';
 import { SECTION_TITLE_COLOR, LABEL_COLOR, DIVIDER_COLOR, INPUT_TEXT } from './settingsShared';
 
-const MAX_NAME_LENGTH = PLAYER_NAME_MAX_LENGTH;
+const INPUT_HEIGHT = 58;
 const SAVE_BTN_WIDTH = 100;
 const SAVE_BTN_HEIGHT = 66;
-const INPUT_HEIGHT = 58;
+const MAX_NAME_LENGTH = PLAYER_NAME_MAX_LENGTH;
 
 export class SettingsProfileSection {
-  private saving = false;
-  private nameEditing = false;
   private draftName = '';
-  private nameFieldText?: Phaser.GameObjects.Text;
+  private saving = false;
+  private disposed = false;
+  private nameEditing = false;
+  private editInput?: HTMLInputElement;
   private nameCaret?: Phaser.GameObjects.Text;
   private nameCaretTimer?: Phaser.Time.TimerEvent;
+  private nameFieldText?: Phaser.GameObjects.Text;
   private focusCheckTimer?: Phaser.Time.TimerEvent;
-  private editInput?: HTMLInputElement;
-  private disposed = false;
 
   constructor(
     private readonly scene: Phaser.Scene,

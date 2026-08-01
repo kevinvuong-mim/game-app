@@ -16,18 +16,18 @@ VITE_GAME_ID=FRULOOP
 VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 ```
 
-| Variable             | Values                         | Default / Source     | Description                                                                  |
-| -------------------- | ------------------------------ | -------------------- | ---------------------------------------------------------------------------- |
-| `VITE_APP_ENV`       | `dev`, `production`        | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
-| `VITE_GAME_ID`       | string                         | Bắt buộc             | Game id dùng ở frontend và backend                                           |
-| `VITE_REPLAY_SECRET` | string                         | Bắt buộc             | Secret replay — phải khớp `GAME_CONFIG[gameId].replaySecret` trên `game-api` |
+| Variable             | Values              | Default / Source     | Description                                                                  |
+| -------------------- | ------------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `VITE_APP_ENV`       | `dev`, `production` | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
+| `VITE_GAME_ID`       | string              | Bắt buộc             | Game id dùng ở frontend và backend                                           |
+| `VITE_REPLAY_SECRET` | string              | Bắt buộc             | Secret replay — phải khớp `GAME_CONFIG[gameId].replaySecret` trên `game-api` |
 
 Preset API URL trong code (`src/platform/core/config/index.ts`):
 
-| Env          | API URL                                      |
-| ------------ | -------------------------------------------- |
-| `dev`        | `https://game-api-s5kn.onrender.com/api`     |
-| `production` | `https://game-api-s5kn.onrender.com/api`     |
+| Env          | API URL                                  |
+| ------------ | ---------------------------------------- |
+| `dev`        | `https://game-api-s5kn.onrender.com/api` |
+| `production` | `https://game-api-s5kn.onrender.com/api` |
 
 Cả hai preset hiện trỏ Render. Để dùng API local, tạm sửa `apiUrl` trong `src/platform/core/config/index.ts` (client không đọc `VITE_API_URL`).
 
@@ -102,10 +102,10 @@ VITE_FIREBASE_MEASUREMENT_ID=
 | ----------------- | ----------------------------------------------------------------------- |
 | `VITE_FIREBASE_*` | Web config từ Firebase Console → Project settings → General → Your apps |
 
-| Env          | Analytics                  | Push (native) | Local notifications |
-| ------------ | -------------------------- | ------------- | ------------------- |
-| `dev`        | on (`analyticsEnabled`)    | on\*\*        | on\*                |
-| `production` | on                         | on\*\*        | on\*                |
+| Env          | Analytics               | Push (native) | Local notifications |
+| ------------ | ----------------------- | ------------- | ------------------- |
+| `dev`        | on (`analyticsEnabled`) | on\*\*        | on\*                |
+| `production` | on                      | on\*\*        | on\*                |
 
 \* Local chỉ active trên native (`resolveLocalNotificationsEnabled()`).  
 \*\* Push chỉ active khi `Capacitor.isNativePlatform()` **và** đủ 5 biến `VITE_FIREBASE_*` (`isFirebaseConfigured()`). Provider analytics (`console` / `firebase`) độc lập với cờ `analyticsEnabled`.

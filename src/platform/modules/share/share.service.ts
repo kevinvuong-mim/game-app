@@ -1,7 +1,7 @@
 import { logger } from '@platform/core/error';
 import { getConfig } from '@platform/core/config';
-import { t } from '@platform/modules/i18n/i18n.service';
 import { getStoreListingUrl } from './share.config';
+import { t } from '@platform/modules/i18n/i18n.service';
 
 interface ShareScoreOptions {
   score: number;

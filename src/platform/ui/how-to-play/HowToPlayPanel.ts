@@ -4,27 +4,27 @@ import {
   PANEL_BG,
   TEXT_COLOR,
   PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
   PANEL_LIST_PADDING,
+  PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { drawRoundedRect } from '../panel/graphics';
 import { createUIButton } from '../button/UIButton';
 import { t } from '@platform/modules/i18n/i18n.service';
 
-const CONTENT_TEXT = '#3a372f';
+const NAV_BTN_HEIGHT = 56;
 const DOT_ACTIVE = 0x1f6b32;
 const DOT_INACTIVE = 0xb5974f;
-const NAV_BTN_HEIGHT = 56;
+const CONTENT_TEXT = '#3a372f';
 
 export interface HowToPlayStepConfig {
-  titleKey: string;
   bodyKey: string;
   iconKey: string;
-  /** Optional second icon shown beside the primary (merge step). */
-  secondaryIconKey?: string;
+  titleKey: string;
   /** Texture for the merge result icon. */
   resultIconKey?: string;
+  /** Optional second icon shown beside the primary (merge step). */
+  secondaryIconKey?: string;
 }
 
 /**
@@ -34,25 +34,24 @@ export interface HowToPlayStepConfig {
 export class HowToPlayPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
   private readonly steps: HowToPlayStepConfig[];
-  private stepIndex = 0;
 
-  private panelWidth = 0;
-  private contentCenterX = 0;
-  private iconY = 0;
   private navY = 0;
+  private iconY = 0;
   private dotsY = 0;
+  private stepIndex = 0;
+  private panelWidth = 0;
   private navBtnWidth = 0;
-
-  private stepTitle?: Phaser.GameObjects.Text;
+  private contentCenterX = 0;
   private stepBody?: Phaser.GameObjects.Text;
-  private iconPrimary?: Phaser.GameObjects.Image;
-  private iconSecondary?: Phaser.GameObjects.Image;
+  private stepTitle?: Phaser.GameObjects.Text;
+  private nextLabel?: Phaser.GameObjects.Text;
   private mergeArrow?: Phaser.GameObjects.Text;
   private resultIcon?: Phaser.GameObjects.Image;
+  private iconPrimary?: Phaser.GameObjects.Image;
+  private iconSecondary?: Phaser.GameObjects.Image;
   private dots: Phaser.GameObjects.Graphics[] = [];
   private prevButton?: Phaser.GameObjects.Container;
   private nextButton?: Phaser.GameObjects.Container;
-  private nextLabel?: Phaser.GameObjects.Text;
   private nextBackground?: Phaser.GameObjects.Image;
 
   constructor(

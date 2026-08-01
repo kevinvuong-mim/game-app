@@ -1,6 +1,6 @@
+import { shop } from './shop.service';
 import { logger } from '@platform/core/error';
 import type { IEventBus } from '@platform/core/events';
-import { shop } from './shop.service';
 
 class ShopController {
   bind(events: IEventBus): () => void {

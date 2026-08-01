@@ -8,16 +8,16 @@
 
 ## Scripts
 
-| Command                   | Description                                                                                              |
-| ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `npm run build`           | Typecheck bằng `tsc --noEmit` rồi Vite build vào `dist/`                                                 |
-| `npm run cap:android`     | Mở Android Studio                                                                                        |
-| `npm run cap:ios`         | Mở Xcode                                                                                                 |
-| `npm run assets:generate` | Generate icon/splash bằng `capacitor-assets`                                                             |
-| `npm run build:android`   | Full Android pipeline: build web, add platform if missing, generate assets, sync, apply native templates |
+| Command                   | Description                                                                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm run build`           | Typecheck bằng `tsc --noEmit` rồi Vite build vào `dist/`                                                    |
+| `npm run cap:android`     | Mở Android Studio                                                                                           |
+| `npm run cap:ios`         | Mở Xcode                                                                                                    |
+| `npm run assets:generate` | Generate icon/splash bằng `capacitor-assets`                                                                |
+| `npm run build:android`   | Full Android pipeline: build web, add platform if missing, generate assets, sync, apply native templates    |
 | `npm run build:ios`       | Full iOS pipeline: build web, add platform if missing, generate assets, resolve pods, sync, apply templates |
-| `npm run run:android`     | Build + emulator install + launch (`scripts/run-android-emulator.sh`)                                    |
-| `npm run run:ios`         | Build + simulator install + launch (`scripts/run-ios-simulator.sh`)                                      |
+| `npm run run:android`     | Build + emulator install + launch (`scripts/run-android-emulator.sh`)                                       |
+| `npm run run:ios`         | Build + simulator install + launch (`scripts/run-ios-simulator.sh`)                                         |
 
 ---
 
@@ -27,16 +27,16 @@ File chính: `capacitor.config.ts`.
 
 Current config:
 
-| Field                                           | Value                       |
-| ----------------------------------------------- | --------------------------- |
-| `appId`                                         | `com.vraxion.fruloop` |
-| `appName`                                       | `Fruloop`          |
-| `webDir`                                        | `dist`                      |
-| `server.androidScheme`                          | `https`                     |
-| `SplashScreen.launchAutoHide`                   | `false`                     |
-| `SplashScreen.backgroundColor`                  | `#6b97b2`                   |
-| `StatusBar.overlaysWebView`                     | `true`                      |
-| `plugins.PushNotifications.presentationOptions` | `alert`, `badge`, `sound`   |
+| Field                                           | Value                     |
+| ----------------------------------------------- | ------------------------- |
+| `appId`                                         | `com.vraxion.fruloop`     |
+| `appName`                                       | `Fruloop`                 |
+| `webDir`                                        | `dist`                    |
+| `server.androidScheme`                          | `https`                   |
+| `SplashScreen.launchAutoHide`                   | `false`                   |
+| `SplashScreen.backgroundColor`                  | `#6b97b2`                 |
+| `StatusBar.overlaysWebView`                     | `true`                    |
+| `plugins.PushNotifications.presentationOptions` | `alert`, `badge`, `sound` |
 
 Khi tạo game mới, đổi ít nhất:
 

@@ -4,8 +4,8 @@ import {
   PANEL_BG,
   TEXT_COLOR,
   PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
   PANEL_LIST_PADDING,
+  PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { drawRoundedRect } from '../panel/graphics';
@@ -20,11 +20,11 @@ const TAB_HEIGHT = 52;
 const TAB_RADIUS = 18;
 /** How far tabs sit down onto the panel so the active tab clearly overlays it. */
 const TAB_OVERLAP = 22;
+const TAB_INACTIVE = 0x1f6b32;
+const CONTENT_TEXT = '#1c1b18';
 /** Extra space between the overlapping tabs and the scrollable content. */
 const CONTENT_TOP_PADDING = 28;
-const TAB_INACTIVE = 0x1f6b32;
 const TAB_INACTIVE_BORDER = 0x145024;
-const CONTENT_TEXT = '#1c1b18';
 
 /**
  * Terms & Privacy tabbed content — Shop/Settings beige panel matching the legal mock.
@@ -40,29 +40,28 @@ export class LegalPanel extends Phaser.GameObjects.Container {
   ) => void;
 
   private scrollY = 0;
+  private tabWidth = 0;
+  private panelTop = 0;
+  private panelLeft = 0;
   private maxScroll = 0;
+  private panelWidth = 0;
   private contentBaseY = 0;
   private contentWidth = 0;
+  private cleanedUp = false;
   private contentHeight = 0;
   private contentCenterY = 0;
-  private panelLeft = 0;
-  private panelTop = 0;
-  private panelWidth = 0;
-  private tabWidth = 0;
   private activeTab: LegalTab = 'terms';
-
+  private tabSeam?: Phaser.GameObjects.Graphics;
   private contentText?: Phaser.GameObjects.Text;
-  private contentHitArea?: Phaser.GameObjects.Rectangle;
+  private termsTabLabel?: Phaser.GameObjects.Text;
   private termsTabBg?: Phaser.GameObjects.Graphics;
+  private privacyTabLabel?: Phaser.GameObjects.Text;
   private privacyTabBg?: Phaser.GameObjects.Graphics;
   private termsTabHit?: Phaser.GameObjects.Rectangle;
-  private privacyTabHit?: Phaser.GameObjects.Rectangle;
-  private termsTabLabel?: Phaser.GameObjects.Text;
-  private privacyTabLabel?: Phaser.GameObjects.Text;
   private panelGraphics?: Phaser.GameObjects.Graphics;
-  private tabSeam?: Phaser.GameObjects.Graphics;
+  private privacyTabHit?: Phaser.GameObjects.Rectangle;
+  private contentHitArea?: Phaser.GameObjects.Rectangle;
   private contentMaskShape?: Phaser.GameObjects.Graphics;
-  private cleanedUp = false;
 
   constructor(
     scene: Phaser.Scene,

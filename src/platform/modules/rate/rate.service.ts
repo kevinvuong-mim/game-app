@@ -2,17 +2,16 @@ import { Capacitor } from '@capacitor/core';
 
 import { logger } from '@platform/core/error';
 import { getConfig } from '@platform/core/config';
-import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
-import { getStoreListingUrl } from '@platform/modules/share/share.config';
-
+import { usePlatformStore } from '@platform/core/state';
 import { isRatePromptGamesPlayed } from './rate.fibonacci';
-
-/** Stars at or above this threshold open the store / native review prompt. */
-const STORE_REVIEW_MIN_STARS = 4;
+import { getStoreListingUrl } from '@platform/modules/share/share.config';
 
 /** TEMP: always show rate modal on GameOver for QA — set false before ship. */
 const FORCE_RATE_PROMPT = false;
+
+/** Stars at or above this threshold open the store / native review prompt. */
+const STORE_REVIEW_MIN_STARS = 4;
 
 class RateService {
   shouldPrompt(): boolean {

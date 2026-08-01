@@ -1,6 +1,6 @@
-import { BasePanelScene } from '@platform/ui/BasePanelScene';
 import { HowToPlayPanel } from '@platform/ui';
 import { HOW_TO_PLAY_STEPS } from '@game/howToPlaySteps';
+import { BasePanelScene } from '@platform/ui/BasePanelScene';
 
 export class HowToPlayScene extends BasePanelScene {
   private panel?: HowToPlayPanel;

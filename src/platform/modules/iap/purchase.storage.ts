@@ -1,14 +1,14 @@
 import { logger } from '@platform/core/error';
-import { IAP_STORAGE_KEY, IAP_CONSUMABLE_TX_KEY } from './iap.config';
 import { storage } from '@platform/core/storage';
 import type { StoredEntitlements } from './iap.types';
+import { IAP_STORAGE_KEY, IAP_CONSUMABLE_TX_KEY } from './iap.config';
 
 const STORAGE_VERSION = 1;
 
 interface ConsumableTxStore {
   version: number;
-  transactionIds: string[];
   updatedAt: number;
+  transactionIds: string[];
 }
 
 export class PurchaseStorage {

@@ -6,15 +6,16 @@ import {
 } from './mission.model';
 import missionsData from './missions.json';
 import { logger } from '@platform/core/error';
-import { eventBus } from '@platform/core/events';
-import { ClockIntegritySession, getLocalDateKey, now } from '@platform/core/utils';
-import { usePlatformStore } from '@platform/core/state';
-import { saveService } from '@platform/modules/save';
 import { guest } from '@platform/modules/guest';
+import { eventBus } from '@platform/core/events';
+import { saveService } from '@platform/modules/save';
+import { usePlatformStore } from '@platform/core/state';
+import { ClockIntegritySession, getLocalDateKey, now } from '@platform/core/utils';
 
 export class MissionService {
-  private definitions: MissionDefinition[] = missionsData as MissionDefinition[];
   private readonly clockSession = new ClockIntegritySession();
+
+  private definitions: MissionDefinition[] = missionsData as MissionDefinition[];
 
   init(): void {
     this.initializeMissions();

@@ -1,61 +1,39 @@
 import Phaser from 'phaser';
 
-import { eventBus } from '@platform/core/events';
-import { gameConfig } from '@game/config';
-import { getHighScore } from '@platform/ui/progress';
-import { soundManager } from '@platform/ui/audio/SoundManager';
-import { randomSpawnLevel } from '@game/fruits';
-import { GameplayHUD } from '@game/ui/GameplayHUD';
 import {
-  CONTAINER_INSET,
-  DangerLineSystem,
-  DropController,
-  FruitFactory,
   MergeSystem,
+  saveGameRun,
   SkillBarView,
+  FruitFactory,
+  DropController,
+  type FruitBody,
   SkillController,
-  clearGameRunSave,
   isMeaningfulRun,
   loadGameRunSave,
-  saveGameRun,
-  type FruitBody,
+  CONTAINER_INSET,
+  clearGameRunSave,
+  DangerLineSystem,
   type GameRunSnapshot,
 } from '@game/gameplay';
+import { gameConfig } from '@game/config';
+import { randomSpawnLevel } from '@game/fruits';
+import { eventBus } from '@platform/core/events';
+import { GameplayHUD } from '@game/ui/GameplayHUD';
+import { getHighScore } from '@platform/ui/progress';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 
 /**
  * Suika-style merge gameplay — composition root for gameplay systems.
  */
 export class GameplayScene extends Phaser.Scene {
-  private hud!: GameplayHUD;
-  private score = 0;
-  private merges = 0;
-  private startTime = 0;
-  private gameActive = true;
-  private returnTo = 'Home';
-  private sessionEnded = false;
-  private sessionStarted = false;
-  private startingHighScore = 0;
-  private canDrop = true;
-
-  private currentLevel = 0;
-  private nextLevel = 0;
-  private dangerY = 0;
-
   private readonly fruits = new Set<FruitBody>();
-  private factory!: FruitFactory;
-  private mergeSystem!: MergeSystem;
-  private dropController!: DropController;
-  private dangerLine!: DangerLineSystem;
-  private skillBar!: SkillBarView;
-  private skills!: SkillController;
-  private undoSnapshot: GameRunSnapshot | null = null;
-
-  private unsubscribers: Array<() => void> = [];
-  /** Only drop if this press started while gameplay (not while quit modal was open). */
-  private dropGestureArmed = false;
+  private readonly onCollision = (
+    _event: Phaser.Physics.Matter.Events.CollisionStartEvent,
+    bodyA: MatterJS.BodyType,
+    bodyB: MatterJS.BodyType
+  ) => this.mergeSystem.handleCollision(bodyA, bodyB);
   private readonly onPointerMove = (pointer: Phaser.Input.Pointer) =>
     this.handlePointerMove(pointer);
-  private readonly onPointerUp = (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer);
   private readonly onPointerDown = (pointer: Phaser.Input.Pointer) => {
     if (this.hud?.isQuitConfirmOpen()) {
       this.dropGestureArmed = false;
@@ -64,11 +42,31 @@ export class GameplayScene extends Phaser.Scene {
     this.dropGestureArmed = true;
     this.skillBar.onPointerDown(pointer);
   };
-  private readonly onCollision = (
-    _event: Phaser.Physics.Matter.Events.CollisionStartEvent,
-    bodyA: MatterJS.BodyType,
-    bodyB: MatterJS.BodyType
-  ) => this.mergeSystem.handleCollision(bodyA, bodyB);
+  private readonly onPointerUp = (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer);
+
+  private score = 0;
+  private merges = 0;
+  private dangerY = 0;
+  private nextLevel = 0;
+  private startTime = 0;
+  private canDrop = true;
+  private currentLevel = 0;
+  private gameActive = true;
+  private hud!: GameplayHUD;
+  private returnTo = 'Home';
+  private sessionEnded = false;
+  private startingHighScore = 0;
+  private sessionStarted = false;
+  private factory!: FruitFactory;
+  private skillBar!: SkillBarView;
+  /** Only drop if this press started while gameplay (not while quit modal was open). */
+  private dropGestureArmed = false;
+  private skills!: SkillController;
+  private mergeSystem!: MergeSystem;
+  private dangerLine!: DangerLineSystem;
+  private dropController!: DropController;
+  private unsubscribers: Array<() => void> = [];
+  private undoSnapshot: GameRunSnapshot | null = null;
 
   constructor() {
     super({ key: 'Gameplay' });

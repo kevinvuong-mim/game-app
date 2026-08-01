@@ -24,14 +24,14 @@ interface InventoryState {
 interface ProgressState {
   highScore: number;
   currentLevel: number;
-  totalGamesPlayed: number;
-  unlockedFeatures: string[];
   /** User already submitted an in-app rating (stop further prompts). */
   hasRatedApp: boolean;
-  /** Last `totalGamesPlayed` value when the rate modal was shown or deferred. */
-  lastRatePromptGamesPlayed: number;
   /** Last star rating submitted in-app (1–5), if any. */
   lastAppRating?: number;
+  totalGamesPlayed: number;
+  unlockedFeatures: string[];
+  /** Last `totalGamesPlayed` value when the rate modal was shown or deferred. */
+  lastRatePromptGamesPlayed: number;
 }
 
 export interface SettingsState {
@@ -43,10 +43,10 @@ export interface SettingsState {
 export type { MissionProgress };
 
 interface MissionsState {
-  missions: Record<string, MissionProgress>;
   timeManipulated: boolean;
   lastClaimWallClock: number;
   lastSessionTimestamp: number;
+  missions: Record<string, MissionProgress>;
 }
 
 export interface PlatformState {

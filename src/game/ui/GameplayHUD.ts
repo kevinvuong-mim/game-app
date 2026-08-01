@@ -1,20 +1,20 @@
 import Phaser from 'phaser';
 
 import { t } from '@platform/ui';
-import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { createUIButton } from '@platform/ui/button/UIButton';
-import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import {
   PANEL_BG,
+  TEXT_COLOR,
   PANEL_BORDER,
   PANEL_CORNER_RADIUS,
-  TEXT_COLOR,
 } from '@platform/ui/panel/panelTheme';
+import { FREDOKA_FONT } from '@platform/ui/fonts';
 import type { UIButton } from '@platform/ui/types';
+import { createUIButton } from '@platform/ui/button/UIButton';
+import { drawRoundedRect } from '@platform/ui/panel/graphics';
 
 const PANEL_FILL = 0xf5e6c8;
-const PANEL_STROKE = 0xd4b896;
 const TEXT_DARK = '#1a1a1a';
+const PANEL_STROKE = 0xd4b896;
 const LABEL_COLOR = '#3a372f';
 
 function formatScore(score: number): string {
@@ -32,13 +32,14 @@ export interface GameplayHUDOptions {
  * Suika gameplay HUD — back/quit buttons and score panel.
  */
 export class GameplayHUD extends Phaser.GameObjects.Container {
-  private scoreValue?: Phaser.GameObjects.Text;
-  private backButton?: UIButton;
-  private quitButton?: UIButton;
-  private quitConfirmModal?: Phaser.GameObjects.Container;
   private readonly onQuit: () => void;
   private readonly onQuitConfirmOpen?: () => void;
   private readonly onQuitConfirmClose?: () => void;
+
+  private backButton?: UIButton;
+  private quitButton?: UIButton;
+  private scoreValue?: Phaser.GameObjects.Text;
+  private quitConfirmModal?: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene, options: GameplayHUDOptions) {
     super(scene, 0, 0);

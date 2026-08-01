@@ -20,14 +20,14 @@ export const gameConfig: GameConfig = {
 };
 ```
 
-| Field     | Nguồn          | Mô tả                                                   |
-| --------- | -------------- | ------------------------------------------------------- |
-| `id`      | `VITE_GAME_ID` | Phải khớp `GameId` enum trên `game-api`                 |
-| `name`    | File           | Tên hiển thị của game                                   |
-| `width`   | File           | Chiều rộng canvas Phaser                                |
-| `height`  | File           | Chiều cao canvas Phaser                                 |
-| `version` | File           | Phiên bản game (semver)                                 |
-| `physics` | File           | Optional Phaser physics (`matter` / omit for none)      |
+| Field     | Nguồn          | Mô tả                                              |
+| --------- | -------------- | -------------------------------------------------- |
+| `id`      | `VITE_GAME_ID` | Phải khớp `GameId` enum trên `game-api`            |
+| `name`    | File           | Tên hiển thị của game                              |
+| `width`   | File           | Chiều rộng canvas Phaser                           |
+| `height`  | File           | Chiều cao canvas Phaser                            |
+| `version` | File           | Phiên bản game (semver)                            |
+| `physics` | File           | Optional Phaser physics (`matter` / omit for none) |
 
 **Replay secret** không nằm trong `gameConfig`. `GameEngine` gọi `createConfig()` → `RuntimeConfig.replaySecret` từ `VITE_REPLAY_SECRET`. Game-sync / HMAC đọc `getConfig().replaySecret`. Gameplay nên emit `getConfig().gameId` (hoặc cùng `VITE_GAME_ID` qua `gameConfig.id`).
 

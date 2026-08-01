@@ -1,13 +1,13 @@
-import { t } from '@platform/modules/i18n/i18n.service';
 import {
   ads,
   type AdContext,
   type AdPlacement,
   type AdsRemoteConfig,
   BANNER_HIDDEN_CONTEXTS,
-  CONTEXT_TO_BANNER_PLACEMENT,
   DEFAULT_REMOTE_CONFIG,
+  CONTEXT_TO_BANNER_PLACEMENT,
 } from '@platform/core/advertising';
+import { t } from '@platform/modules/i18n/i18n.service';
 
 interface RewardRequestResult {
   message?: string;

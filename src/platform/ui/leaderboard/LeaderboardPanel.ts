@@ -4,8 +4,8 @@ import {
   PANEL_BG,
   TEXT_COLOR,
   PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
   PANEL_LIST_PADDING,
+  PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
 import { guest } from '@platform/modules/guest';
 import { eventBus } from '@platform/core/events';
@@ -14,21 +14,21 @@ import type { UIButton } from '@platform/ui/types';
 import { drawRoundedRect } from '../panel/graphics';
 import { createUIButton } from '../button/UIButton';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
+import { DeferredListRebuild } from '../panel/deferredListRebuild';
 import type { LeaderboardEntry, LeaderboardView } from '@platform/modules/leaderboard';
 import { LEADERBOARD_LIMIT, getLeaderboardDisplayName } from '@platform/modules/leaderboard';
-import { DeferredListRebuild } from '../panel/deferredListRebuild';
 
 const ROW_HEIGHT = 56;
 const CROWN_SIZE = 40;
-const RANK_COL_WIDTH = 48;
 const PILL_HEIGHT = 40;
 const PILL_RADIUS = 18;
 const PILL_OVERLAP = 18;
+const SKELETON_ROWS = 8;
+const RANK_COL_WIDTH = 48;
 const TAB_GREEN = 0x1f6b32;
-const TAB_GREEN_BORDER = 0x145024;
 const ROW_HIGHLIGHT = 0xfff6e4;
 const DIVIDER_COLOR = 0xd4c09a;
-const SKELETON_ROWS = 8;
+const TAB_GREEN_BORDER = 0x145024;
 const REFRESHING_LIST_ALPHA = 0.72;
 
 const CROWN_KEYS: Record<1 | 2 | 3, string> = {
@@ -50,31 +50,30 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
     deltaX: number,
     deltaY: number
   ) => void;
-
-  private panelWidth = 0;
-  private panelLeft = 0;
-  private listTop = 0;
-  private listHeight = 0;
-  private listCenterY = 0;
-  private listBaseY = 0;
-  private rowWidth = 0;
-  private scrollY = 0;
-  private maxScroll = 0;
-  private cleanedUp = false;
-
-  private retryButton!: UIButton;
-  private statusText!: Phaser.GameObjects.Text;
-  private listContainer!: Phaser.GameObjects.Container;
-  private skeletonContainer!: Phaser.GameObjects.Container;
-  private myRankContainer!: Phaser.GameObjects.Container;
-  private contentHitArea?: Phaser.GameObjects.Rectangle;
-  private contentMaskShape?: Phaser.GameObjects.Graphics;
-  private unsubscribers: Array<() => void> = [];
-  private latestView: LeaderboardView | null = null;
   private readonly listRebuild = new DeferredListRebuild(() => {
     if (!this.latestView) return;
     this.rebuildView(this.latestView);
   });
+
+  private scrollY = 0;
+  private listTop = 0;
+  private rowWidth = 0;
+  private listBaseY = 0;
+  private maxScroll = 0;
+  private panelLeft = 0;
+  private panelWidth = 0;
+  private listHeight = 0;
+  private listCenterY = 0;
+  private cleanedUp = false;
+  private retryButton!: UIButton;
+  private statusText!: Phaser.GameObjects.Text;
+  private unsubscribers: Array<() => void> = [];
+  private latestView: LeaderboardView | null = null;
+  private listContainer!: Phaser.GameObjects.Container;
+  private contentHitArea?: Phaser.GameObjects.Rectangle;
+  private contentMaskShape?: Phaser.GameObjects.Graphics;
+  private myRankContainer!: Phaser.GameObjects.Container;
+  private skeletonContainer!: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene, options: { onBack: () => void }) {
     super(scene, 0, 0);

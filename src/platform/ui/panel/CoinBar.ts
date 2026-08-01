@@ -2,14 +2,14 @@ import Phaser from 'phaser';
 
 import type { UIButton } from '../types';
 import { drawRoundedRect } from './graphics';
+import { shop } from '@platform/modules/shop';
 import { toast } from '../toast/ToastManager';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '../button/UIButton';
-import { soundManager } from '@platform/ui/audio/SoundManager';
 import { formatNumber } from '@platform/core/utils';
-import { shop } from '@platform/modules/shop';
 import { t } from '@platform/modules/i18n/i18n.service';
 import { usePlatformStore } from '@platform/core/state';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from './panelTheme';
 import { COINS_10000_AMOUNT, COINS_10000_PRICE } from '@platform/modules/iap/iap.config';
 
@@ -18,15 +18,14 @@ const COIN_BAR_PAD_X = 8;
 const COIN_ICON_SIZE = 48;
 const COIN_PLUS_SIZE = 48;
 const COIN_BAR_HEIGHT = 54;
-const COIN_BAR_MIN_WIDTH = 120;
-
-const COINS_PACK_ITEM_ID = 'coins_10000';
-const GET_COINS_BTN_HEIGHT = 80;
 const GET_COINS_PAD_TOP = 52;
+const COIN_BAR_MIN_WIDTH = 120;
+const GET_COINS_BTN_HEIGHT = 80;
 const GET_COINS_PAD_BOTTOM = 28;
 const GET_COINS_ACTION_GAP = 12;
 const GET_COINS_SECTION_GAP = 18;
 const GET_COINS_DIVIDER_THICKNESS = 2;
+const COINS_PACK_ITEM_ID = 'coins_10000';
 
 const GET_COIN_ACTIONS = [
   { labelKey: 'shop.getCoins.missions', sceneKey: 'Missions' },
@@ -36,8 +35,6 @@ const GET_COIN_ACTIONS = [
 export interface CoinBarOptions {
   /** Vertical center of the bar. */
   y: number;
-  /** Horizontal alignment. Defaults to `'center'`. */
-  align?: 'center' | 'right';
   /**
    * Anchor X: bar center when `align: 'center'`, right edge when `align: 'right'`.
    * Defaults to screen center (center) or `width * 0.88` (right).
@@ -45,6 +42,8 @@ export interface CoinBarOptions {
   x?: number;
   /** Hide the + button / get-coins modal. */
   showGetCoins?: boolean;
+  /** Horizontal alignment. Defaults to `'center'`. */
+  align?: 'center' | 'right';
   /** Scene keys to omit from the get-coins modal. */
   excludeGetCoinScenes?: string[];
   onNavigate: (sceneKey: string) => void;
@@ -54,21 +53,21 @@ export interface CoinBarOptions {
  * Coin pill: coin icon, balance, optional + (opens get-coins modal).
  */
 export class CoinBar extends Phaser.GameObjects.Container {
+  private readonly barY: number;
+  private readonly anchorX: number;
   private readonly showGetCoins: boolean;
+  private readonly align: 'center' | 'right';
   private readonly excludeGetCoinScenes: Set<string>;
   private readonly onNavigate: (sceneKey: string) => void;
-  private readonly align: 'center' | 'right';
-  private readonly anchorX: number;
-  private readonly barY: number;
 
   private plusButton?: UIButton;
+  private purchasingCoins = false;
+  private buyCoinsButton?: UIButton;
   private storeUnsubscribe?: () => void;
   private coinText?: Phaser.GameObjects.Text;
   private coinIcon?: Phaser.GameObjects.Image;
   private coinBarGfx?: Phaser.GameObjects.Graphics;
   private getCoinsModal?: Phaser.GameObjects.Container;
-  private buyCoinsButton?: UIButton;
-  private purchasingCoins = false;
 
   constructor(scene: Phaser.Scene, options: CoinBarOptions) {
     super(scene, 0, 0);

@@ -80,11 +80,11 @@ export function normalizeNotificationState(value: unknown): NotificationState {
     unregisterPending: Boolean(raw.unregisterPending),
     syncAttempts: typeof raw.syncAttempts === 'number' ? raw.syncAttempts : 0,
     pendingToken: typeof raw.pendingToken === 'string' ? raw.pendingToken : null,
-    lastSyncedToken: typeof raw.lastSyncedToken === 'string' ? raw.lastSyncedToken : null,
     platform: raw.platform === 'IOS' || raw.platform === 'ANDROID' ? raw.platform : null,
     lastAttemptAt: typeof raw.lastAttemptAt === 'string' ? raw.lastAttemptAt : undefined,
     lastErrorCode: typeof raw.lastErrorCode === 'string' ? raw.lastErrorCode : undefined,
     nextAttemptAt: typeof raw.nextAttemptAt === 'string' ? raw.nextAttemptAt : undefined,
+    lastSyncedToken: typeof raw.lastSyncedToken === 'string' ? raw.lastSyncedToken : null,
     pendingLocale:
       raw.pendingLocale === 'EN' || raw.pendingLocale === 'VI' ? raw.pendingLocale : null,
     lastSyncedLocale:

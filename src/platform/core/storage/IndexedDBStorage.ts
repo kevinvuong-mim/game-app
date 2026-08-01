@@ -6,6 +6,7 @@ const DB_NAME = 'fruloop';
 
 export class IndexedDBStorageProvider implements StorageProvider {
   readonly type = 'indexedDB' as const;
+
   private db: IDBDatabase | null = null;
 
   private async getDB(): Promise<IDBDatabase> {

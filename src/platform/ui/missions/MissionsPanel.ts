@@ -4,8 +4,8 @@ import {
   PANEL_BG,
   TEXT_COLOR,
   PANEL_BORDER,
-  PANEL_CORNER_RADIUS,
   PANEL_LIST_PADDING,
+  PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
 import { toast } from '../toast/ToastManager';
 import { eventBus } from '@platform/core/events';
@@ -16,8 +16,8 @@ import { drawRoundedRect } from '../panel/graphics';
 import { formatNumber } from '@platform/core/utils';
 import type { MissionProgress } from '@platform/core/state';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
-import { missions } from '@platform/modules/missions/mission.service';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
+import { missions } from '@platform/modules/missions/mission.service';
 
 const ACTION_BTN_WIDTH = 88;
 const REWARD_ICON_SIZE = 36;
@@ -41,13 +41,13 @@ function formatMissionNumber(value: number): string {
 export class MissionsPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
   private readonly onNavigate: (sceneKey: string) => void;
+  /** One-shot missions claimed this visit — keep showing "Claimed" until leave. */
+  private readonly retainedClaimedIds = new Set<string>();
+  private readonly listRebuild = new DeferredListRebuild(() => this.rebuildMissions());
 
   private header?: PanelHeader;
   private unsubscribers: Array<() => void> = [];
   private listContainer?: Phaser.GameObjects.Container;
-  /** One-shot missions claimed this visit — keep showing "Claimed" until leave. */
-  private readonly retainedClaimedIds = new Set<string>();
-  private readonly listRebuild = new DeferredListRebuild(() => this.rebuildMissions());
 
   constructor(
     scene: Phaser.Scene,

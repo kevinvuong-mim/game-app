@@ -1,5 +1,5 @@
-import { BasePanelScene } from '@platform/ui/BasePanelScene';
 import { MissionsPanel } from '@platform/ui';
+import { BasePanelScene } from '@platform/ui/BasePanelScene';
 
 export class MissionsScene extends BasePanelScene {
   private panel?: MissionsPanel;

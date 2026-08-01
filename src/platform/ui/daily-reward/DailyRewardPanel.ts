@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 
-import { PANEL_BG, TEXT_COLOR, PANEL_BORDER, PANEL_CORNER_RADIUS } from '../panel/panelTheme';
 import { toast } from '../toast/ToastManager';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
@@ -13,19 +12,20 @@ import type {
   RewardDayProgress,
 } from '@platform/modules/daily-reward/daily-reward.model';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
+import { PANEL_BG, TEXT_COLOR, PANEL_BORDER, PANEL_CORNER_RADIUS } from '../panel/panelTheme';
 
+const DAY7_GAP = 36;
 const GRID_COLS = 2;
 const GRID_ROWS = 3;
 const CELL_GAP_X = 14;
 const CELL_GAP_Y = 28;
-const PANEL_CONTENT_PADDING_Y = 36;
+const DAY_COIN_SIZE = 56;
 const CELL_BG = 0xf3d7a8;
+const DAY7_COIN_SIZE = 28;
+const CHECK_ICON_SIZE = 36;
 const CELL_BORDER = 0xc9a86a;
 const DAY7_BANNER = 0xffd54f;
-const DAY7_GAP = 36;
-const CHECK_ICON_SIZE = 36;
-const DAY_COIN_SIZE = 56;
-const DAY7_COIN_SIZE = 28;
+const PANEL_CONTENT_PADDING_Y = 36;
 
 function formatRewardAmount(value: number): string {
   return String(Math.floor(value));
@@ -34,8 +34,8 @@ function formatRewardAmount(value: number): string {
 interface CalendarLayout {
   gridWidth: number;
   cellWidth: number;
-  cellHeight: number;
   day7Width: number;
+  cellHeight: number;
   day7Height: number;
   contentHeight: number;
 }
@@ -46,19 +46,19 @@ interface CalendarLayout {
 export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
   private readonly onNavigate: (sceneKey: string) => void;
-
-  private header?: PanelHeader;
-  private statusText?: Phaser.GameObjects.Text;
-  private claimButton?: Phaser.GameObjects.Container;
-  private calendarContainer?: Phaser.GameObjects.Container;
-  private calendarLayout!: CalendarLayout;
-  private unsubscribers: Array<() => void> = [];
-  private claimPending = false;
-  private latestProgress: RewardProgress | null = null;
   private readonly calendarRebuild = new DeferredListRebuild(() => {
     if (!this.latestProgress) return;
     this.rebuildFromProgress(this.latestProgress);
   });
+
+  private claimPending = false;
+  private header?: PanelHeader;
+  private calendarLayout!: CalendarLayout;
+  private statusText?: Phaser.GameObjects.Text;
+  private unsubscribers: Array<() => void> = [];
+  private claimButton?: Phaser.GameObjects.Container;
+  private latestProgress: RewardProgress | null = null;
+  private calendarContainer?: Phaser.GameObjects.Container;
 
   constructor(
     scene: Phaser.Scene,

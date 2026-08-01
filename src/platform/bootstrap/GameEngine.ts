@@ -2,18 +2,18 @@ import type Phaser from 'phaser';
 
 import { gameConfig } from '@game/config';
 import { gameScenes } from '@game/scenes';
+import { iap } from '@platform/modules/iap';
 import { app } from '@platform/bootstrap/App';
+import { eventBus } from '@platform/core/events';
 import { toast } from '@platform/ui/toast/ToastManager';
 import { loadGameFonts } from '@platform/bootstrap/fonts';
 import { soundManager } from '@platform/ui/audio/SoundManager';
+import { navigationService } from '@platform/modules/navigation';
 import { DeviceType, getDeviceType } from '@platform/core/utils';
 import { refreshServicesFromConfig } from '@platform/core/services';
 import { initCapacitorPlugins } from '@platform/bootstrap/capacitor';
 import { getConfig, setConfig, createConfig } from '@platform/core/config';
 import { errorBoundary, setupGlobalErrorHandlers } from '@platform/core/error';
-import { eventBus } from '@platform/core/events';
-import { navigationService } from '@platform/modules/navigation';
-import { iap } from '@platform/modules/iap';
 
 const TABLET_LETTERBOX_BG_ID = 'tablet-letterbox-bg';
 

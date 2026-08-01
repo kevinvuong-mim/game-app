@@ -4,10 +4,10 @@ import {
   toNonNegativeInt,
   MAX_SYNC_ATTEMPTS,
   isValidReplaySecret,
-  isTransientSyncErrorCode,
   type ResultSubmitData,
   computeReplaySignature,
   type PendingGameResult,
+  isTransientSyncErrorCode,
 } from './game-sync.model';
 import { ApiError } from '@platform/core/api';
 import { logger } from '@platform/core/error';

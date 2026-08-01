@@ -1,6 +1,6 @@
 /** Shared wall-clock skew detection for daily reward + missions. */
-export const BACKWARD_CLOCK_TOLERANCE_MS = 60_000;
 export const FORWARD_CLOCK_TOLERANCE_MS = 60_000;
+export const BACKWARD_CLOCK_TOLERANCE_MS = 60_000;
 
 export type ClockCheckPoint = {
   wall: number;
