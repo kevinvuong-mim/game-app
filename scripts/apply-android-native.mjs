@@ -1,4 +1,10 @@
 import {
+  isAdMobProvider,
+  isGoogleTestAdId,
+  isProductionAppEnv,
+  GOOGLE_SAMPLE_ANDROID_APP_ID,
+} from './admob-constants.mjs';
+import {
   resolvePushNotificationsEnabled,
   resolveLocalNotificationsEnabled,
 } from './notification-config.mjs';
@@ -19,24 +25,14 @@ const ANDROID_PERMISSIONS = [
   'android.permission.VIBRATE',
 ];
 const ADMOB_META_NAME = 'com.google.android.gms.ads.APPLICATION_ID';
-/** Dev-only fallback when VITE_ADS_PROVIDER=admob but no real app id is set. */
-const GOOGLE_SAMPLE_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713';
 const GOOGLE_SERVICES_PLUGIN = "apply plugin: 'com.google.gms.google-services'";
 const GOOGLE_SERVICES_CLASSPATH = "classpath 'com.google.gms:google-services:4.4.2'";
 const FCM_CHANNEL_META = 'com.google.firebase.messaging.default_notification_channel_id';
 
-function isProductionAppEnv() {
-  return (process.env.VITE_APP_ENV ?? 'dev') === 'production';
-}
-
-function isAdMobProvider() {
-  return (process.env.VITE_ADS_PROVIDER ?? 'mock') === 'admob';
-}
-
 function resolveAdMobAppId() {
   const configured = process.env.VITE_ADMOB_ANDROID_APP_ID?.trim();
   if (configured) {
-    if (isProductionAppEnv() && configured.includes('ca-app-pub-3940256099942544')) {
+    if (isProductionAppEnv() && isGoogleTestAdId(configured)) {
       console.error(
         '[android-native] Production refuses Google sample AdMob app id in VITE_ADMOB_ANDROID_APP_ID'
       );

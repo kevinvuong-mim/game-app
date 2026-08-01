@@ -84,11 +84,8 @@ export class RevenueCatAdapter implements IAPProvider {
 
     try {
       const { customerInfo } = await Purchases.restorePurchases();
-      // Consumable history is not restorable grant stock — only non-consumables.
-      return mapCustomerInfoToPurchases(customerInfo).filter((purchase) => {
-        const product = getProductById(purchase.productId);
-        return product != null && product.type !== 'consumable';
-      });
+      // Restore only non-consumable entitlements — coin packs are granted at purchase time.
+      return mapCustomerInfoToPurchases(customerInfo);
     } catch (error) {
       throw mapRevenueCatError(error);
     }
@@ -216,28 +213,19 @@ function mapMakePurchaseResult(
   };
 }
 
+/** Non-consumable entitlements only — used by restore. */
 function mapCustomerInfoToPurchases(customerInfo: CustomerInfo): ProviderPurchase[] {
   const purchases: ProviderPurchase[] = [];
-  const seenTx = new Set<string>();
 
   for (const entitlement of Object.values(customerInfo.entitlements.active)) {
     if (!getProductById(entitlement.productIdentifier)) continue;
 
-    const transactionId = entitlement.identifier;
-    seenTx.add(transactionId);
     purchases.push({
       productId: entitlement.productIdentifier,
-      transactionId,
+      transactionId: entitlement.identifier,
       receipt: entitlement.productIdentifier,
       purchaseTime: entitlement.latestPurchaseDateMillis,
     });
-  }
-
-  // Consumables / non-renewing purchases live here, not in entitlements.active.
-  for (const purchase of mapNonSubscriptionPurchases(customerInfo)) {
-    if (seenTx.has(purchase.transactionId)) continue;
-    seenTx.add(purchase.transactionId);
-    purchases.push(purchase);
   }
 
   return purchases;

@@ -57,16 +57,7 @@ export class PurchaseStorage {
     await this.save([...current, entitlement]);
   }
 
-  async sync(entitlements: string[]): Promise<void> {
-    await this.save(entitlements);
-  }
-
-  async hasConsumableTransaction(transactionId: string): Promise<boolean> {
-    const ids = await this.loadConsumableTxIds();
-    return ids.has(transactionId);
-  }
-
-  /** Returns false if this transaction was already recorded. */
+  /** Returns false if this transaction was already recorded (idempotent claim). */
   async recordConsumableTransaction(transactionId: string): Promise<boolean> {
     const ids = await this.loadConsumableTxIds();
     if (ids.has(transactionId)) return false;

@@ -1,15 +1,13 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { loadEnvFile } from './env-file.mjs';
+import { isGoogleTestAdId } from './admob-constants.mjs';
 
 const SHA256_HEX_PATTERN = /^[a-f0-9]{64}$/;
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Must match `apiUrl` presets in `src/platform/core/config/index.ts`. */
 const API_URL = 'https://game-api-s5kn.onrender.com/api';
-
-/** Google's official sample publisher — never ship these in store builds. */
-const GOOGLE_TEST_PUBLISHER = 'ca-app-pub-3940256099942544';
 
 function readGameIdFromEnv() {
   const gameId = process.env.VITE_GAME_ID?.trim();
@@ -33,7 +31,7 @@ function requireNonEmpty(name) {
 }
 
 function assertNotGoogleTestAdId(name, value) {
-  if (value.includes(GOOGLE_TEST_PUBLISHER)) {
+  if (isGoogleTestAdId(value)) {
     throw new Error(
       `Release build refuses Google sample/test AdMob id in ${name}. Use your real AdMob ids.`
     );

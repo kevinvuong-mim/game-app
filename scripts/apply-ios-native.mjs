@@ -1,3 +1,8 @@
+import {
+  isGoogleTestAdId,
+  isProductionAppEnv,
+  GOOGLE_SAMPLE_IOS_APP_ID,
+} from './admob-constants.mjs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { loadEnvFile } from './env-file.mjs';
@@ -15,18 +20,12 @@ const SWIFT_FILE = 'FullscreenBridgeViewController.swift';
 const GOOGLE_SERVICE_INFO_FILE = 'GoogleService-Info.plist';
 const GOOGLE_SERVICE_INFO_REF_ID = 'F5LL5CRN4FED79650016851F';
 const GOOGLE_SERVICE_INFO_BUILD_FILE_ID = 'F5LL5CRN5FED79650016851F';
-/** Dev-only fallback when VITE_ADS_PROVIDER=admob but no real app id is set. */
-const GOOGLE_SAMPLE_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
 const ENTITLEMENTS_BUILD_SETTING = 'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;';
-
-function isProductionAppEnv() {
-  return (process.env.VITE_APP_ENV ?? 'dev') === 'production';
-}
 
 function resolveAdMobAppId() {
   const configured = process.env.VITE_ADMOB_IOS_APP_ID?.trim();
   if (configured) {
-    if (isProductionAppEnv() && configured.includes('ca-app-pub-3940256099942544')) {
+    if (isProductionAppEnv() && isGoogleTestAdId(configured)) {
       console.error(
         '[ios-native] Production refuses Google sample AdMob app id in VITE_ADMOB_IOS_APP_ID'
       );

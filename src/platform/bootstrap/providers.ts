@@ -83,25 +83,20 @@ export function registerIapProvider(appUserId?: string): void {
     return;
   }
 
-  // Never ship mock IAP on production native builds — purchases would succeed for free.
-  if (Capacitor.isNativePlatform() && mustBlockMockMonetization()) {
-    if (runtime.iap.provider === 'revenuecat') {
-      logger.error(
-        '[IAP] RevenueCat selected but API key missing — disabling IAP (refusing mock fallback)'
-      );
-    } else {
-      logger.error('[IAP] Mock IAP blocked in production native — disabling IAP');
+  // Never ship mock IAP on production native — or fall back to mock when RevenueCat
+  // was selected but the API key is missing.
+  if (Capacitor.isNativePlatform()) {
+    if (mustBlockMockMonetization() || runtime.iap.provider === 'revenuecat') {
+      if (runtime.iap.provider === 'revenuecat') {
+        logger.error(
+          '[IAP] RevenueCat selected but API key missing — disabling IAP (refusing mock fallback)'
+        );
+      } else {
+        logger.error('[IAP] Mock IAP blocked in production native — disabling IAP');
+      }
+      iap.setEnabled(false);
+      return;
     }
-    iap.setEnabled(false);
-    return;
-  }
-
-  if (Capacitor.isNativePlatform() && runtime.iap.provider === 'revenuecat') {
-    logger.error(
-      '[IAP] RevenueCat selected but API key missing — disabling IAP (refusing mock fallback)'
-    );
-    iap.setEnabled(false);
-    return;
   }
 
   iap.setProvider(createIapProvider('mock'));

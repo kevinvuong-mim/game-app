@@ -113,7 +113,7 @@ class ShopService {
     }
   }
 
-  /** Grant coin packs after IAP success / restore of an unconsumed consumable. */
+  /** Grant coin packs after a successful consumable IAP purchase. */
   fulfillIapProduct(productId: string): void {
     const item = this.items.find((entry) => {
       if (entry.id === productId) return true;
