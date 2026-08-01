@@ -31,19 +31,19 @@ export class HomeScene extends Phaser.Scene {
 
     this.addBackgroundImage(width, height);
 
-    this.coinBar = new CoinBar(this, {
-      y: height * 0.08,
-      align: 'center',
-      onNavigate: (sceneKey) => this.openScreen(sceneKey),
-    });
+    // this.coinBar = new CoinBar(this, {
+    //   y: height * 0.08,
+    //   align: 'center',
+    //   onNavigate: (sceneKey) => this.openScreen(sceneKey),
+    // });
 
-    createUIButton({
-      scene: this,
-      position: { x: width * 0.83, y: height * 0.04 },
-      size: { width: 64, height: 64 },
-      background: { key: 'how-to-play-icon' },
-      onClick: () => this.openScreen('HowToPlay'),
-    });
+    // createUIButton({
+    //   scene: this,
+    //   position: { x: width * 0.83, y: height * 0.04 },
+    //   size: { width: 64, height: 64 },
+    //   background: { key: 'how-to-play-icon' },
+    //   onClick: () => this.openScreen('HowToPlay'),
+    // });
 
     createUIButton({
       scene: this,
