@@ -17,43 +17,23 @@ const DOT_ACTIVE = 0x1f6b32;
 const DOT_INACTIVE = 0xb5974f;
 const NAV_BTN_HEIGHT = 56;
 
-interface HowToPlayStep {
+export interface HowToPlayStepConfig {
   titleKey: string;
   bodyKey: string;
   iconKey: string;
-  /** Optional second fruit shown beside the primary (merge step). */
+  /** Optional second icon shown beside the primary (merge step). */
   secondaryIconKey?: string;
+  /** Texture for the merge result icon. */
+  resultIconKey?: string;
 }
-
-const STEPS: HowToPlayStep[] = [
-  {
-    titleKey: 'howToPlay.step1Title',
-    bodyKey: 'howToPlay.step1Body',
-    iconKey: 'fruit-5',
-  },
-  {
-    titleKey: 'howToPlay.step2Title',
-    bodyKey: 'howToPlay.step2Body',
-    iconKey: 'fruit-6',
-    secondaryIconKey: 'fruit-6',
-  },
-  {
-    titleKey: 'howToPlay.step3Title',
-    bodyKey: 'howToPlay.step3Body',
-    iconKey: 'fruit-7',
-  },
-  {
-    titleKey: 'howToPlay.step4Title',
-    bodyKey: 'howToPlay.step4Body',
-    iconKey: 'shop-item-1',
-  },
-];
 
 /**
  * Paginated how-to-play guide — Shop/Settings beige panel style.
+ * Step content (icons/keys) is injected by the game layer.
  */
 export class HowToPlayPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
+  private readonly steps: HowToPlayStepConfig[];
   private stepIndex = 0;
 
   private panelWidth = 0;
@@ -79,10 +59,12 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
     scene: Phaser.Scene,
     options: {
       onBack: () => void;
+      steps: HowToPlayStepConfig[];
     }
   ) {
     super(scene, 0, 0);
     this.onBack = options.onBack;
+    this.steps = options.steps;
     scene.add.existing(this);
     this.build();
     this.renderStep();
@@ -125,9 +107,10 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
     );
     this.add(panel);
 
-    this.iconPrimary = this.scene.add.image(this.contentCenterX, this.iconY, 'fruit-1');
+    const placeholderKey = this.steps[0]?.iconKey ?? 'shop-item-1';
+    this.iconPrimary = this.scene.add.image(this.contentCenterX, this.iconY, placeholderKey);
     this.iconSecondary = this.scene.add
-      .image(this.contentCenterX, this.iconY, 'fruit-1')
+      .image(this.contentCenterX, this.iconY, placeholderKey)
       .setVisible(false);
     this.mergeArrow = this.scene.add
       .text(this.contentCenterX, this.iconY, '→', {
@@ -139,7 +122,7 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
       .setOrigin(0.5)
       .setVisible(false);
     this.resultIcon = this.scene.add
-      .image(this.contentCenterX, this.iconY, 'fruit-4')
+      .image(this.contentCenterX, this.iconY, placeholderKey)
       .setVisible(false);
     this.add([this.iconPrimary, this.iconSecondary, this.mergeArrow, this.resultIcon]);
 
@@ -167,15 +150,16 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
       .setOrigin(0.5, 0);
     this.add(this.stepBody);
 
+    const stepCount = Math.max(this.steps.length, 1);
     const dotGap = 18;
-    const dotsWidth = (STEPS.length - 1) * dotGap;
-    STEPS.forEach((_, index) => {
+    const dotsWidth = (stepCount - 1) * dotGap;
+    for (let index = 0; index < stepCount; index++) {
       const dot = this.scene.add.graphics();
       const x = this.contentCenterX - dotsWidth / 2 + index * dotGap;
       this.drawDot(dot, x, this.dotsY, false);
       this.dots.push(dot);
       this.add(dot);
-    });
+    }
 
     this.prevButton = createUIButton({
       scene: this.scene,
@@ -249,7 +233,7 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
   }
 
   private handleNext(): void {
-    if (this.stepIndex >= STEPS.length - 1) {
+    if (this.stepIndex >= this.steps.length - 1) {
       this.onBack();
       return;
     }
@@ -257,13 +241,13 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
   }
 
   private goToStep(index: number): void {
-    if (index < 0 || index >= STEPS.length) return;
+    if (index < 0 || index >= this.steps.length) return;
     this.stepIndex = index;
     this.renderStep();
   }
 
   private renderStep(): void {
-    const step = STEPS[this.stepIndex];
+    const step = this.steps[this.stepIndex];
     if (!step) return;
 
     this.stepTitle?.setText(t(step.titleKey));
@@ -282,7 +266,7 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
     ) {
       this.iconSecondary.setTexture(step.secondaryIconKey!).setVisible(true);
       this.fitIcon(this.iconSecondary, 72);
-      this.resultIcon.setTexture('fruit-4').setVisible(true);
+      this.resultIcon.setTexture(step.resultIconKey ?? step.iconKey).setVisible(true);
       this.fitIcon(this.resultIcon, 88);
       this.mergeArrow.setVisible(true);
 
@@ -297,15 +281,16 @@ export class HowToPlayPanel extends Phaser.GameObjects.Container {
       this.iconPrimary?.setPosition(this.contentCenterX, this.iconY);
     }
 
+    const stepCount = Math.max(this.steps.length, 1);
     const dotGap = 18;
-    const dotsWidth = (STEPS.length - 1) * dotGap;
+    const dotsWidth = (stepCount - 1) * dotGap;
     this.dots.forEach((dot, index) => {
       const x = this.contentCenterX - dotsWidth / 2 + index * dotGap;
       this.drawDot(dot, x, this.dotsY, index === this.stepIndex);
     });
 
     const isFirst = this.stepIndex === 0;
-    const isLast = this.stepIndex === STEPS.length - 1;
+    const isLast = this.stepIndex === this.steps.length - 1;
 
     this.prevButton?.setVisible(!isFirst);
     if (isFirst) {

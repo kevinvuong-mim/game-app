@@ -75,6 +75,10 @@ export interface PlatformState {
   missions: MissionsState;
   settings: SettingsState;
   inventory: InventoryState;
+  /**
+   * Legacy snapshot field — Preferences (`daily-reward-v2`) is SoT.
+   * Kept on PlatformState only so hydrate can migrate old game-saves once.
+   */
   dailyRewards: DailyRewardState;
 }
 

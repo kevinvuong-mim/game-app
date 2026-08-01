@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { gameConfig } from '@game/config';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { t, toast, shareService, i18n, rateService, RateAppModal, gameSync } from '@platform/ui';
+import { t, toast, RateAppModal, i18n, shareService, rateService, gameSync } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect, measureTextWidth } from '@platform/ui/panel/graphics';
 import {

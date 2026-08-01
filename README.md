@@ -62,12 +62,13 @@ game-apps/
 │   ├── platform/              # Reusable platform (keep as-is across games)
 │   │   ├── core/              # events, state, storage, api, analytics, advertising, error
 │   │   ├── modules/           # i18n, shop, missions, leaderboard, notifications, save, …
-│   │   ├── ui/                # Phaser UI: panels, HUD, toast, audio, screen stack, fonts
-│   │   └── bootstrap/         # App, GameEngine, providers, app-events, capacitor, fonts
+│   │   ├── ui/                # Panels, BasePanelScene, HUD, toast, audio, fonts
+│   │   └── bootstrap/         # App, GameEngine, providers, app-events, capacitor
 │   └── game/                  # YOUR game — customize per project
-│       ├── config.ts          # Game identity & screen size
-│       ├── utils/             # e.g. ObjectPool
-│       └── scenes/            # Boot → Preload → Home + feature scenes
+│       ├── config.ts          # Display identity (id/name/size/physics) — no replaySecret
+│       ├── howToPlaySteps.ts  # Game-specific how-to content
+│       ├── utils/
+│       └── scenes/            # Boot → Preload → Home + panel wrappers
 ├── public/assets/             # Static game assets (create per project)
 │   ├── images/                # UI/game art
 │   └── audio/                 # SFX + BGM (see Audio below)
@@ -97,35 +98,30 @@ game-apps/
 ## Architecture Layers
 
 ```
-Game Layer        → src/game/ — gameplay only (scenes, entities, systems)
-     ↓ @platform/ui  |  eventBus
-Platform UI       → src/platform/ui — Phaser panels, HUD, toast, sound, screen stack
+Game Layer        → src/game/ — gameplay + game-specific content (how-to steps, scenes)
+     ↓ eventBus   |  @platform/ui (panels / BasePanelScene)
+Platform UI       → src/platform/ui — Phaser panels, BasePanelScene, toast, sound
      ↓
 Platform Modules  → src/platform/modules — feature services + controllers
      ↓
-Platform Core     → src/platform/core — events, state, storage, api, providers
+Platform Core     → src/platform/core — events, state, storage, api, RuntimeConfig
      ↓
 Bootstrap         → src/platform/bootstrap — App, GameEngine, provider wiring
 ```
 
-Games talk to the platform via **`@platform/ui`** and/or the **Event Bus**. ESLint blocks `@platform/modules/*` (and direct store/API/storage) from `src/game`.
+Games talk to the platform primarily via the **Event Bus**. `@platform/ui` exports Phaser UI (panels, toast, i18n `t`, `BasePanelScene`) — not module services like game-sync/share/rate. ESLint blocks `@platform/modules/*` from most of `src/game`.
 
 ```typescript
 import { eventBus, AnalyticsEvents } from '@platform/core/events';
-import { getEquippedPlayerColor } from '@platform/ui';
-import { gameConfig } from '@game/config';
+import { getConfig } from '@platform/core/config';
 
-eventBus.emit('game:start', { gameId: gameConfig.id });
+eventBus.emit('game:start', { gameId: getConfig().gameId });
 eventBus.emit('score:update', { score: 100 });
-eventBus.emit('coin:add', { amount: 5, source: 'gameplay' });
 eventBus.emit('game:over', { score: 100, duration: 30000 });
 eventBus.emit('analytics', { event: AnalyticsEvents.SESSION_START });
-
-// Demo player fill from equipped shop skin
-this.add.circle(120, height - 160, 24, getEquippedPlayerColor());
 ```
 
-**i18n / share / toast:** import from `@platform/ui`, not `@platform/modules`.
+**i18n / toast:** import from `@platform/ui`. Share / rate / game-sync: import from `@platform/modules/*`.
 
 ## Platform Modules
 
@@ -137,10 +133,10 @@ this.add.circle(120, height - 160, 24, getEquippedPlayerColor());
 | notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)            |
 | i18n          | Local    | Runtime language switch (`en` / `vi`), lazy-loaded locale JSON             |
 | shop          | Local    | Catalog skins/boosts/IAP; equip skin                                       |
-| missions      | Local    | Daily missions (`missions.json`); WATCH_AD via rewarded ads                |
-| daily-reward  | Local    | 7-day streak; anti-tamper recovers when clock is consistent again          |
-| save          | Local    | Single `game-save` key — hydrates Zustand store on boot                    |
-| settings      | Local    | Language, sound, music, vibration, graphics — part of store state          |
+| missions      | Local    | Daily missions; claim via EventBus; WATCH_AD via `MISSION_WATCH` placement |
+| daily-reward  | Local    | 7-day streak in Preferences; claim via EventBus                            |
+| save          | Local    | Single `game-save` key — hydrates Zustand (excludes daily-reward prefs)    |
+| settings      | Local    | Language, sound, music — part of store state                               |
 | deep-link     | Local    | Custom scheme, Universal Links / App Links, deferred cold-start navigation |
 | navigation    | Local    | Scene navigation + pending queue (notification / deeplink cold start)      |
 | share         | Local    | Native share sheet helper (used from Game Over)                            |
@@ -153,14 +149,14 @@ this.add.circle(120, height - 160, 24, getEquippedPlayerColor());
 
 ## UI Framework
 
-Feature screens are **Phaser scenes** that compose reusable **panels**. Seven panel scenes (`Shop`, `Missions`, `Leaderboard`, `DailyReward`, `Settings`, `HowToPlay`, `Legal`) share `BasePanelScene` for title, close button, and `app:back` handling.
+Feature screens are **Phaser scenes** that compose reusable **panels**. Seven panel scenes share `BasePanelScene` (`@platform/ui`) for background, close/`app:back`, optional GetCoins overlay, and ad context.
 
-Fonts: **Fredoka** is the only UI font (`FREDOKA_FONT`). Home’s Play button badge uses i18n key `home.playBadge` (`"NEW"` / `"MỚI"`).
+Fonts: **Fredoka** (`FREDOKA_FONT`). Settings UI is split into section modules under `platform/ui/settings/`. Home’s Play button badge uses i18n key `home.playBadge`.
 
-The `@platform/ui` barrel re-exports `t`, `toast`, `shareService`, `LeaderboardPanel`, and `getEquippedPlayerColor`. Import other helpers from their module paths:
+The `@platform/ui` barrel re-exports panels, `t`/`toast`, and `BasePanelScene`. Import other helpers from their paths:
 
 ```typescript
-import { t, toast } from '@platform/ui';
+import { t, toast, BasePanelScene } from '@platform/ui';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 import { createUIButton } from '@platform/ui/button/UIButton';
@@ -257,7 +253,7 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 | `VITE_FIREBASE_*`                                   | Firebase web config (analytics + push gate on native)                          |
 | `VITE_IOS_APP_STORE_ID` / `VITE_ANDROID_PACKAGE_ID` | Store listing IDs attached when sharing scores                                 |
 
-API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` passes `gameConfig.id` and `gameConfig.replaySecret` (from `VITE_GAME_ID` / `VITE_REPLAY_SECRET`) into runtime config. `name`, `width`, `height`, and `version` are edited directly in `src/game/config.ts`. Deep-link scheme/hosts live in `src/platform/modules/deep-link/deep-link.config.ts` (keep in sync with `scripts/deeplink-config.mjs`) — not `.env`.
+API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` calls `createConfig()` so `RuntimeConfig` reads `VITE_GAME_ID` / `VITE_REPLAY_SECRET`. `gameConfig` holds display fields (`name`, size, `physics`, `id`); it does **not** duplicate `replaySecret`. Deep-link scheme/hosts live in `src/platform/modules/deep-link/deep-link.config.ts` (keep in sync with `scripts/deeplink-config.mjs`) — not `.env`.
 
 ## Mobile Deployment
 

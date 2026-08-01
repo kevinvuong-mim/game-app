@@ -45,7 +45,7 @@ class GameEngine {
     if (this.game) return this.game;
 
     setupGlobalErrorHandlers();
-    // createConfig already reads VITE_GAME_ID / VITE_REPLAY_SECRET (same as gameConfig).
+    // createConfig already reads VITE_GAME_ID / VITE_REPLAY_SECRET into RuntimeConfig.
     setConfig(createConfig());
     refreshServicesFromConfig();
     iap.setEnabled(getConfig().iapEnabled);

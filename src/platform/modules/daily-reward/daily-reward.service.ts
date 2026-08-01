@@ -131,9 +131,8 @@ export class DailyRewardService {
   }
 
   private async persist(): Promise<void> {
-    // Preferences is the only durable store for daily-reward; game-save no longer mirrors it.
+    // Preferences is the only durable store for daily-reward; do not mirror onto PlatformState.
     await this.repository.save(this.model);
-    usePlatformStore.getState().setDailyRewardState(this.repository.toStoreState(this.model));
     // Persist currency/other store changes (e.g. coins from claim).
     await saveService.saveLocal();
   }

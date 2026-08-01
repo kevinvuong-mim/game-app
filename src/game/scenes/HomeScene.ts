@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 
-import { t, canClaimDailyReward, getClaimableMissionCount } from '@platform/ui/index';
+import { t } from '@platform/ui';
+import { canClaimDailyReward } from '@platform/ui/dailyReward';
+import { getClaimableMissionCount } from '@platform/ui/missionsStatus';
 import { eventBus } from '@platform/core/events';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { CoinBar } from '@platform/ui/panel/CoinBar';

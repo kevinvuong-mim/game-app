@@ -1,4 +1,4 @@
-import { BasePanelScene } from './BasePanelScene';
+import { BasePanelScene } from '@platform/ui/BasePanelScene';
 import { MissionsPanel } from '@platform/ui';
 
 export class MissionsScene extends BasePanelScene {
@@ -16,18 +16,12 @@ export class MissionsScene extends BasePanelScene {
       onBack: () => this.goBack(),
       onNavigate: (sceneKey) => this.openScreen(sceneKey),
     });
-  }
-
-  protected handleAppBack(): void {
-    if (this.panel?.isGetCoinsModalOpen()) {
-      this.panel.hideGetCoinsModal();
-      return;
-    }
-    this.goBack();
+    this.getCoinsOverlay = this.panel;
   }
 
   protected onPanelShutdown(): void {
     this.panel?.destroy();
     this.panel = undefined;
+    this.getCoinsOverlay = undefined;
   }
 }

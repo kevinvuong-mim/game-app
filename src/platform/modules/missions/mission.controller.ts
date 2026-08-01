@@ -16,6 +16,10 @@ class MissionController {
         void this.handleProgress(type, amount, mode ?? 'increment');
       }),
 
+      events.on('mission:claim:request', async ({ missionId }) => {
+        await this.handleClaim(events, missionId);
+      }),
+
       events.on('app:resume', () => {
         this.service.refreshClockIntegrity();
         void this.handleResets();
@@ -25,6 +29,28 @@ class MissionController {
     return () => {
       for (const unsub of unsubs) unsub();
     };
+  }
+
+  private async handleClaim(events: IEventBus, missionId: string): Promise<void> {
+    const success = this.service.claimMission(missionId);
+
+    if (!success) {
+      events.emit('mission:claim:result', {
+        missionId,
+        success: false,
+        message: this.service.isTimeManipulated() ? 'time_manipulated' : 'claim_failed',
+      });
+      return;
+    }
+
+    await saveService.saveLocal();
+
+    events.emit('mission:claim:result', {
+      missionId,
+      success: true,
+    });
+
+    logger.info('[MissionController] Claim handled', { missionId });
   }
 
   private async handleProgress(

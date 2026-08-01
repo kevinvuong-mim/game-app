@@ -16,7 +16,6 @@ import { drawRoundedRect } from '../panel/graphics';
 import { formatNumber } from '@platform/core/utils';
 import type { MissionProgress } from '@platform/core/state';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
-import { saveService } from '@platform/modules/save';
 import { missions } from '@platform/modules/missions/mission.service';
 
 const ACTION_BTN_WIDTH = 88;
@@ -84,6 +83,14 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
       eventBus.on('mission:update', () => this.renderMissions()),
       eventBus.on('mission:complete', () => this.renderMissions()),
       eventBus.on('player:name:updated', () => this.renderMissions()),
+      eventBus.on('mission:claim:result', ({ missionId, success }) => {
+        if (success) {
+          this.retainedClaimedIds.add(missionId);
+          this.renderMissions();
+          return;
+        }
+        toast.show({ message: t('missions.claimFailed'), type: 'error' });
+      }),
       eventBus.on('ad:reward:result', ({ success, message }) => {
         if (success) {
           this.renderMissions();
@@ -344,13 +351,6 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
   }
 
   private handleClaim(missionId: string): void {
-    const success = missions.claimMission(missionId);
-    if (success) {
-      this.retainedClaimedIds.add(missionId);
-      void saveService.saveLocal();
-      this.renderMissions();
-    } else {
-      toast.show({ message: t('missions.claimFailed'), type: 'error' });
-    }
+    eventBus.emit('mission:claim:request', { missionId });
   }
 }

@@ -1,5 +1,5 @@
 import { LeaderboardPanel } from '@platform/ui';
-import { BasePanelScene, type PanelSceneData } from './BasePanelScene';
+import { BasePanelScene, type PanelSceneData } from '@platform/ui/BasePanelScene';
 
 export class LeaderboardScene extends BasePanelScene {
   private panel?: LeaderboardPanel;

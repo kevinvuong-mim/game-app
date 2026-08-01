@@ -35,9 +35,6 @@ export interface PlatformStore extends PlatformState {
   setMissions: (missions: PlatformState['missions']['missions']) => void;
   updateMissionsState: (update: Partial<PlatformState['missions']>) => void;
 
-  // Daily rewards
-  setDailyRewardState: (state: Partial<PlatformState['dailyRewards']>) => void;
-
   // Bulk
   reset: () => void;
   hydrate: (state: Partial<PlatformState>) => void;
@@ -182,8 +179,6 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
       missions: { ...s.missions, ...update },
     })),
 
-  setDailyRewardState: (state) => set((s) => ({ dailyRewards: { ...s.dailyRewards, ...state } })),
-
   hydrate: (state) =>
     set((s) => ({
       ...s,
@@ -204,6 +199,7 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
           ...(state.missions?.missions ?? {}),
         },
       },
+      // Kept only so legacy game-save snapshots can migrate into Preferences once.
       dailyRewards: {
         ...DEFAULT_STATE.dailyRewards,
         ...s.dailyRewards,

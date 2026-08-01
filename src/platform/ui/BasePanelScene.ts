@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { t } from '@platform/ui';
+import { t } from '@platform/modules/i18n/i18n.service';
 import { eventBus } from '@platform/core/events';
 import { createUIButton, UIButtonBackgroundKey } from '@platform/ui/button/UIButton';
 
@@ -17,12 +17,20 @@ export interface PanelSceneOptions {
   adContext?: string;
 }
 
+/** Panels that host a GetCoins modal via PanelHeader / CoinBar. */
+export interface GetCoinsOverlayHost {
+  isGetCoinsModalOpen(): boolean;
+  hideGetCoinsModal(): void;
+}
+
 export abstract class BasePanelScene extends Phaser.Scene {
   private readonly options: PanelSceneOptions;
 
   protected returnTo: string;
   private unsubscribers: Array<() => void> = [];
   protected returnData?: Record<string, unknown>;
+  /** Set by subclasses whose panel exposes GetCoins overlay dismiss-on-back. */
+  protected getCoinsOverlay?: GetCoinsOverlayHost;
 
   protected constructor(options: PanelSceneOptions) {
     super({ key: options.sceneKey });
@@ -91,6 +99,10 @@ export abstract class BasePanelScene extends Phaser.Scene {
 
   /** Override to intercept hardware/system back (e.g. dismiss a modal first). */
   protected handleAppBack(): void {
+    if (this.getCoinsOverlay?.isGetCoinsModalOpen()) {
+      this.getCoinsOverlay.hideGetCoinsModal();
+      return;
+    }
     this.goBack();
   }
 

@@ -1,4 +1,4 @@
-import { BasePanelScene } from './BasePanelScene';
+import { BasePanelScene } from '@platform/ui/BasePanelScene';
 import { SettingsPanel } from '@platform/ui';
 
 export class SettingsScene extends BasePanelScene {

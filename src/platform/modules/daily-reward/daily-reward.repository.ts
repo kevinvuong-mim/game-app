@@ -38,17 +38,6 @@ export class DailyRewardRepository {
     };
   }
 
-  toStoreState(model: DailyRewardModel): DailyRewardState {
-    return {
-      version: model.version,
-      currentDay: model.currentDay,
-      lastClaimDate: model.lastClaimDate,
-      timeManipulated: model.timeManipulated,
-      lastClaimWallClock: model.lastClaimWallClock,
-      lastSessionTimestamp: model.lastSessionTimestamp,
-    };
-  }
-
   private async readModel(key: string): Promise<DailyRewardModel | null> {
     const { value } = await Preferences.get({ key });
     if (!value) return null;

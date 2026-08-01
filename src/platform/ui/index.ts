@@ -1,10 +1,11 @@
 export * from './types';
 export { toast } from './toast/ToastManager';
-export { shareService } from '@platform/modules/share';
 export { t, i18n } from '@platform/modules/i18n/i18n.service';
-export { getHighScore } from './progress';
-export { canClaimDailyReward } from './dailyReward';
-export { getClaimableMissionCount } from './missionsStatus';
+/** Game-facing facades — game layer imports these via `@platform/ui`, not `@platform/modules`. */
+export { shop } from '@platform/modules/shop';
+export { shareService } from '@platform/modules/share';
+export { rateService } from '@platform/modules/rate';
+export { gameSync } from '@platform/modules/game-sync';
 export { ShopPanel } from './shop/ShopPanel';
 export { SettingsPanel } from './settings/SettingsPanel';
 export { MissionsPanel } from './missions/MissionsPanel';
@@ -13,6 +14,7 @@ export { LeaderboardPanel } from './leaderboard/LeaderboardPanel';
 export { LegalPanel } from './legal/LegalPanel';
 export type { LegalTab } from './legal/LegalPanel';
 export { HowToPlayPanel } from './how-to-play/HowToPlayPanel';
+export type { HowToPlayStepConfig } from './how-to-play/HowToPlayPanel';
 export { RateAppModal } from './rate/RateAppModal';
-export { rateService } from '@platform/modules/rate';
-export { gameSync } from '@platform/modules/game-sync';
+export { BasePanelScene } from './BasePanelScene';
+export type { PanelSceneData, PanelSceneOptions, GetCoinsOverlayHost } from './BasePanelScene';

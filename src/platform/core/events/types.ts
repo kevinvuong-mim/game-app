@@ -1,6 +1,8 @@
 /**
- * Platform event map. Games emit gameplay events only.
- * App modules subscribe and react.
+ * Platform event map.
+ *
+ * Contract: game emits gameplay; controllers handle commands (*:request → *:result);
+ * services emit domain facts (e.g. daily:claim, mission:complete).
  */
 import type {
   IapPurchaseFailedPayload,
@@ -49,6 +51,12 @@ export interface PlatformEventMap {
   'ad:show:request': { placement: string };
   'ad:context:change': { context: string };
   'mission:complete': { missionId: string };
+  'mission:claim:request': { missionId: string };
+  'mission:claim:result': {
+    missionId: string;
+    success: boolean;
+    message?: string;
+  };
   'ad:reward:request': { placement: string };
   'ad:reward:result': {
     message?: string;

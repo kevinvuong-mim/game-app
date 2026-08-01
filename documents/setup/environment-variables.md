@@ -4,7 +4,7 @@
 
 Tài liệu này mô tả các biến môi trường runtime của `fruloop`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
 
-`src/game/config.ts` là nơi khai báo game identity: `id` và `replaySecret` đọc từ `.env` (`VITE_GAME_ID`, `VITE_REPLAY_SECRET`); `name`, `width`, `height`, `version` chỉnh trực tiếp trong file.
+`src/game/config.ts` khai báo display identity: `id` từ `VITE_GAME_ID`; `name`, `width`, `height`, `version`, `physics` chỉnh trong file. **`VITE_REPLAY_SECRET` chỉ vào RuntimeConfig** (`createConfig()` / `getConfig().replaySecret`) — không nhân đôi trên `gameConfig`.
 
 ---
 

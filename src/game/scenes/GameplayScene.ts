@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 
-import { gameConfig } from '@game/config';
 import { eventBus } from '@platform/core/events';
-import { getHighScore } from '@platform/ui';
+import { gameConfig } from '@game/config';
+import { getHighScore } from '@platform/ui/progress';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 import { randomSpawnLevel } from '@game/fruits';
 import { GameplayHUD } from '@game/ui/GameplayHUD';
