@@ -8,6 +8,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** Must match `apiUrl` presets in `src/platform/core/config/index.ts`. */
 const API_URL = 'https://game-api-s5kn.onrender.com/api';
 
+/** Google's official sample publisher — never ship these in store builds. */
+const GOOGLE_TEST_PUBLISHER = 'ca-app-pub-3940256099942544';
+
 function readGameIdFromEnv() {
   const gameId = process.env.VITE_GAME_ID?.trim();
   if (!gameId) {
@@ -15,6 +18,26 @@ function readGameIdFromEnv() {
   }
 
   return gameId;
+}
+
+function env(name) {
+  return process.env[name]?.trim() ?? '';
+}
+
+function requireNonEmpty(name) {
+  const value = env(name);
+  if (!value) {
+    throw new Error(`Release build requires ${name}.`);
+  }
+  return value;
+}
+
+function assertNotGoogleTestAdId(name, value) {
+  if (value.includes(GOOGLE_TEST_PUBLISHER)) {
+    throw new Error(
+      `Release build refuses Google sample/test AdMob id in ${name}. Use your real AdMob ids.`
+    );
+  }
 }
 
 async function verifyApiGame(apiUrl, gameId) {
@@ -33,6 +56,51 @@ async function verifyApiGame(apiUrl, gameId) {
   }
 }
 
+function assertReleaseIapSafe(iapProvider) {
+  if (iapProvider === 'mock') {
+    throw new Error(
+      'Release build refuses VITE_IAP_PROVIDER=mock. Set revenuecat (+ API keys) for store builds.'
+    );
+  }
+
+  if (iapProvider !== 'revenuecat') {
+    throw new Error(
+      `Release build requires VITE_IAP_PROVIDER=revenuecat (got "${iapProvider}").`
+    );
+  }
+
+  requireNonEmpty('VITE_REVENUECAT_IOS_API_KEY');
+  requireNonEmpty('VITE_REVENUECAT_ANDROID_API_KEY');
+}
+
+function assertReleaseAdsSafe(adsProvider) {
+  if (adsProvider === 'mock') {
+    throw new Error(
+      'Release build refuses VITE_ADS_PROVIDER=mock. Set admob (+ app/unit ids) for store builds.'
+    );
+  }
+
+  if (adsProvider !== 'admob') {
+    throw new Error(`Release build requires VITE_ADS_PROVIDER=admob (got "${adsProvider}").`);
+  }
+
+  const admobVars = [
+    'VITE_ADMOB_IOS_APP_ID',
+    'VITE_ADMOB_ANDROID_APP_ID',
+    'VITE_ADMOB_IOS_BANNER_ID',
+    'VITE_ADMOB_ANDROID_BANNER_ID',
+    'VITE_ADMOB_IOS_REWARDED_ID',
+    'VITE_ADMOB_ANDROID_REWARDED_ID',
+    'VITE_ADMOB_IOS_INTERSTITIAL_ID',
+    'VITE_ADMOB_ANDROID_INTERSTITIAL_ID',
+  ];
+
+  for (const name of admobVars) {
+    const value = requireNonEmpty(name);
+    assertNotGoogleTestAdId(name, value);
+  }
+}
+
 function assertReleaseMonetizationSafe() {
   const appEnv = process.env.VITE_APP_ENV ?? 'dev';
   const enforce =
@@ -42,26 +110,17 @@ function assertReleaseMonetizationSafe() {
     return;
   }
 
-  const iapProvider = process.env.VITE_IAP_PROVIDER ?? 'mock';
-  const adsProvider = process.env.VITE_ADS_PROVIDER ?? 'mock';
-
-  if (iapProvider === 'mock') {
-    throw new Error(
-      'Release build refuses VITE_IAP_PROVIDER=mock. Set revenuecat (+ API keys) for store builds.'
-    );
-  }
-
-  if (adsProvider === 'mock') {
-    throw new Error(
-      'Release build refuses VITE_ADS_PROVIDER=mock. Set admob (+ app ids) for store builds.'
-    );
-  }
-
   if (appEnv !== 'production') {
     throw new Error(
       'ENFORCE_RELEASE_MONETIZATION=true requires VITE_APP_ENV=production (got "' + appEnv + '").'
     );
   }
+
+  const iapProvider = process.env.VITE_IAP_PROVIDER ?? 'mock';
+  const adsProvider = process.env.VITE_ADS_PROVIDER ?? 'mock';
+
+  assertReleaseIapSafe(iapProvider);
+  assertReleaseAdsSafe(adsProvider);
 
   console.log('Release monetization providers OK:', { iapProvider, adsProvider, appEnv });
 }

@@ -15,13 +15,29 @@ const SWIFT_FILE = 'FullscreenBridgeViewController.swift';
 const GOOGLE_SERVICE_INFO_FILE = 'GoogleService-Info.plist';
 const GOOGLE_SERVICE_INFO_REF_ID = 'F5LL5CRN4FED79650016851F';
 const GOOGLE_SERVICE_INFO_BUILD_FILE_ID = 'F5LL5CRN5FED79650016851F';
+/** Dev-only fallback when VITE_ADS_PROVIDER=admob but no real app id is set. */
 const GOOGLE_SAMPLE_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
 const ENTITLEMENTS_BUILD_SETTING = 'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;';
 
+function isProductionAppEnv() {
+  return (process.env.VITE_APP_ENV ?? 'dev') === 'production';
+}
+
 function resolveAdMobAppId() {
   const configured = process.env.VITE_ADMOB_IOS_APP_ID?.trim();
-  if (configured) return configured;
-  if (process.env.VITE_ADS_PROVIDER === 'admob') return GOOGLE_SAMPLE_IOS_APP_ID;
+  if (configured) {
+    if (isProductionAppEnv() && configured.includes('ca-app-pub-3940256099942544')) {
+      console.error(
+        '[ios-native] Production refuses Google sample AdMob app id in VITE_ADMOB_IOS_APP_ID'
+      );
+      process.exit(1);
+    }
+    return configured;
+  }
+  // Never inject Google sample ids into store / production packaging.
+  if (process.env.VITE_ADS_PROVIDER === 'admob' && !isProductionAppEnv()) {
+    return GOOGLE_SAMPLE_IOS_APP_ID;
+  }
   return '';
 }
 
