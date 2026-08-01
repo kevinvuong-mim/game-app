@@ -8,6 +8,18 @@ import { ConsoleAnalyticsProvider, FirebaseAnalyticsProvider } from '@platform/c
 
 const { ads, config, analytics } = services;
 
+/**
+ * Native shell + Vite production bundle. Block mock monetization even when
+ * `VITE_APP_ENV=dev` was left in the release env by mistake.
+ */
+function isNativeProductionBundle(): boolean {
+  return Capacitor.isNativePlatform() && import.meta.env.PROD;
+}
+
+function mustBlockMockMonetization(): boolean {
+  return isNativeProductionBundle() || getEnvironment() === 'production';
+}
+
 /** Registers the ads provider based on runtime config and platform. */
 export function registerAdsProvider(): void {
   const runtime = config();
@@ -23,7 +35,7 @@ export function registerAdsProvider(): void {
   }
 
   // Never ship mock ads on production native — rewarded would grant without real ads.
-  if (isNative && getEnvironment() === 'production') {
+  if (isNative && mustBlockMockMonetization()) {
     logger.error('[Ads] Mock ads blocked in production native — disabling ads');
     ads.setEnabled(false);
     return;
@@ -72,8 +84,14 @@ export function registerIapProvider(appUserId?: string): void {
   }
 
   // Never ship mock IAP on production native builds — purchases would succeed for free.
-  if (Capacitor.isNativePlatform() && getEnvironment() === 'production') {
-    logger.error('[IAP] Mock IAP blocked in production native — disabling IAP');
+  if (Capacitor.isNativePlatform() && mustBlockMockMonetization()) {
+    if (runtime.iap.provider === 'revenuecat') {
+      logger.error(
+        '[IAP] RevenueCat selected but API key missing — disabling IAP (refusing mock fallback)'
+      );
+    } else {
+      logger.error('[IAP] Mock IAP blocked in production native — disabling IAP');
+    }
     iap.setEnabled(false);
     return;
   }

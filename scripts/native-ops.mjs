@@ -54,6 +54,8 @@ function resolveIosPods() {
 }
 
 function build(targetPlatform) {
+  // Fail fast when packaging a production store build with mock IAP/ads.
+  run('npm', ['run', 'game:verify-config']);
   run('npm', ['run', 'build']);
   ensureCapPlatform(targetPlatform);
   run('npm', ['run', 'assets:generate']);

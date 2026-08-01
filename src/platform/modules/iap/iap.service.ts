@@ -178,8 +178,13 @@ class IapService {
     const matched = getProductById(providerPurchase.productId) ?? product;
 
     if (matched.type === 'consumable') {
-      // Grant before recording so a crash mid-fulfillment can still recover via restore.
-      if (await this.storage.hasConsumableTransaction(providerPurchase.transactionId)) {
+      // Claim the transaction id first so a crash after fulfill cannot double-grant
+      // on restore / timeout recovery. A crash between claim and fulfill loses one
+      // grant (acceptable) instead of paying once and receiving coins twice.
+      const claimed = await this.storage.recordConsumableTransaction(
+        providerPurchase.transactionId
+      );
+      if (!claimed) {
         logger.info('[IAP] Consumable transaction already granted', {
           productId: matched.id,
           transactionId: providerPurchase.transactionId,
@@ -191,7 +196,6 @@ class IapService {
         productId: providerPurchase.productId,
         entitlement: matched.entitlement,
       });
-      await this.storage.recordConsumableTransaction(providerPurchase.transactionId);
     } else {
       await this.grantEntitlement(matched.entitlement);
       this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
@@ -312,20 +316,9 @@ class IapService {
         const product = getProductById(purchase.productId);
         if (!product?.entitlement) continue;
 
+        // Consumables are one-shot grants at purchase time. Store/RevenueCat history
+        // is not "unconsumed stock" — replaying it on Restore reinstalls free coins.
         if (product.type === 'consumable') {
-          if (await this.storage.hasConsumableTransaction(purchase.transactionId)) {
-            continue;
-          }
-          this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
-            productId: purchase.productId,
-            entitlement: product.entitlement,
-          });
-          await this.storage.recordConsumableTransaction(purchase.transactionId);
-          restoredEntitlements.push(product.entitlement);
-          logger.info('[IAP] Restored unconsumed consumable', {
-            productId: product.id,
-            transactionId: purchase.transactionId,
-          });
           continue;
         }
 

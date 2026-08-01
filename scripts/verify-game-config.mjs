@@ -33,6 +33,39 @@ async function verifyApiGame(apiUrl, gameId) {
   }
 }
 
+function assertReleaseMonetizationSafe() {
+  const appEnv = process.env.VITE_APP_ENV ?? 'dev';
+  const enforce =
+    appEnv === 'production' || process.env.ENFORCE_RELEASE_MONETIZATION === 'true';
+
+  if (!enforce) {
+    return;
+  }
+
+  const iapProvider = process.env.VITE_IAP_PROVIDER ?? 'mock';
+  const adsProvider = process.env.VITE_ADS_PROVIDER ?? 'mock';
+
+  if (iapProvider === 'mock') {
+    throw new Error(
+      'Release build refuses VITE_IAP_PROVIDER=mock. Set revenuecat (+ API keys) for store builds.'
+    );
+  }
+
+  if (adsProvider === 'mock') {
+    throw new Error(
+      'Release build refuses VITE_ADS_PROVIDER=mock. Set admob (+ app ids) for store builds.'
+    );
+  }
+
+  if (appEnv !== 'production') {
+    throw new Error(
+      'ENFORCE_RELEASE_MONETIZATION=true requires VITE_APP_ENV=production (got "' + appEnv + '").'
+    );
+  }
+
+  console.log('Release monetization providers OK:', { iapProvider, adsProvider, appEnv });
+}
+
 async function main() {
   loadEnvFile(root);
   const gameId = readGameIdFromEnv();
@@ -51,8 +84,16 @@ async function main() {
     );
   }
 
+  assertReleaseMonetizationSafe();
+
   if (process.env.SKIP_API_CHECK === 'true') {
     console.log('Skipped backend check because SKIP_API_CHECK=true.');
+    return;
+  }
+
+  // Local packaging with mock providers should not require network.
+  if ((process.env.VITE_APP_ENV ?? 'dev') !== 'production') {
+    console.log('Skipped backend check (VITE_APP_ENV is not production).');
     return;
   }
 

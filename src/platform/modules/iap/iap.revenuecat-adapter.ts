@@ -84,7 +84,11 @@ export class RevenueCatAdapter implements IAPProvider {
 
     try {
       const { customerInfo } = await Purchases.restorePurchases();
-      return mapCustomerInfoToPurchases(customerInfo);
+      // Consumable history is not restorable grant stock — only non-consumables.
+      return mapCustomerInfoToPurchases(customerInfo).filter((purchase) => {
+        const product = getProductById(purchase.productId);
+        return product != null && product.type !== 'consumable';
+      });
     } catch (error) {
       throw mapRevenueCatError(error);
     }

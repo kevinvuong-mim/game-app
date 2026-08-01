@@ -9,9 +9,10 @@ const RUN_KEY = 'gameplay-run';
  */
 class GameRunService {
   private dirty = false;
-  private writing = false;
   private hydrated = false;
   private cache: unknown = null;
+  /** Coalesce concurrent flushes; every `await flush()` waits until durable write finishes. */
+  private writeChain: Promise<void> = Promise.resolve();
 
   async load(): Promise<void> {
     const durable = storage.getDurableProviderType();
@@ -41,25 +42,21 @@ class GameRunService {
       return;
     }
 
-    if (this.writing) {
-      this.dirty = true;
-      return;
-    }
+    this.dirty = true;
+    this.writeChain = this.writeChain.then(() => this.flushDirty());
+    await this.writeChain;
+  }
 
-    this.writing = true;
-    try {
-      do {
-        this.dirty = false;
-        const durable = storage.getDurableProviderType();
-        if (this.cache == null) {
-          await storage.remove(RUN_KEY, durable);
-        } else {
-          await storage.save(RUN_KEY, this.cache, durable);
-        }
-      } while (this.dirty);
+  private async flushDirty(): Promise<void> {
+    while (this.dirty) {
+      this.dirty = false;
+      const durable = storage.getDurableProviderType();
+      if (this.cache == null) {
+        await storage.remove(RUN_KEY, durable);
+      } else {
+        await storage.save(RUN_KEY, this.cache, durable);
+      }
       logger.debug('[GameRun] Flushed', { hasRun: this.cache != null });
-    } finally {
-      this.writing = false;
     }
   }
 }
