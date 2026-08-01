@@ -149,25 +149,31 @@ export class MissionService {
       store.addCoins(def.reward.amount);
     }
 
-    store.claimMission(id);
-    store.updateMissionsState({ lastClaimWallClock: now() });
+    const claimedAt = now();
+    let nextMission: MissionProgress = {
+      ...mission,
+      status: 'claimed',
+      claimedAt,
+    };
 
     if ((def?.resetPolicy ?? 'never') === 'onClaim') {
-      const { missions: all, setMissions } = usePlatformStore.getState();
-      const current = all.missions[id];
-      if (current) {
-        setMissions({
-          ...all.missions,
-          [id]: {
-            ...current,
-            progress: 0,
-            status: 'active',
-            completedAt: undefined,
-            claimedAt: undefined,
-          },
-        });
-        eventBus.emit('mission:update', { missionId: id, progress: 0 });
-      }
+      nextMission = {
+        ...nextMission,
+        progress: 0,
+        status: 'active',
+        completedAt: undefined,
+        claimedAt: undefined,
+      };
+    }
+
+    store.setMissions({
+      ...store.missions.missions,
+      [id]: nextMission,
+    });
+    store.updateMissionsState({ lastClaimWallClock: claimedAt });
+
+    if (nextMission.status === 'active') {
+      eventBus.emit('mission:update', { missionId: id, progress: 0 });
     }
 
     logger.info('mission_claimed', { missionId: id });
@@ -258,7 +264,7 @@ export class MissionService {
     const mission = usePlatformStore.getState().missions.missions[missionId];
     if (!mission || mission.status !== 'active') return false;
 
-    usePlatformStore.getState().updateMissionProgress(missionId, mission.progress + amount);
+    this.writeMissionProgress(missionId, mission.progress + amount);
     this.checkCompletion(missionId);
     return true;
   }
@@ -269,17 +275,40 @@ export class MissionService {
     if (!mission || mission.status !== 'active') return false;
     if (value <= mission.progress) return false;
 
-    usePlatformStore.getState().updateMissionProgress(missionId, value);
+    this.writeMissionProgress(missionId, value);
     this.checkCompletion(missionId);
     return true;
   }
 
+  private writeMissionProgress(missionId: string, progress: number): void {
+    const store = usePlatformStore.getState();
+    const mission = store.missions.missions[missionId];
+    if (!mission || mission.status !== 'active') return;
+
+    store.setMissions({
+      ...store.missions.missions,
+      [missionId]: {
+        ...mission,
+        progress: Math.min(progress, mission.target),
+      },
+    });
+  }
+
   private checkCompletion(missionId: string): void {
-    const mission = usePlatformStore.getState().missions.missions[missionId];
+    const store = usePlatformStore.getState();
+    const mission = store.missions.missions[missionId];
     if (!mission) return;
 
     if (mission.progress >= mission.target && mission.status === 'active') {
-      usePlatformStore.getState().completeMission(missionId);
+      store.setMissions({
+        ...store.missions.missions,
+        [missionId]: {
+          ...mission,
+          progress: mission.target,
+          status: 'completed',
+          completedAt: Date.now(),
+        },
+      });
       eventBus.emit('mission:complete', { missionId });
       logger.info('mission_completed', { missionId });
     }

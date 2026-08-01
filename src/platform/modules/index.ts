@@ -11,3 +11,4 @@ export { missions, missionController } from './missions';
 export { notificationController } from './notifications';
 export { leaderboard, leaderboardController } from './leaderboard';
 export { dailyRewards, dailyRewardController } from './daily-reward';
+export { shop, shopController } from './shop';

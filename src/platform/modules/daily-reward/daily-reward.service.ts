@@ -26,17 +26,7 @@ export class DailyRewardService {
   ) {}
 
   async init(): Promise<void> {
-    const hasPrefs = await this.repository.hasPersistedModel();
-    if (hasPrefs) {
-      this.model = await this.repository.load();
-    } else {
-      // One-time migration from legacy game-save snapshot, then Preferences is sole durable store.
-      const migrated = this.repository.migrateFromStoreState(
-        usePlatformStore.getState().dailyRewards
-      );
-      this.model = migrated ?? (await this.repository.load());
-    }
-
+    this.model = await this.repository.load();
     this.model = applyStreakGapReset(this.model);
 
     if (this.detectClockSkew()) {

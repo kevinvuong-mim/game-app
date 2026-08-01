@@ -1,5 +1,13 @@
 import { t } from '@platform/modules/i18n/i18n.service';
-import { ads, type AdsRemoteConfig, DEFAULT_REMOTE_CONFIG } from '@platform/core/advertising';
+import {
+  ads,
+  type AdContext,
+  type AdPlacement,
+  type AdsRemoteConfig,
+  BANNER_HIDDEN_CONTEXTS,
+  CONTEXT_TO_BANNER_PLACEMENT,
+  DEFAULT_REMOTE_CONFIG,
+} from '@platform/core/advertising';
 
 interface RewardRequestResult {
   message?: string;
@@ -14,7 +22,7 @@ class AdsModuleService {
     ads.setRemoteConfig(this.runtimeConfig);
   }
 
-  async showPlacement(placement: string): Promise<{ shown: boolean; error?: string }> {
+  async showPlacement(placement: AdPlacement | string): Promise<{ shown: boolean; error?: string }> {
     const format = ads.resolveFormat(placement);
     if (!format) {
       return { shown: false, error: 'Unknown placement' };
@@ -33,25 +41,20 @@ class AdsModuleService {
     }
   }
 
-  async applyBannerForContext(context: string): Promise<void> {
-    if (context === 'GAMEPLAY' || context === 'CUTSCENE' || context === 'COMBAT') {
+  async applyBannerForContext(context: AdContext | string): Promise<void> {
+    const typedContext = context as AdContext;
+    if (BANNER_HIDDEN_CONTEXTS.has(typedContext)) {
       await ads.hideBanner();
       return;
     }
 
-    const contextToPlacement: Record<string, string> = {
-      HOME: 'HOME',
-      SHOP: 'SHOP',
-      LEADERBOARD: 'LEADERBOARD',
-    };
-
-    const placement = contextToPlacement[context];
+    const placement = CONTEXT_TO_BANNER_PLACEMENT[typedContext];
     if (placement && ads.resolveFormat(placement) === 'banner') {
       await ads.showBanner(placement);
     }
   }
 
-  async requestReward(placement: string): Promise<RewardRequestResult> {
+  async requestReward(placement: AdPlacement | string): Promise<RewardRequestResult> {
     if (!ads.isOnline()) {
       return {
         success: false,
@@ -63,7 +66,7 @@ class AdsModuleService {
       return { success: false, message: t('ads.rewardUnavailable') };
     }
 
-    const reward = this.runtimeConfig.rewards[placement];
+    const reward = this.runtimeConfig.rewards[placement as AdPlacement];
     if (!reward) {
       return {
         success: false,

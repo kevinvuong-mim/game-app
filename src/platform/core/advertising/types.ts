@@ -1,5 +1,9 @@
 export type AdFormat = 'banner' | 'rewarded' | 'interstitial';
 
+export type AdPlacement = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'MISSION_WATCH' | 'GAME_OVER';
+
+export type AdContext = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'GAMEPLAY' | 'GAME_OVER';
+
 export type AdState =
   'IDLE' | 'ERROR' | 'READY' | 'LOADING' | 'SHOWING' | 'COMPLETED' | 'DESTROYED';
 
@@ -54,8 +58,8 @@ export interface AdsRemoteConfig {
     interstitial: number;
   };
   interstitialEnabled: boolean;
-  rewards: Record<string, AdReward>;
-  placements: Record<string, AdFormat>;
+  rewards: Partial<Record<AdPlacement, AdReward>>;
+  placements: Record<AdPlacement, AdFormat>;
 }
 
 export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
@@ -79,4 +83,18 @@ export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
   },
 };
 
-export const BANNER_ALLOWED_PLACEMENTS = new Set(['HOME', 'LEADERBOARD', 'SHOP']);
+export const BANNER_ALLOWED_PLACEMENTS = new Set<AdPlacement>(
+  (Object.entries(DEFAULT_REMOTE_CONFIG.placements) as Array<[AdPlacement, AdFormat]>)
+    .filter(([, format]) => format === 'banner')
+    .map(([placement]) => placement)
+);
+
+/** Contexts that hide banners (gameplay surfaces). */
+export const BANNER_HIDDEN_CONTEXTS = new Set<AdContext>(['GAMEPLAY']);
+
+/** Context → banner placement (identity map for banner contexts). */
+export const CONTEXT_TO_BANNER_PLACEMENT: Partial<Record<AdContext, AdPlacement>> = {
+  HOME: 'HOME',
+  SHOP: 'SHOP',
+  LEADERBOARD: 'LEADERBOARD',
+};

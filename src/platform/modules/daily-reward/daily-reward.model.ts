@@ -1,7 +1,10 @@
 import { getLocalDateKey } from '@platform/core/utils';
 
 export const DAILY_REWARD_MODEL_VERSION = 2;
-export const DAILY_REWARD_STORAGE_KEY = 'daily-reward-v2';
+/** Durable StorageService key (becomes `gsk:daily-reward` on preferences/localStorage providers). */
+export const DAILY_REWARD_STORAGE_KEY = 'daily-reward';
+/** Pre-StorageService Capacitor Preferences key (no `gsk:` prefix). */
+export const DAILY_REWARD_LEGACY_PREFERENCES_KEY = 'daily-reward-v2';
 
 export interface DailyRewardModel {
   version: number;

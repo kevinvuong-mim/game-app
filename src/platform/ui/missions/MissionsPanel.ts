@@ -17,6 +17,7 @@ import { formatNumber } from '@platform/core/utils';
 import type { MissionProgress } from '@platform/core/state';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import { missions } from '@platform/modules/missions/mission.service';
+import { DeferredListRebuild } from '../panel/deferredListRebuild';
 
 const ACTION_BTN_WIDTH = 88;
 const REWARD_ICON_SIZE = 36;
@@ -46,6 +47,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
   private listContainer?: Phaser.GameObjects.Container;
   /** One-shot missions claimed this visit — keep showing "Claimed" until leave. */
   private readonly retainedClaimedIds = new Set<string>();
+  private readonly listRebuild = new DeferredListRebuild(() => this.rebuildMissions());
 
   constructor(
     scene: Phaser.Scene,
@@ -59,7 +61,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     this.onNavigate = options.onNavigate;
     scene.add.existing(this);
     this.build();
-    this.renderMissions();
+    this.listRebuild.runNow();
     this.bindEvents();
   }
 
@@ -141,6 +143,10 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
   }
 
   private renderMissions(): void {
+    this.listRebuild.schedule();
+  }
+
+  private rebuildMissions(): void {
     if (!this.listContainer) return;
     this.listContainer.removeAll(true);
 

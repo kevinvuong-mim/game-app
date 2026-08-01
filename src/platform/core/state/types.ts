@@ -49,15 +49,6 @@ interface MissionsState {
   lastSessionTimestamp: number;
 }
 
-export interface DailyRewardState {
-  version: number;
-  currentDay: number;
-  timeManipulated: boolean;
-  lastClaimWallClock: number;
-  lastClaimDate: string | null;
-  lastSessionTimestamp: number;
-}
-
 export interface PlatformState {
   user: UserState;
   currency: CurrencyState;
@@ -65,11 +56,6 @@ export interface PlatformState {
   missions: MissionsState;
   settings: SettingsState;
   inventory: InventoryState;
-  /**
-   * Legacy snapshot field — Preferences (`daily-reward-v2`) is SoT.
-   * Kept on PlatformState only so hydrate can migrate old game-saves once.
-   */
-  dailyRewards: DailyRewardState;
 }
 
 export const DEFAULT_STATE: PlatformState = {
@@ -94,14 +80,6 @@ export const DEFAULT_STATE: PlatformState = {
     displayName: 'Player',
     createdAt: Date.now(),
     lastLoginAt: Date.now(),
-  },
-  dailyRewards: {
-    version: 2,
-    currentDay: 1,
-    lastClaimDate: null,
-    lastClaimWallClock: 0,
-    timeManipulated: false,
-    lastSessionTimestamp: 0,
   },
   settings: {
     language: 'en',

@@ -16,6 +16,7 @@ import {
   dailyRewardController,
   leaderboardController,
   notificationController,
+  shopController,
 } from '@platform/modules';
 import {
   registerAdsProvider,
@@ -123,6 +124,7 @@ class App {
       bindAdsController(events),
       bindIapController(events),
       missionController.bind(events),
+      shopController.bind(events),
       notificationController.bind(events),
       deepLinkController.bind(events)
     );

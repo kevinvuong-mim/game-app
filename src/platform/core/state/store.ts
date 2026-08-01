@@ -28,10 +28,7 @@ export interface PlatformStore extends PlatformState {
   // Settings
   updateSettings: (settings: Partial<PlatformState['settings']>) => void;
 
-  // Missions
-  claimMission: (id: string) => void;
-  completeMission: (id: string) => void;
-  updateMissionProgress: (id: string, progress: number) => void;
+  // Missions (snapshot only — transitions live in MissionService)
   setMissions: (missions: PlatformState['missions']['missions']) => void;
   updateMissionsState: (update: Partial<PlatformState['missions']>) => void;
 
@@ -118,60 +115,6 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
 
   updateSettings: (settings) => set((s) => ({ settings: { ...s.settings, ...settings } })),
 
-  updateMissionProgress: (id, progress) =>
-    set((s) => {
-      const mission = s.missions.missions[id];
-      if (!mission || mission.status !== 'active') return s;
-      const capped = Math.min(progress, mission.target);
-      return {
-        missions: {
-          ...s.missions,
-          missions: {
-            ...s.missions.missions,
-            [id]: {
-              ...mission,
-              progress: capped,
-            },
-          },
-        },
-      };
-    }),
-
-  completeMission: (id) =>
-    set((s) => {
-      const mission = s.missions.missions[id];
-      if (!mission || mission.status !== 'active') return s;
-      return {
-        missions: {
-          ...s.missions,
-          missions: {
-            ...s.missions.missions,
-            [id]: {
-              ...mission,
-              progress: mission.target,
-              status: 'completed',
-              completedAt: Date.now(),
-            },
-          },
-        },
-      };
-    }),
-
-  claimMission: (id) =>
-    set((s) => {
-      const mission = s.missions.missions[id];
-      if (!mission || mission.status !== 'completed') return s;
-      return {
-        missions: {
-          ...s.missions,
-          missions: {
-            ...s.missions.missions,
-            [id]: { ...mission, status: 'claimed', claimedAt: Date.now() },
-          },
-        },
-      };
-    }),
-
   setMissions: (missions) => set((s) => ({ missions: { ...s.missions, missions } })),
 
   updateMissionsState: (update) =>
@@ -204,12 +147,6 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
             ...s.missions.missions,
             ...(state.missions?.missions ?? {}),
           },
-        },
-        // Kept only so legacy game-save snapshots can migrate into Preferences once.
-        dailyRewards: {
-          ...DEFAULT_STATE.dailyRewards,
-          ...s.dailyRewards,
-          ...(state.dailyRewards ?? {}),
         },
       };
     }),

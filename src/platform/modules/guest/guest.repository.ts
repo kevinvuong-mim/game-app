@@ -12,17 +12,25 @@ import { getConfig } from '@platform/core/config';
 import type { ApiEnvelope } from '@platform/core/api';
 import type { StorageProviderType } from '@platform/core/storage';
 import { apiClient, unwrapSuccessEnvelope } from '@platform/core/api';
+import { logger } from '@platform/core/error';
 
 function guestStorageProvider(): StorageProviderType {
-  return Capacitor.isNativePlatform() ? 'preferences' : 'localStorage';
+  return storage.getDurableProviderType();
 }
 
 /**
  * Owns guest credentials persistence and remote guest API calls.
+ * Uses the same durable provider as game-save (Preferences native / IndexedDB web).
  */
 export class GuestRepository {
   async loadCredentials(): Promise<GuestCredentials | null> {
-    const value = await storage.load<GuestCredentials>(GUEST_STORAGE_KEY, guestStorageProvider());
+    const durable = guestStorageProvider();
+    let value = await storage.load<GuestCredentials>(GUEST_STORAGE_KEY, durable);
+
+    if (!value && !Capacitor.isNativePlatform()) {
+      value = await this.migrateFromLegacyLocalStorage(GUEST_STORAGE_KEY);
+    }
+
     return isValidGuestCredentials(value) ? value : null;
   }
 
@@ -32,10 +40,19 @@ export class GuestRepository {
 
   async clearCredentials(): Promise<void> {
     await storage.remove(GUEST_STORAGE_KEY, guestStorageProvider());
+    if (!Capacitor.isNativePlatform()) {
+      await storage.remove(GUEST_STORAGE_KEY, 'localStorage');
+    }
   }
 
   async loadPendingName(): Promise<string | null> {
-    const value = await storage.load<string>(GUEST_PENDING_NAME_KEY, guestStorageProvider());
+    const durable = guestStorageProvider();
+    let value = await storage.load<string>(GUEST_PENDING_NAME_KEY, durable);
+
+    if ((value === null || value === undefined) && !Capacitor.isNativePlatform()) {
+      value = await this.migrateFromLegacyLocalStorage(GUEST_PENDING_NAME_KEY);
+    }
+
     return typeof value === 'string' && value.trim() ? value.trim() : null;
   }
 
@@ -45,6 +62,9 @@ export class GuestRepository {
 
   async clearPendingName(): Promise<void> {
     await storage.remove(GUEST_PENDING_NAME_KEY, guestStorageProvider());
+    if (!Capacitor.isNativePlatform()) {
+      await storage.remove(GUEST_PENDING_NAME_KEY, 'localStorage');
+    }
   }
 
   async initGuest(): Promise<InitGuestPayload> {
@@ -68,6 +88,16 @@ export class GuestRepository {
       name,
     });
     return unwrapSuccessEnvelope(envelope);
+  }
+
+  private async migrateFromLegacyLocalStorage<T>(key: string): Promise<T | null> {
+    const legacy = await storage.load<T>(key, 'localStorage');
+    if (legacy === null || legacy === undefined) return null;
+
+    await storage.save(key, legacy, guestStorageProvider());
+    await storage.remove(key, 'localStorage');
+    logger.info(`[Guest] Migrated ${key} from localStorage to durable storage`);
+    return legacy;
   }
 }
 

@@ -17,6 +17,8 @@ import { t } from '@platform/modules/i18n/i18n.service';
 import { usePlatformStore } from '@platform/core/state';
 import { drawRoundedRect, measureTextWidth } from '../panel/graphics';
 import { shop, type ShopItem } from '@platform/modules/shop';
+import { eventBus } from '@platform/core/events';
+import { DeferredListRebuild } from '../panel/deferredListRebuild';
 
 const ITEM_ROW_HEIGHT = 146;
 
@@ -39,6 +41,8 @@ export class ShopPanel extends Phaser.GameObjects.Container {
   private listContainer?: Phaser.GameObjects.Container;
   private priceButtons: UIButton[] = [];
   private purchaseUiLocked = false;
+  private readonly unsubscribers: Array<() => void> = [];
+  private readonly listRebuild = new DeferredListRebuild(() => this.rebuildItems());
 
   constructor(
     scene: Phaser.Scene,
@@ -52,10 +56,26 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     this.onNavigate = options.onNavigate;
     scene.add.existing(this);
     this.build();
-    this.renderItems();
+    this.listRebuild.runNow();
+    this.unsubscribers.push(
+      eventBus.on('shop:purchase:result', ({ success }) => {
+        if (!this.purchaseUiLocked) return;
+
+        if (!success) {
+          toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
+          this.setPriceButtonsLocked(false);
+          return;
+        }
+
+        this.setPriceButtonsLocked(false);
+        this.renderItems();
+      })
+    );
   }
 
   destroy(fromScene?: boolean): void {
+    for (const unsub of this.unsubscribers) unsub();
+    this.unsubscribers.length = 0;
     this.header = undefined;
     super.destroy(fromScene);
   }
@@ -106,34 +126,6 @@ export class ShopPanel extends Phaser.GameObjects.Container {
       panelTop + PANEL_LIST_PADDING + ITEM_ROW_HEIGHT * 0.4
     );
     this.add(this.listContainer);
-  }
-
-  private renderItems(): void {
-    if (!this.listContainer) return;
-    this.listContainer.removeAll(true);
-    this.priceButtons = [];
-
-    const { width } = this.scene.cameras.main;
-    const items = this.getBoostItems();
-    const rowWidth = Math.min(width * 0.91, 430);
-
-    items.forEach((item, index) => {
-      const y = index * ITEM_ROW_HEIGHT;
-      this.listContainer!.add(this.createItemRow(item, y, rowWidth));
-
-      if (index < items.length - 1) {
-        this.listContainer!.add(
-          this.scene.add.rectangle(
-            0,
-            y + ITEM_ROW_HEIGHT / 2,
-            rowWidth * 0.92,
-            2,
-            PANEL_BORDER,
-            0.55
-          )
-        );
-      }
-    });
   }
 
   private createItemRow(item: ShopItem, y: number, rowWidth: number): Phaser.GameObjects.Container {
@@ -225,7 +217,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
       },
       disabled: this.purchaseUiLocked || shop.isPurchaseInFlight(),
       onClick: () => {
-        void this.purchaseItem(item);
+        this.purchaseItem(item);
       },
     });
     this.priceButtons.push(button);
@@ -234,6 +226,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
 
   private setPriceButtonsLocked(locked: boolean): void {
     this.purchaseUiLocked = locked;
+    this.listRebuild.setLocked(locked);
     for (const button of this.priceButtons) {
       // setLoading disables hit area; clear loading before re-enabling.
       if (locked) {
@@ -245,7 +238,38 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     }
   }
 
-  private async purchaseItem(item: ShopItem): Promise<void> {
+  private renderItems(): void {
+    this.listRebuild.schedule();
+  }
+
+  private rebuildItems(): void {
+    if (!this.listContainer) return;
+    this.listContainer.removeAll(true);
+    this.priceButtons = [];
+
+    const { width } = this.scene.cameras.main;
+    const items = this.getBoostItems();
+    const rowWidth = Math.min(width * 0.91, 430);
+
+    items.forEach((item, index) => {
+      const y = index * ITEM_ROW_HEIGHT;
+      this.listContainer!.add(this.createItemRow(item, y, rowWidth));
+
+      if (index < items.length - 1) {
+        this.listContainer!.add(
+          this.scene.add.rectangle(
+            0,
+            y + ITEM_ROW_HEIGHT / 2,
+            rowWidth * 0.92,
+            2,
+            PANEL_BORDER,
+            0.55
+          )
+        );
+      }
+    });
+  }
+  private purchaseItem(item: ShopItem): void {
     if (this.purchaseUiLocked || shop.isPurchaseInFlight()) {
       return;
     }
@@ -258,19 +282,6 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     }
 
     this.setPriceButtonsLocked(true);
-    try {
-      const success = await shop.purchase(item.id);
-      if (!success) {
-        toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
-        return;
-      }
-
-      this.purchaseUiLocked = false;
-      this.renderItems();
-    } finally {
-      if (this.purchaseUiLocked) {
-        this.setPriceButtonsLocked(false);
-      }
-    }
+    eventBus.emit('shop:purchase:request', { itemId: item.id });
   }
 }

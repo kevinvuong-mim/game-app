@@ -7,27 +7,37 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 - Catalog: `src/platform/modules/shop/catalog.json` (boosts, remove-ads IAP, coin packs).
 - **Boosts**: mua bằng coins → quantity trong inventory; gameplay skill bar đọc qua `shop` từ `@platform/ui` (`boost_hammer`, …).
 - **Remove ads**: IAP entitlement — client-authoritative trong starter kit (xem README IAP warning).
-- UI: nút mua bị disable + loading trong lúc `purchaseInFlight`; hydrate sanitize coins/inventory từ save.
+- UI: EventBus `shop:purchase:request` / `shop:purchase:result` → `shopController` (cùng pattern daily/missions); nút mua disable + loading khi locked.
+- Hydrate sanitize coins/inventory từ save.
 
 ## Daily reward
 
-- 7-day cycle; **Preferences** key `daily-reward-v2` là source of truth (không ghi vào `game-save`).
+- 7-day cycle; durable StorageService key `daily-reward` (`gsk:daily-reward` trên Preferences) là source of truth (không ghi vào `game-save`).
+- Migrate one-shot từ legacy Preferences `daily-reward-v2` và snapshot cũ trong `game-save` nếu còn.
 - UI: EventBus `daily:progress:request` / `daily:claim:request` → `dailyRewardController`.
 - Anti-tamper: `timeManipulated` sticky lock khi phát hiện tua đồng hồ (lùi, claim-stamp ở tương lai, hoặc wall clock lệch monotonic giữa các check trong session). **Không** tự clear khi clock “nhất quán lại”.
 
 ## Missions
 
-- Definitions: `missions.json`; progress trong Zustand + `game-save`.
+- Definitions: `missions.json`; progress snapshot trong Zustand + `game-save`.
+- **Mọi transition** (progress / complete / claim / onClaim reset) chỉ qua `MissionService` — store chỉ còn `setMissions` / `updateMissionsState`.
 - `resetPolicy`: `'daily'` | `'never'` | `'onClaim'`.
 - Progress: `mission.tracker` ← gameplay events (`score:update`, `ad:reward` với placement `MISSION_WATCH`, …).
-- Claim: EventBus `mission:claim:request` / `mission:claim:result` → `missionController` (cùng pattern daily reward).
-- Clock integrity: shared `ClockIntegritySession` / `detectTimeManipulation` — sticky lock chặn reset/claim khi tua đồng hồ (không auto-clear).
+- Claim: EventBus `mission:claim:request` / `mission:claim:result` → `missionController`.
+- Clock integrity: shared `ClockIntegritySession` / `detectTimeManipulation` — sticky lock (không auto-clear).
 
 ## Ads placements
 
-- Banner: `HOME` / `SHOP` / `LEADERBOARD`
+Typed `AdPlacement` / `AdContext` trong `advertising/types.ts`:
+
+- Banner: `HOME` / `SHOP` / `LEADERBOARD` (derive `BANNER_ALLOWED_PLACEMENTS` từ placements)
 - Rewarded: `MISSION_WATCH` (mission progress only)
 - Interstitial: `GAME_OVER`
+- Banner ẩn trên context `GAMEPLAY`
+
+## List panels
+
+Missions / Shop / Daily reward / Leaderboard dùng `DeferredListRebuild` — coalesce rebuild và defer khi pointer đang xuống (tránh destroy hit-target giữa tap).
 
 ## Settings UI
 
@@ -36,8 +46,8 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 ## EventBus contract
 
 - **Game** emits gameplay facts (`game:start`, `score:update`, `game:over`, …).
-- **Controllers** handle UI commands (`*:request` → work → `*:result`).
-- **Services** emit domain facts (`mission:complete`, `daily:claim`, `ad:reward`, …).
+- **Controllers** handle UI commands (`*:request` → work → `*:result`) — daily, missions, shop, ads, …
+- **Services** emit domain facts (`mission:complete`, `daily:claim`, `shop:purchase`, `ad:reward`, …).
 
 ## Related
 

@@ -1,5 +1,6 @@
 import type {
   AdFormat,
+  AdPlacement,
   AdShowResult,
   IAdsProvider,
   AdsRemoteConfig,
@@ -124,7 +125,7 @@ class AdsService {
   }
 
   resolveFormat(placement: string): AdFormat | null {
-    return this.remoteConfig.placements[placement] ?? null;
+    return this.remoteConfig.placements[placement as AdPlacement] ?? null;
   }
 
   async loadRewarded(): Promise<void> {
@@ -274,7 +275,7 @@ class AdsService {
   canShowBanner(placement: string): boolean {
     if (this.adsRemoved) return false;
     if (!this.enabled || !this.provider || !this.remoteConfig.bannerEnabled) return false;
-    if (!BANNER_ALLOWED_PLACEMENTS.has(placement)) return false;
+    if (!BANNER_ALLOWED_PLACEMENTS.has(placement as AdPlacement)) return false;
     return this.resolveFormat(placement) === 'banner';
   }
 

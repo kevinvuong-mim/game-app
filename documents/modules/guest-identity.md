@@ -10,10 +10,12 @@ Guest identity quản lý anonymous player cho `game-api`.
 
 ## Storage
 
-| Key                   | Provider                                            | Nội dung                                            |
-| --------------------- | --------------------------------------------------- | --------------------------------------------------- |
-| `gsk:guest`           | Capacitor Preferences (native) / localStorage (web) | `{ guestId, secretToken, name?, nameSyncPending? }` |
-| `gsk:guest:pending-name` | cùng provider                                    | Tên local khi chưa có credentials (first-install offline) |
+| Key                      | Provider                                                         | Nội dung                                            |
+| ------------------------ | ---------------------------------------------------------------- | --------------------------------------------------- |
+| `gsk:guest`              | Durable StorageService (Preferences native / IndexedDB web)      | `{ guestId, secretToken, name?, nameSyncPending? }` |
+| `gsk:guest:pending-name` | cùng provider                                                    | Tên local khi chưa có credentials (first-install offline) |
+
+Web builds migrate one-shot từ legacy `localStorage` sang IndexedDB nếu còn dữ liệu cũ.
 
 ## `guest.init()` flow
 

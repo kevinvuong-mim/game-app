@@ -14,6 +14,7 @@ import type { AnalyticsEvent, AnalyticsParams } from '../analytics/types';
 import type { DeepLinkPayload } from '@platform/modules/deep-link/deep-link.model';
 import type { LeaderboardView } from '@platform/modules/leaderboard/leaderboard.model';
 import type { RewardProgress } from '@platform/modules/daily-reward/daily-reward.model';
+import type { AdContext, AdPlacement } from '@platform/core/advertising';
 
 export type PlatformEvent = keyof PlatformEventMap;
 
@@ -48,8 +49,8 @@ export interface PlatformEventMap {
     message?: string;
   };
   'leaderboard:update': LeaderboardView;
-  'ad:show:request': { placement: string };
-  'ad:context:change': { context: string };
+  'ad:show:request': { placement: AdPlacement | string };
+  'ad:context:change': { context: AdContext | string };
   'mission:complete': { missionId: string };
   'mission:claim:request': { missionId: string };
   'mission:claim:result': {
@@ -57,7 +58,7 @@ export interface PlatformEventMap {
     success: boolean;
     message?: string;
   };
-  'ad:reward:request': { placement: string };
+  'ad:reward:request': { placement: AdPlacement | string };
   'ad:reward:result': {
     message?: string;
     success: boolean;
@@ -70,6 +71,13 @@ export interface PlatformEventMap {
   'iap:purchase:success': IapPurchaseSuccessPayload;
   'settings:change': { key: string; value: unknown };
   'shop:purchase': { itemId: string; price: number };
+  'shop:purchase:request': { itemId: string };
+  'shop:purchase:result': {
+    itemId: string;
+    success: boolean;
+    price?: number;
+    message?: string;
+  };
   'shop:restore': void;
   'ad:reward': { placement: string; reward: unknown };
   'leaderboard:refresh': { page?: number } | undefined;

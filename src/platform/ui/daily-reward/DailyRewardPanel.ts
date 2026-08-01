@@ -12,6 +12,7 @@ import type {
   RewardProgress,
   RewardDayProgress,
 } from '@platform/modules/daily-reward/daily-reward.model';
+import { DeferredListRebuild } from '../panel/deferredListRebuild';
 
 const GRID_COLS = 2;
 const GRID_ROWS = 3;
@@ -53,6 +54,11 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private calendarLayout!: CalendarLayout;
   private unsubscribers: Array<() => void> = [];
   private claimPending = false;
+  private latestProgress: RewardProgress | null = null;
+  private readonly calendarRebuild = new DeferredListRebuild(() => {
+    if (!this.latestProgress) return;
+    this.rebuildFromProgress(this.latestProgress);
+  });
 
   constructor(
     scene: Phaser.Scene,
@@ -100,10 +106,12 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private bindEvents(): void {
     this.unsubscribers.push(
       eventBus.on('daily:progress', (progress) => {
-        this.render(progress);
+        this.latestProgress = progress;
+        this.calendarRebuild.schedule();
       }),
       eventBus.on('daily:claim:result', ({ success, message }) => {
         this.claimPending = false;
+        this.calendarRebuild.setLocked(false);
         if (!success && message === 'time_manipulated') {
           toast.show({ message: t('dailyReward.timeManipulated'), type: 'error' });
         }
@@ -115,6 +123,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private requestClaim(): void {
     if (this.claimPending) return;
     this.claimPending = true;
+    this.calendarRebuild.setLocked(true);
     this.claimButton?.setVisible(false);
     eventBus.emit('daily:claim:request', undefined);
   }
@@ -189,7 +198,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     this.add(this.claimButton);
   }
 
-  private render(progress: RewardProgress): void {
+  private rebuildFromProgress(progress: RewardProgress): void {
     this.renderCalendar(progress.days, progress.canClaim);
 
     if (progress.timeManipulated) {

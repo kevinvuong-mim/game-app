@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { t } from '@platform/modules/i18n/i18n.service';
 import { eventBus } from '@platform/core/events';
+import type { AdContext } from '@platform/core/advertising';
 import { createUIButton, UIButtonBackgroundKey } from '@platform/ui/button/UIButton';
 
 export interface PanelSceneData {
@@ -14,7 +15,7 @@ export interface PanelSceneOptions {
   backgroundKey?: string;
   defaultReturnTo: string;
   /** When set, emits `ad:context:change` before the panel builds. */
-  adContext?: string;
+  adContext?: AdContext;
 }
 
 /** Panels that host a GetCoins modal via PanelHeader / CoinBar. */

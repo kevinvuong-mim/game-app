@@ -16,6 +16,7 @@ import { createUIButton } from '../button/UIButton';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import type { LeaderboardEntry, LeaderboardView } from '@platform/modules/leaderboard';
 import { LEADERBOARD_LIMIT, getLeaderboardDisplayName } from '@platform/modules/leaderboard';
+import { DeferredListRebuild } from '../panel/deferredListRebuild';
 
 const ROW_HEIGHT = 56;
 const CROWN_SIZE = 40;
@@ -69,6 +70,11 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
   private contentHitArea?: Phaser.GameObjects.Rectangle;
   private contentMaskShape?: Phaser.GameObjects.Graphics;
   private unsubscribers: Array<() => void> = [];
+  private latestView: LeaderboardView | null = null;
+  private readonly listRebuild = new DeferredListRebuild(() => {
+    if (!this.latestView) return;
+    this.rebuildView(this.latestView);
+  });
 
   constructor(scene: Phaser.Scene, options: { onBack: () => void }) {
     super(scene, 0, 0);
@@ -282,7 +288,8 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
   private bindEvents(): void {
     this.unsubscribers.push(
       eventBus.on('leaderboard:update', (view) => {
-        this.render(view);
+        this.latestView = view;
+        this.listRebuild.schedule();
       })
     );
   }
@@ -308,7 +315,7 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
     eventBus.emit('leaderboard:refresh', { page: 1 });
   }
 
-  private render(view: LeaderboardView): void {
+  private rebuildView(view: LeaderboardView): void {
     const loading = view.status === 'loading';
     const refreshing = view.status === 'refreshing';
     const errored = view.status === 'error';

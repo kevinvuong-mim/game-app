@@ -3,56 +3,107 @@ import {
   type DailyRewardModel,
   DAILY_REWARD_STORAGE_KEY,
   DAILY_REWARD_MODEL_VERSION,
+  DAILY_REWARD_LEGACY_PREFERENCES_KEY,
 } from './daily-reward.model';
 import { Preferences } from '@capacitor/preferences';
-import type { DailyRewardState } from '@platform/core/state';
+import { storage } from '@platform/core/storage';
+import { logger } from '@platform/core/error';
+
+/** Legacy shape formerly mirrored onto PlatformState / game-save. */
+export interface LegacyDailyRewardSnapshot {
+  version: number;
+  currentDay: number;
+  timeManipulated: boolean;
+  lastClaimWallClock: number;
+  lastClaimDate: string | null;
+  lastSessionTimestamp: number;
+}
 
 export class DailyRewardRepository {
+  private durableProvider() {
+    return storage.getDurableProviderType();
+  }
+
   async hasPersistedModel(): Promise<boolean> {
-    const { value } = await Preferences.get({ key: DAILY_REWARD_STORAGE_KEY });
-    return value !== null && value !== undefined;
+    const stored = await storage.load<DailyRewardModel>(
+      DAILY_REWARD_STORAGE_KEY,
+      this.durableProvider()
+    );
+    if (stored) return true;
+
+    const legacy = await this.readLegacyPreferencesModel();
+    return legacy !== null;
   }
 
   async load(): Promise<DailyRewardModel> {
-    const stored = await this.readModel(DAILY_REWARD_STORAGE_KEY);
-    return stored ?? createDefaultModel();
+    const durable = this.durableProvider();
+    const stored = await storage.load<DailyRewardModel>(DAILY_REWARD_STORAGE_KEY, durable);
+    if (stored && typeof stored.currentDay === 'number') {
+      return this.normalize(stored);
+    }
+
+    const fromLegacyPrefs = await this.readLegacyPreferencesModel();
+    if (fromLegacyPrefs) {
+      await storage.save(DAILY_REWARD_STORAGE_KEY, fromLegacyPrefs, durable);
+      await Preferences.remove({ key: DAILY_REWARD_LEGACY_PREFERENCES_KEY });
+      logger.info('[DailyReward] Migrated from legacy Preferences key');
+      return fromLegacyPrefs;
+    }
+
+    const fromGameSave = await this.readLegacyGameSaveSnapshot();
+    if (fromGameSave) {
+      await storage.save(DAILY_REWARD_STORAGE_KEY, fromGameSave, durable);
+      logger.info('[DailyReward] Migrated from legacy game-save snapshot');
+      return fromGameSave;
+    }
+
+    return createDefaultModel();
   }
 
   async save(model: DailyRewardModel): Promise<void> {
-    await Preferences.set({
-      key: DAILY_REWARD_STORAGE_KEY,
-      value: JSON.stringify(model),
-    });
+    await storage.save(DAILY_REWARD_STORAGE_KEY, model, this.durableProvider());
   }
 
-  migrateFromStoreState(state: DailyRewardState | undefined): DailyRewardModel | null {
+  migrateFromStoreState(state: LegacyDailyRewardSnapshot | undefined): DailyRewardModel | null {
     if (!state || state.version < DAILY_REWARD_MODEL_VERSION) return null;
 
-    return {
+    return this.normalize({
       version: state.version,
       lastClaimDate: state.lastClaimDate,
-      currentDay: clampDay(state.currentDay),
+      currentDay: state.currentDay,
       timeManipulated: state.timeManipulated ?? false,
       lastClaimWallClock: state.lastClaimWallClock ?? 0,
       lastSessionTimestamp: state.lastSessionTimestamp ?? 0,
-    };
+    });
   }
 
-  private async readModel(key: string): Promise<DailyRewardModel | null> {
-    const { value } = await Preferences.get({ key });
+  private async readLegacyPreferencesModel(): Promise<DailyRewardModel | null> {
+    const { value } = await Preferences.get({ key: DAILY_REWARD_LEGACY_PREFERENCES_KEY });
     if (!value) return null;
 
     try {
       const parsed = JSON.parse(value) as DailyRewardModel;
       if (!parsed || typeof parsed.currentDay !== 'number') return null;
-      return {
-        ...createDefaultModel(),
-        ...parsed,
-        currentDay: clampDay(parsed.currentDay),
-      };
+      return this.normalize(parsed);
     } catch {
       return null;
     }
+  }
+
+  private async readLegacyGameSaveSnapshot(): Promise<DailyRewardModel | null> {
+    const save = await storage.load<{ state?: { dailyRewards?: LegacyDailyRewardSnapshot } }>(
+      'game-save',
+      this.durableProvider()
+    );
+    return this.migrateFromStoreState(save?.state?.dailyRewards);
+  }
+
+  private normalize(model: DailyRewardModel): DailyRewardModel {
+    return {
+      ...createDefaultModel(),
+      ...model,
+      currentDay: clampDay(model.currentDay),
+    };
   }
 }
 

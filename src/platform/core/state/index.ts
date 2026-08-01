@@ -1,2 +1,2 @@
 export { usePlatformStore } from './store';
-export type { PlatformState, SettingsState, MissionProgress, DailyRewardState } from './types';
+export type { PlatformState, SettingsState, MissionProgress } from './types';
