@@ -15,16 +15,16 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 - 7-day cycle; durable StorageService key `daily-reward` (`gsk:daily-reward` trên Preferences) là source of truth (không ghi vào `game-save`).
 - Migrate one-shot từ legacy Preferences `daily-reward-v2` và snapshot cũ trong `game-save` nếu còn.
 - UI: EventBus `daily:progress:request` / `daily:claim:request` → `dailyRewardController`.
-- Anti-tamper: `timeManipulated` sticky lock khi phát hiện tua đồng hồ (lùi, claim-stamp ở tương lai, hoặc wall clock lệch monotonic giữa các check trong session). **Không** tự clear khi clock “nhất quán lại”.
+- Claim gating: `lastClaimDate` theo lịch local (`hasClaimedToday`); streak gap reset khi bỏ ngày.
 
 ## Missions
 
 - Definitions: `missions.json`; progress snapshot trong Zustand + `game-save`.
-- **Mọi transition** (progress / complete / claim / onClaim reset) chỉ qua `MissionService` — store chỉ còn `setMissions` / `updateMissionsState`.
+- **Mọi transition** (progress / complete / claim / onClaim reset) chỉ qua `MissionService` — store chỉ còn `setMissions`.
 - `resetPolicy`: `'daily'` | `'never'` | `'onClaim'`.
 - Progress: `mission.tracker` ← gameplay events (`score:update`, `ad:reward` với placement `MISSION_WATCH`, …).
 - Claim: EventBus `mission:claim:request` / `mission:claim:result` → `missionController`.
-- Clock integrity: shared `ClockIntegritySession` / `detectTimeManipulation` — sticky lock (không auto-clear).
+- Daily reset theo `lastResetDayKey` / lịch local (không có clock anti-tamper).
 
 ## Ads placements
 

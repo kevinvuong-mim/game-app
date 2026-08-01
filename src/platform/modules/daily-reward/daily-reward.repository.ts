@@ -13,10 +13,7 @@ import { Preferences } from '@capacitor/preferences';
 export interface LegacyDailyRewardSnapshot {
   version: number;
   currentDay: number;
-  timeManipulated: boolean;
-  lastClaimWallClock: number;
   lastClaimDate: string | null;
-  lastSessionTimestamp: number;
 }
 
 export class DailyRewardRepository {
@@ -71,9 +68,6 @@ export class DailyRewardRepository {
       version: state.version,
       lastClaimDate: state.lastClaimDate,
       currentDay: state.currentDay,
-      timeManipulated: state.timeManipulated ?? false,
-      lastClaimWallClock: state.lastClaimWallClock ?? 0,
-      lastSessionTimestamp: state.lastSessionTimestamp ?? 0,
     });
   }
 
@@ -82,7 +76,7 @@ export class DailyRewardRepository {
     if (!value) return null;
 
     try {
-      const parsed = JSON.parse(value) as DailyRewardModel;
+      const parsed = JSON.parse(value) as Partial<DailyRewardModel>;
       if (!parsed || typeof parsed.currentDay !== 'number') return null;
       return this.normalize(parsed);
     } catch {
@@ -98,11 +92,12 @@ export class DailyRewardRepository {
     return this.migrateFromStoreState(save?.state?.dailyRewards);
   }
 
-  private normalize(model: DailyRewardModel): DailyRewardModel {
+  /** Keep only current schema fields (drop legacy clock-lock keys on read). */
+  private normalize(model: Partial<DailyRewardModel>): DailyRewardModel {
     return {
-      ...createDefaultModel(),
-      ...model,
-      currentDay: clampDay(model.currentDay),
+      version: DAILY_REWARD_MODEL_VERSION,
+      currentDay: clampDay(typeof model.currentDay === 'number' ? model.currentDay : 1),
+      lastClaimDate: typeof model.lastClaimDate === 'string' ? model.lastClaimDate : null,
     };
   }
 }

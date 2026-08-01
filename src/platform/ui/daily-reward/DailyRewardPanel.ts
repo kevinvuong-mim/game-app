@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 
-import { toast } from '../toast/ToastManager';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { PanelHeader } from '../panel/PanelHeader';
@@ -109,12 +108,9 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
         this.latestProgress = progress;
         this.calendarRebuild.schedule();
       }),
-      eventBus.on('daily:claim:result', ({ success, message }) => {
+      eventBus.on('daily:claim:result', () => {
         this.claimPending = false;
         this.calendarRebuild.setLocked(false);
-        if (!success && message === 'time_manipulated') {
-          toast.show({ message: t('dailyReward.timeManipulated'), type: 'error' });
-        }
         eventBus.emit('daily:progress:request', undefined);
       })
     );
@@ -200,12 +196,6 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
 
   private rebuildFromProgress(progress: RewardProgress): void {
     this.renderCalendar(progress.days, progress.canClaim);
-
-    if (progress.timeManipulated) {
-      this.statusText?.setText(t('dailyReward.timeManipulated')).setVisible(true);
-      this.claimButton?.setVisible(false);
-      return;
-    }
 
     if (progress.canClaim) {
       this.statusText?.setVisible(false);

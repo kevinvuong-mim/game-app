@@ -141,8 +141,7 @@
     "title": "Daily Reward",
     "claim": "Claim",
     "day": "Day {{day}}",
-    "comeBack": "Come back tomorrow!",
-    "timeManipulated": "Daily rewards are unavailable due to a clock change."
+    "comeBack": "Come back tomorrow!"
   },
   "leaderboard": {
     "title": "Leaderboard",

@@ -17,7 +17,7 @@ class DailyRewardController {
       }),
 
       events.on('app:resume', () => {
-        this.service.refreshSessionTimestamp();
+        this.service.refreshOnResume();
         this.emitProgress(events);
       }),
     ];
@@ -38,11 +38,7 @@ class DailyRewardController {
       const progress = this.service.getRewardProgress();
       events.emit('daily:claim:result', {
         success: false,
-        message: progress.timeManipulated
-          ? 'time_manipulated'
-          : progress.canClaim
-            ? 'claim_failed'
-            : 'already_claimed',
+        message: progress.canClaim ? 'claim_failed' : 'already_claimed',
       });
       this.emitProgress(events);
       return;

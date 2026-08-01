@@ -10,16 +10,13 @@ import { guest } from '@platform/modules/guest';
 import { eventBus } from '@platform/core/events';
 import { saveService } from '@platform/modules/save';
 import { usePlatformStore } from '@platform/core/state';
-import { ClockIntegritySession, getLocalDateKey, now } from '@platform/core/utils';
+import { getLocalDateKey, now } from '@platform/core/utils';
 
 export class MissionService {
-  private readonly clockSession = new ClockIntegritySession();
-
   private definitions: MissionDefinition[] = missionsData as MissionDefinition[];
 
   init(): void {
     this.initializeMissions();
-    this.refreshClockIntegrity();
     let changed = this.applyResets();
     if (this.recordDailyLogin()) changed = true;
     if (changed) {
@@ -43,40 +40,8 @@ export class MissionService {
     return this.definitions.filter((d) => d.type === type);
   }
 
-  isTimeManipulated(): boolean {
-    return usePlatformStore.getState().missions.timeManipulated;
-  }
-
-  /** Re-check wall clock vs saved stamps (call on init / resume). */
-  refreshClockIntegrity(at: number = now()): void {
-    const state = usePlatformStore.getState().missions;
-    const manipulated = this.clockSession.check({
-      now: at,
-      lastSessionTimestamp: state.lastSessionTimestamp,
-      lastClaimWallClock: state.lastClaimWallClock,
-    });
-
-    if (manipulated) {
-      // Sticky lock — never auto-clear once set.
-      usePlatformStore.getState().updateMissionsState({ timeManipulated: true });
-      logger.warn('mission_time_manipulated');
-      return;
-    }
-
-    if (!state.timeManipulated) {
-      usePlatformStore.getState().updateMissionsState({
-        lastSessionTimestamp: at,
-      });
-    }
-  }
-
   /** Returns true when any mission was reset or stamped. */
   applyResets(at?: number): boolean {
-    this.refreshClockIntegrity(at);
-    if (this.isTimeManipulated()) {
-      return false;
-    }
-
     const currentDayKey = getLocalDateKey(at);
     const missions = { ...usePlatformStore.getState().missions.missions };
     let changed = false;
@@ -106,7 +71,6 @@ export class MissionService {
 
   /** Marks daily-login missions complete for the current calendar day (opening the app). */
   recordDailyLogin(): boolean {
-    if (this.isTimeManipulated()) return false;
     return this.setProgressByType('DAILY_LOGIN', 1);
   }
 
@@ -136,11 +100,6 @@ export class MissionService {
   }
 
   claimMission(id: string): boolean {
-    if (this.isTimeManipulated()) {
-      logger.warn('mission_claim_blocked_time_manipulated', { missionId: id });
-      return false;
-    }
-
     const store = usePlatformStore.getState();
     const mission = store.missions.missions[id];
     if (!mission || mission.status !== 'completed') return false;
@@ -171,7 +130,6 @@ export class MissionService {
       ...store.missions.missions,
       [id]: nextMission,
     });
-    store.updateMissionsState({ lastClaimWallClock: claimedAt });
 
     if (nextMission.status === 'active') {
       eventBus.emit('mission:update', { missionId: id, progress: 0 });
@@ -261,7 +219,6 @@ export class MissionService {
   }
 
   private incrementProgress(missionId: string, amount: number): boolean {
-    if (this.isTimeManipulated()) return false;
     const mission = usePlatformStore.getState().missions.missions[missionId];
     if (!mission || mission.status !== 'active') return false;
 
@@ -271,7 +228,6 @@ export class MissionService {
   }
 
   private setProgress(missionId: string, value: number): boolean {
-    if (this.isTimeManipulated()) return false;
     const mission = usePlatformStore.getState().missions.missions[missionId];
     if (!mission || mission.status !== 'active') return false;
     if (value <= mission.progress) return false;

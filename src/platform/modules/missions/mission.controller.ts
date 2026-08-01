@@ -21,7 +21,6 @@ class MissionController {
       }),
 
       events.on('app:resume', () => {
-        this.service.refreshClockIntegrity();
         void this.handleResets();
       }),
     ];
@@ -38,7 +37,7 @@ class MissionController {
       events.emit('mission:claim:result', {
         missionId,
         success: false,
-        message: this.service.isTimeManipulated() ? 'time_manipulated' : 'claim_failed',
+        message: 'claim_failed',
       });
       return;
     }

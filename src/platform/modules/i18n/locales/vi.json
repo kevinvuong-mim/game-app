@@ -141,8 +141,7 @@
     "title": "Quà hàng ngày",
     "claim": "Nhận",
     "day": "Ngày {{day}}",
-    "comeBack": "Quay lại vào ngày mai!",
-    "timeManipulated": "Quà hàng ngày không khả dụng do thay đổi thời gian thiết bị."
+    "comeBack": "Quay lại vào ngày mai!"
   },
   "leaderboard": {
     "title": "Xếp hạng",

@@ -9,14 +9,12 @@ import {
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { saveService } from '@platform/modules/save';
+import { getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
-import { ClockIntegritySession, getLocalDateKey } from '@platform/core/utils';
 import { rewardResolver, type RewardResolver, type ResolvedReward } from './reward-resolver';
 import { dailyRewardRepository, type DailyRewardRepository } from './daily-reward.repository';
 
 export class DailyRewardService {
-  private readonly clockSession = new ClockIntegritySession();
-
   private initialized = false;
   private claimInFlight = false;
   private model: DailyRewardModel = createDefaultModel();
@@ -29,14 +27,6 @@ export class DailyRewardService {
   async init(): Promise<void> {
     this.model = await this.repository.load();
     this.model = applyStreakGapReset(this.model);
-
-    if (this.detectClockSkew()) {
-      // Sticky lock — never auto-clear once set (avoids "fix clock then claim").
-      this.model.timeManipulated = true;
-    } else if (!this.model.timeManipulated) {
-      this.model.lastSessionTimestamp = Date.now();
-    }
-
     await this.persist();
     this.initialized = true;
     logger.info('[DailyReward] Initialized', { currentDay: this.model.currentDay });
@@ -45,7 +35,6 @@ export class DailyRewardService {
   canClaim(): boolean {
     if (!this.initialized) return false;
     if (this.claimInFlight) return false;
-    if (this.model.timeManipulated) return false;
     if (hasClaimedToday(this.model)) return false;
     return true;
   }
@@ -62,7 +51,7 @@ export class DailyRewardService {
 
     this.claimInFlight = true;
     try {
-      if (this.model.timeManipulated || hasClaimedToday(this.model)) {
+      if (hasClaimedToday(this.model)) {
         logger.warn('[DailyReward] Claim blocked after lock');
         return null;
       }
@@ -71,10 +60,7 @@ export class DailyRewardService {
       const resolved = this.resolver.resolveClaim(rewardDay);
       this.applyReward(resolved);
 
-      const wallNow = Date.now();
       this.model.lastClaimDate = getLocalDateKey();
-      this.model.lastClaimWallClock = wallNow;
-      this.model.lastSessionTimestamp = wallNow;
       this.model.currentDay = rewardDay >= 7 ? 1 : rewardDay + 1;
 
       await this.persist();
@@ -92,28 +78,14 @@ export class DailyRewardService {
     return {
       currentDay: this.model.currentDay,
       canClaim: this.canClaim(),
-      timeManipulated: this.model.timeManipulated,
       days: this.resolver.buildProgress(this.model.currentDay),
     };
   }
 
-  refreshSessionTimestamp(): void {
+  /** Re-evaluate streak gap when the app returns to foreground. */
+  refreshOnResume(): void {
     this.model = applyStreakGapReset(this.model);
-
-    if (this.detectClockSkew()) {
-      this.model.timeManipulated = true;
-    } else if (!this.model.timeManipulated) {
-      this.model.lastSessionTimestamp = Date.now();
-    }
     void this.persist();
-  }
-
-  private detectClockSkew(wallNow = Date.now()): boolean {
-    return this.clockSession.check({
-      now: wallNow,
-      lastSessionTimestamp: this.model.lastSessionTimestamp,
-      lastClaimWallClock: this.model.lastClaimWallClock,
-    });
   }
 
   private applyReward(reward: ResolvedReward): void {

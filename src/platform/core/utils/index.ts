@@ -1,11 +1,3 @@
-export {
-  ClockIntegritySession,
-  detectTimeManipulation,
-  FORWARD_CLOCK_TOLERANCE_MS,
-  BACKWARD_CLOCK_TOLERANCE_MS,
-} from './clock-integrity';
-export type { ClockCheckPoint } from './clock-integrity';
-
 /**
  * Shared time source for platform modules.
  * Centralizes device time so server time can be wired in later.

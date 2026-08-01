@@ -30,7 +30,6 @@ export interface PlatformStore extends PlatformState {
 
   // Missions (snapshot only — transitions live in MissionService)
   setMissions: (missions: PlatformState['missions']['missions']) => void;
-  updateMissionsState: (update: Partial<PlatformState['missions']>) => void;
 
   // Bulk
   reset: () => void;
@@ -117,11 +116,6 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
 
   setMissions: (missions) => set((s) => ({ missions: { ...s.missions, missions } })),
 
-  updateMissionsState: (update) =>
-    set((s) => ({
-      missions: { ...s.missions, ...update },
-    })),
-
   hydrate: (state) =>
     set((s) => {
       const nextCurrency = sanitizeCurrency(state.currency ?? s.currency);
@@ -138,10 +132,8 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
           ...(state.progress ?? {}),
         },
         settings: { ...DEFAULT_STATE.settings, ...s.settings, ...(state.settings ?? {}) },
+        // Drop legacy clock-lock fields from older saves (`timeManipulated`, …).
         missions: {
-          ...DEFAULT_STATE.missions,
-          ...s.missions,
-          ...(state.missions ?? {}),
           missions: {
             ...DEFAULT_STATE.missions.missions,
             ...s.missions.missions,
