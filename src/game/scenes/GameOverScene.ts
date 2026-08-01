@@ -71,7 +71,7 @@ export class GameOverScene extends Phaser.Scene {
     this.addBackgroundImage(width, height);
 
     const panelWidth = Math.min(width * 0.88, 420);
-    const contentTop = height * 0.36;
+    const contentTop = height * 0.4;
 
     const scoreLabelY = contentTop + LAYOUT.scoreLabel;
     const scoreValueY = contentTop + LAYOUT.scoreValue;
@@ -194,7 +194,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   private addBackgroundImage(width: number, height: number): void {
-    const background = this.add.image(width / 2, height / 2, 'general-background-image');
+    const background = this.add.image(width / 2, height / 2, 'gameover-background-image');
     const backgroundScale = Math.max(width / background.width, height / background.height);
     background.setScale(backgroundScale).setDepth(-1);
   }

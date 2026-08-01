@@ -69,6 +69,7 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'home-button-background', path: '/assets/images/home-button-background.png' },
   { key: 'share-button-background', path: '/assets/images/share-button-background.png' },
   { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
+  { key: 'gameover-background-image', path: '/assets/images/gameover-background-image.webp' },
   { key: 'settings-button-background', path: '/assets/images/settings-button-background.png' },
   { key: 'best-score-background-image', path: '/assets/images/best-score-background-image.png' },
 ];
@@ -113,6 +114,7 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'home-button-background', width: 265, height: 98, color: 0x8e44ad },
   { key: 'general-background-image', width: 16, height: 16, color: 0x16213e },
   { key: 'share-button-background', width: 265, height: 98, color: 0xe67e22 },
+  { key: 'gameover-background-image', width: 16, height: 16, color: 0x16213e },
   { key: 'settings-button-background', width: 256, height: 78, color: 0x4a90d9 },
   { key: 'best-score-background-image', width: 265, height: 97, color: 0xe74c3c },
   { key: 'leaderboard-button-background', width: 256, height: 78, color: 0x4a90d9 },
