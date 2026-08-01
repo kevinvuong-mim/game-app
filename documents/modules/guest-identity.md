@@ -20,7 +20,7 @@ Guest identity quản lý anonymous player cho `game-api`.
 1. Đọc `gsk:guest` từ storage.
 2. Nếu có → `apiClient.setAuthToken(secretToken)`, xong (cold start không gọi mạng).
 3. Nếu không → giữ `pending`, **không block** cold start; `POST /api/guest/init` chạy nền khi online.
-4. Khi create xong → lưu `{ guestId, secretToken }`, `markReady`, adopt pending name nếu có.
+4. Khi create xong → nếu `payload.gameId` **không khớp** `RuntimeConfig.gameId` thì **từ chối lưu credentials** (log error, giữ `pending`, retry khi online). Khớp thì lưu `{ guestId, secretToken }`, `markReady`, adopt pending name nếu có.
 
 Nếu offline / create fail ở bước 3–4, guest ở `pending` và tự retry khi network online (`@capacitor/network` trên native, `window.online` trên web).
 

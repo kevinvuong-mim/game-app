@@ -14,7 +14,6 @@ import { Capacitor } from '@capacitor/core';
 
 class AdsService {
   private readonly formats = {
-    app_open: new AdFormatManager('app_open'),
     rewarded: new AdFormatManager('rewarded'),
     interstitial: new AdFormatManager('interstitial'),
   };
@@ -24,7 +23,6 @@ class AdsService {
   private adsRemoved = false;
   private lastRewardedAt = 0;
   private lastInterstitialAt = 0;
-  private appOpenShownThisSession = false;
   private provider: IAdsProvider | null = null;
   private activeBannerPlacement: string | null = null;
   private remoteConfig: AdsRemoteConfig = { ...DEFAULT_REMOTE_CONFIG };
@@ -254,46 +252,6 @@ class AdsService {
     this.activeBannerPlacement = null;
   }
 
-  async loadAppOpen(): Promise<void> {
-    await this.loadFormat('app_open', () => this.getProvider().loadAppOpen());
-  }
-
-  async showAppOpen(placement: string): Promise<AdShowResult> {
-    if (
-      this.adsRemoved ||
-      !this.enabled ||
-      !this.provider ||
-      !this.remoteConfig.appOpenEnabled ||
-      this.appOpenShownThisSession
-    ) {
-      return { shown: false, error: 'App open skipped' };
-    }
-
-    const manager = this.formats.app_open;
-    if (!manager.state.canShow() && this.getProvider().isReady('app_open')) {
-      manager.state.markReady();
-    }
-    if (!manager.state.startShowing()) {
-      return { shown: false, error: 'App open busy' };
-    }
-
-    try {
-      const result = await this.getProvider().showAppOpen(placement);
-      if (result.shown) {
-        this.appOpenShownThisSession = true;
-      }
-      return result;
-    } catch (error) {
-      manager.state.markError();
-      logger.warn('[Ads] App open show failed', error);
-      return { shown: false, error: 'App open failed' };
-    } finally {
-      if (manager.state.getState() === 'SHOWING') {
-        manager.state.markCompleted();
-      }
-    }
-  }
-
   canShowRewarded(placement: string): boolean {
     if (!this.enabled || !this.provider || !this.online) return false;
     if (!this.remoteConfig.rewardEnabled) return false;
@@ -335,9 +293,6 @@ class AdsService {
       case 'banner':
         await this.loadBanner();
         break;
-      case 'app_open':
-        await this.loadAppOpen();
-        break;
     }
   }
 
@@ -354,11 +309,7 @@ class AdsService {
   }
 
   private async preloadCommonAds(): Promise<void> {
-    await Promise.allSettled([
-      this.loadRewarded(),
-      this.loadInterstitial(),
-      this.remoteConfig.appOpenEnabled ? this.loadAppOpen() : Promise.resolve(),
-    ]);
+    await Promise.allSettled([this.loadRewarded(), this.loadInterstitial()]);
   }
 
   private async loadFormat(format: AdFormat, loader: () => Promise<void>): Promise<void> {

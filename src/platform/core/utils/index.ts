@@ -1,4 +1,10 @@
-export { BACKWARD_CLOCK_TOLERANCE_MS, detectTimeManipulation } from './clock-integrity';
+export {
+  BACKWARD_CLOCK_TOLERANCE_MS,
+  FORWARD_CLOCK_TOLERANCE_MS,
+  ClockIntegritySession,
+  detectTimeManipulation,
+} from './clock-integrity';
+export type { ClockCheckPoint } from './clock-integrity';
 
 /**
  * Shared time source for platform modules.

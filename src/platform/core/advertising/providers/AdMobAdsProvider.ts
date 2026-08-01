@@ -27,14 +27,12 @@ type AdMobModule = {
     }) => Promise<void>;
     hideBanner: () => Promise<void>;
     removeBanner: () => Promise<void>;
-    showAppOpenAd: () => Promise<void>;
     showInterstitial: () => Promise<void>;
     addListener: (
       event: string,
       handler: (event: AdMobRewardItem) => void
     ) => Promise<{ remove: () => void }>;
     showRewardVideoAd: () => Promise<AdMobRewardItem>;
-    prepareAppOpenAd: (opts: { adId: string }) => Promise<void>;
     prepareInterstitial: (opts: { adId: string }) => Promise<void>;
     prepareRewardVideoAd: (opts: { adId: string }) => Promise<void>;
     initialize: (opts: { initializeForTesting?: boolean }) => Promise<void>;
@@ -273,30 +271,6 @@ export class AdMobAdsProvider implements IAdsProvider {
     });
     this.bannerVisible = false;
     this.ready.delete('banner');
-  }
-
-  async loadAppOpen(): Promise<void> {
-    await this.prepare('app_open', async () => {
-      const adId = this.requireAdUnit('appOpen');
-      await this.admob!.AdMob.prepareAppOpenAd({ adId });
-      this.cached.add('app_open');
-    });
-  }
-
-  async showAppOpen(placement = 'default'): Promise<AdShowResult> {
-    if (!this.ready.has('app_open')) {
-      return { shown: false, error: 'App open ad not ready' };
-    }
-
-    try {
-      await this.admob!.AdMob.showAppOpenAd();
-      this.ready.delete('app_open');
-      this.cached.delete('app_open');
-      return { shown: true, providerPayload: { shown: true, placement } };
-    } catch (error) {
-      logger.warn('[Ads] AdMob app open show failed', error);
-      return { shown: false, error: 'App open ad failed' };
-    }
   }
 
   destroy(): void {

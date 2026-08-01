@@ -54,6 +54,10 @@ class ShopService {
     return usePlatformStore.getState().inventory.items[id]?.quantity ?? 0;
   }
 
+  isPurchaseInFlight(): boolean {
+    return this.purchaseInFlight;
+  }
+
   /** Consume one use of a boost skill. Returns false if none left. */
   consumeBoost(id: string): boolean {
     if (this.getQuantity(id) <= 0) return false;

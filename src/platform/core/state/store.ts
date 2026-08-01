@@ -180,32 +180,67 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
     })),
 
   hydrate: (state) =>
-    set((s) => ({
-      ...s,
-      ...state,
-      progress: {
-        ...DEFAULT_STATE.progress,
-        ...s.progress,
-        ...(state.progress ?? {}),
-      },
-      settings: { ...DEFAULT_STATE.settings, ...s.settings, ...(state.settings ?? {}) },
-      missions: {
-        ...DEFAULT_STATE.missions,
-        ...s.missions,
-        ...(state.missions ?? {}),
-        missions: {
-          ...DEFAULT_STATE.missions.missions,
-          ...s.missions.missions,
-          ...(state.missions?.missions ?? {}),
+    set((s) => {
+      const nextCurrency = sanitizeCurrency(state.currency ?? s.currency);
+      const nextInventory = sanitizeInventory(state.inventory ?? s.inventory);
+
+      return {
+        ...s,
+        ...state,
+        currency: nextCurrency,
+        inventory: nextInventory,
+        progress: {
+          ...DEFAULT_STATE.progress,
+          ...s.progress,
+          ...(state.progress ?? {}),
         },
-      },
-      // Kept only so legacy game-save snapshots can migrate into Preferences once.
-      dailyRewards: {
-        ...DEFAULT_STATE.dailyRewards,
-        ...s.dailyRewards,
-        ...(state.dailyRewards ?? {}),
-      },
-    })),
+        settings: { ...DEFAULT_STATE.settings, ...s.settings, ...(state.settings ?? {}) },
+        missions: {
+          ...DEFAULT_STATE.missions,
+          ...s.missions,
+          ...(state.missions ?? {}),
+          missions: {
+            ...DEFAULT_STATE.missions.missions,
+            ...s.missions.missions,
+            ...(state.missions?.missions ?? {}),
+          },
+        },
+        // Kept only so legacy game-save snapshots can migrate into Preferences once.
+        dailyRewards: {
+          ...DEFAULT_STATE.dailyRewards,
+          ...s.dailyRewards,
+          ...(state.dailyRewards ?? {}),
+        },
+      };
+    }),
 
   reset: () => set(DEFAULT_STATE),
 }));
+
+function sanitizeCurrency(
+  currency: PlatformState['currency'] | undefined
+): PlatformState['currency'] {
+  const coins = currency?.coins;
+  if (typeof coins !== 'number' || !Number.isFinite(coins) || coins < 0) {
+    return { coins: 0 };
+  }
+  return { coins: Math.floor(coins) };
+}
+
+function sanitizeInventory(
+  inventory: PlatformState['inventory'] | undefined
+): PlatformState['inventory'] {
+  const items = inventory?.items;
+  if (!items || typeof items !== 'object') {
+    return { items: {} };
+  }
+
+  const sanitized: PlatformState['inventory']['items'] = {};
+  for (const [id, item] of Object.entries(items)) {
+    if (!item || typeof item !== 'object') continue;
+    const quantity = item.quantity;
+    if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity <= 0) continue;
+    sanitized[id] = { id: String(id), quantity: Math.floor(quantity) };
+  }
+  return { items: sanitized };
+}

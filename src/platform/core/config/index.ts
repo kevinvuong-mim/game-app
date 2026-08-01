@@ -52,7 +52,6 @@ interface AdsConfig {
   testing: boolean;
   adUnits: {
     banner: string;
-    appOpen: string;
     rewarded: string;
     interstitial: string;
   };
@@ -158,13 +157,11 @@ function pickPlatformEnv(androidValue?: string, iosValue?: string): string {
 const GOOGLE_TEST_AD_UNITS = {
   android: {
     banner: 'ca-app-pub-3940256099942544/6300978111',
-    appOpen: 'ca-app-pub-3940256099942544/9257395921',
     rewarded: 'ca-app-pub-3940256099942544/5224354917',
     interstitial: 'ca-app-pub-3940256099942544/1033173712',
   },
   ios: {
     banner: 'ca-app-pub-3940256099942544/2934735716',
-    appOpen: 'ca-app-pub-3940256099942544/5575463023',
     rewarded: 'ca-app-pub-3940256099942544/1712485313',
     interstitial: 'ca-app-pub-3940256099942544/4411468910',
   },
@@ -181,10 +178,6 @@ function resolveAdsConfig(): AdsConfig {
           GOOGLE_TEST_AD_UNITS.android.banner,
           GOOGLE_TEST_AD_UNITS.ios.banner
         ),
-        appOpen: pickPlatformEnv(
-          GOOGLE_TEST_AD_UNITS.android.appOpen,
-          GOOGLE_TEST_AD_UNITS.ios.appOpen
-        ),
         rewarded: pickPlatformEnv(
           GOOGLE_TEST_AD_UNITS.android.rewarded,
           GOOGLE_TEST_AD_UNITS.ios.rewarded
@@ -198,10 +191,6 @@ function resolveAdsConfig(): AdsConfig {
         banner: pickPlatformEnv(
           import.meta.env.VITE_ADMOB_ANDROID_BANNER_ID,
           import.meta.env.VITE_ADMOB_IOS_BANNER_ID
-        ),
-        appOpen: pickPlatformEnv(
-          import.meta.env.VITE_ADMOB_ANDROID_APP_OPEN_ID,
-          import.meta.env.VITE_ADMOB_IOS_APP_OPEN_ID
         ),
         rewarded: pickPlatformEnv(
           import.meta.env.VITE_ADMOB_ANDROID_REWARDED_ID,

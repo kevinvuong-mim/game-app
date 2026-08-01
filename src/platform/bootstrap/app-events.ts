@@ -25,7 +25,6 @@ export function bindAppEvents(): () => void {
     events.on('app:ready', () => {
       logger.info('[App] Game shell ready');
       void hideNativeSplash();
-      events.emit('ad:show:request', { placement: 'APP_START' });
       events.emit('ad:show:request', { placement: 'HOME' });
     }),
 

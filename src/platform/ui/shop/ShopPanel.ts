@@ -37,6 +37,8 @@ export class ShopPanel extends Phaser.GameObjects.Container {
 
   private header?: PanelHeader;
   private listContainer?: Phaser.GameObjects.Container;
+  private priceButtons: UIButton[] = [];
+  private purchaseUiLocked = false;
 
   constructor(
     scene: Phaser.Scene,
@@ -109,6 +111,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
   private renderItems(): void {
     if (!this.listContainer) return;
     this.listContainer.removeAll(true);
+    this.priceButtons = [];
 
     const { width } = this.scene.cameras.main;
     const items = this.getBoostItems();
@@ -195,7 +198,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
       PRICE_BTN_PAD_X + PRICE_ICON_SIZE + PRICE_BTN_GAP + priceTextWidth + PRICE_BTN_PAD_X
     );
 
-    return createUIButton({
+    const button = createUIButton({
       scene: this.scene,
       position: {
         x: rowHalf - PRICE_BTN_RIGHT_MARGIN - priceButtonWidth / 2,
@@ -220,13 +223,33 @@ export class ShopPanel extends Phaser.GameObjects.Container {
           border: { width: 2, color: '#000000' },
         },
       },
+      disabled: this.purchaseUiLocked || shop.isPurchaseInFlight(),
       onClick: () => {
         void this.purchaseItem(item);
       },
     });
+    this.priceButtons.push(button);
+    return button;
+  }
+
+  private setPriceButtonsLocked(locked: boolean): void {
+    this.purchaseUiLocked = locked;
+    for (const button of this.priceButtons) {
+      // setLoading disables hit area; clear loading before re-enabling.
+      if (locked) {
+        button.setLoading(true);
+      } else {
+        button.setLoading(false);
+        button.setEnabled(true);
+      }
+    }
   }
 
   private async purchaseItem(item: ShopItem): Promise<void> {
+    if (this.purchaseUiLocked || shop.isPurchaseInFlight()) {
+      return;
+    }
+
     const coins = usePlatformStore.getState().currency.coins;
 
     if (item.currency === 'coins' && coins < item.price) {
@@ -234,12 +257,20 @@ export class ShopPanel extends Phaser.GameObjects.Container {
       return;
     }
 
-    const success = await shop.purchase(item.id);
-    if (!success) {
-      toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
-      return;
-    }
+    this.setPriceButtonsLocked(true);
+    try {
+      const success = await shop.purchase(item.id);
+      if (!success) {
+        toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
+        return;
+      }
 
-    this.renderItems();
+      this.purchaseUiLocked = false;
+      this.renderItems();
+    } finally {
+      if (this.purchaseUiLocked) {
+        this.setPriceButtonsLocked(false);
+      }
+    }
   }
 }

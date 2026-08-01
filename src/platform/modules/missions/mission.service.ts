@@ -7,13 +7,14 @@ import {
 import missionsData from './missions.json';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
-import { detectTimeManipulation, getLocalDateKey, now } from '@platform/core/utils';
+import { ClockIntegritySession, getLocalDateKey, now } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
 import { guest } from '@platform/modules/guest';
 
 export class MissionService {
   private definitions: MissionDefinition[] = missionsData as MissionDefinition[];
+  private readonly clockSession = new ClockIntegritySession();
 
   init(): void {
     this.initializeMissions();
@@ -48,22 +49,24 @@ export class MissionService {
   /** Re-check wall clock vs saved stamps (call on init / resume). */
   refreshClockIntegrity(at: number = now()): void {
     const state = usePlatformStore.getState().missions;
-    const manipulated = detectTimeManipulation({
+    const manipulated = this.clockSession.check({
       now: at,
       lastSessionTimestamp: state.lastSessionTimestamp,
       lastClaimWallClock: state.lastClaimWallClock,
     });
 
     if (manipulated) {
+      // Sticky lock — never auto-clear once set.
       usePlatformStore.getState().updateMissionsState({ timeManipulated: true });
       logger.warn('mission_time_manipulated');
       return;
     }
 
-    usePlatformStore.getState().updateMissionsState({
-      timeManipulated: false,
-      lastSessionTimestamp: at,
-    });
+    if (!state.timeManipulated) {
+      usePlatformStore.getState().updateMissionsState({
+        lastSessionTimestamp: at,
+      });
+    }
   }
 
   /** Returns true when any mission was reset or stamped. */

@@ -28,10 +28,6 @@ class AdsModuleService {
       case 'banner':
         await ads.showBanner(placement);
         return { shown: true };
-      case 'app_open': {
-        const result = await ads.showAppOpen(placement);
-        return { shown: result.shown, error: result.error };
-      }
       default:
         return { shown: false, error: t('ads.useRequestReward') };
     }
@@ -47,7 +43,6 @@ class AdsModuleService {
       HOME: 'HOME',
       SHOP: 'SHOP',
       LEADERBOARD: 'LEADERBOARD',
-      GAME_OVER: 'GAME_OVER',
     };
 
     const placement = contextToPlacement[context];

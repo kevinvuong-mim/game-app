@@ -13,12 +13,10 @@ interface ImportMetaEnv {
   readonly VITE_ADS_PROVIDER: 'mock' | 'admob';
   readonly VITE_ADMOB_IOS_APP_ID?: string;
   readonly VITE_ADMOB_IOS_BANNER_ID?: string;
-  readonly VITE_ADMOB_IOS_APP_OPEN_ID?: string;
   readonly VITE_ADMOB_IOS_REWARDED_ID?: string;
   readonly VITE_ADMOB_IOS_INTERSTITIAL_ID?: string;
   readonly VITE_ADMOB_ANDROID_APP_ID?: string;
   readonly VITE_ADMOB_ANDROID_BANNER_ID?: string;
-  readonly VITE_ADMOB_ANDROID_APP_OPEN_ID?: string;
   readonly VITE_ADMOB_ANDROID_REWARDED_ID?: string;
   readonly VITE_ADMOB_ANDROID_INTERSTITIAL_ID?: string;
 

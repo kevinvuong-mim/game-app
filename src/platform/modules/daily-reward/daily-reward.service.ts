@@ -8,7 +8,7 @@ import {
 } from './daily-reward.model';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
-import { detectTimeManipulation, getLocalDateKey } from '@platform/core/utils';
+import { ClockIntegritySession, getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
 import { rewardResolver, type RewardResolver, type ResolvedReward } from './reward-resolver';
@@ -18,6 +18,7 @@ export class DailyRewardService {
   private initialized = false;
   private claimInFlight = false;
   private model: DailyRewardModel = createDefaultModel();
+  private readonly clockSession = new ClockIntegritySession();
 
   constructor(
     private readonly repository: DailyRewardRepository = dailyRewardRepository,
@@ -39,9 +40,9 @@ export class DailyRewardService {
     this.model = applyStreakGapReset(this.model);
 
     if (this.detectClockSkew()) {
+      // Sticky lock — never auto-clear once set (avoids "fix clock then claim").
       this.model.timeManipulated = true;
-    } else {
-      this.model.timeManipulated = false;
+    } else if (!this.model.timeManipulated) {
       this.model.lastSessionTimestamp = Date.now();
     }
 
@@ -110,16 +111,14 @@ export class DailyRewardService {
 
     if (this.detectClockSkew()) {
       this.model.timeManipulated = true;
-    } else {
-      // Clock is consistent again — clear a previous lock so claims can resume.
-      this.model.timeManipulated = false;
+    } else if (!this.model.timeManipulated) {
       this.model.lastSessionTimestamp = Date.now();
     }
     void this.persist();
   }
 
   private detectClockSkew(wallNow = Date.now()): boolean {
-    return detectTimeManipulation({
+    return this.clockSession.check({
       now: wallNow,
       lastSessionTimestamp: this.model.lastSessionTimestamp,
       lastClaimWallClock: this.model.lastClaimWallClock,

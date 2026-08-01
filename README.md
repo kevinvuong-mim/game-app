@@ -125,25 +125,25 @@ eventBus.emit('analytics', { event: AnalyticsEvents.SESSION_START });
 
 ## Platform Modules
 
-| Module        | Backend? | Description                                                                |
-| ------------- | -------- | -------------------------------------------------------------------------- |
-| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, storage `gsk:guest`)  |
-| game-sync     | **API**  | Offline queue → HMAC `signature` batch upload (`POST /results`)            |
-| leaderboard   | **API**  | Offline cache, TTL, Top 100 REST (`LEADERBOARD_LIMIT` = 100/page)          |
-| notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)            |
-| i18n          | Local    | Runtime language switch (`en` / `vi`), lazy-loaded locale JSON             |
-| shop          | Local    | Catalog skins/boosts/IAP; equip skin                                       |
-| missions      | Local    | Daily missions; claim via EventBus; WATCH_AD via `MISSION_WATCH` placement |
-| daily-reward  | Local    | 7-day streak in Preferences; claim via EventBus                            |
-| save          | Local    | Single `game-save` key — hydrates Zustand (excludes daily-reward prefs)    |
-| settings      | Local    | Language, sound, music — part of store state                               |
-| deep-link     | Local    | Custom scheme, Universal Links / App Links, deferred cold-start navigation |
-| navigation    | Local    | Scene navigation + pending queue (notification / deeplink cold start)      |
-| share         | Local    | Native share sheet helper (used from Game Over)                            |
-| ads (module)  | Local    | Placement config, banner context (`HOME` / `GAME_OVER` / …), reward flow   |
-| IAP (module)  | Local\*  | Purchase, restore, entitlements; RevenueCat `logIn` on `guest.onReady`     |
-| analytics     | Local    | Provider interface — Console + Firebase (core)                             |
-| advertising   | Local    | AdMob / mock providers, placement state machines (core)                    |
+| Module        | Backend? | Description                                                                                                                |
+| ------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, storage `gsk:guest`)                                                  |
+| game-sync     | **API**  | Offline queue → HMAC `signature` batch upload (`POST /results`)                                                            |
+| leaderboard   | **API**  | Offline cache, TTL, Top 100 REST (`LEADERBOARD_LIMIT` = 100/page)                                                          |
+| notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)                                                            |
+| i18n          | Local    | Runtime language switch (`en` / `vi`), lazy-loaded locale JSON                                                             |
+| shop          | Local    | Catalog skins/boosts/IAP; equip skin                                                                                       |
+| missions      | Local    | Daily missions; claim via EventBus; WATCH_AD via `MISSION_WATCH` placement                                                 |
+| daily-reward  | Local    | 7-day streak in Preferences; claim via EventBus                                                                            |
+| save          | Local    | Single `game-save` key — hydrates Zustand (excludes daily-reward prefs)                                                    |
+| settings      | Local    | Language, sound, music — part of store state                                                                               |
+| deep-link     | Local    | Custom scheme, Universal Links / App Links, deferred cold-start navigation                                                 |
+| navigation    | Local    | Scene navigation + pending queue (notification / deeplink cold start)                                                      |
+| share         | Local    | Native share sheet helper (used from Game Over)                                                                            |
+| ads (module)  | Local    | Placement config (`HOME` / `SHOP` / `LEADERBOARD` banner, `MISSION_WATCH` rewarded, `GAME_OVER` interstitial), reward flow |
+| IAP (module)  | Local\*  | Purchase, restore, entitlements; RevenueCat `logIn` on `guest.onReady`                                                     |
+| analytics     | Local    | Provider interface — Console + Firebase (core)                                                                             |
+| advertising   | Local    | AdMob / mock providers, placement state machines (core)                                                                    |
 
 \* IAP is client-authoritative in this starter kit (no game-api receipt validation). Local feature details: [documents/modules/local-features.md](./documents/modules/local-features.md).
 

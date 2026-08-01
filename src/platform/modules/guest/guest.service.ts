@@ -254,10 +254,11 @@ export class GuestService {
       const payload = await this.repository.initGuest();
 
       if (payload.gameId !== gameId) {
-        logger.warn('[Guest] Backend gameId mismatch', {
+        logger.error('[Guest] Backend gameId mismatch — refusing credentials', {
           expected: gameId,
           received: payload.gameId,
         });
+        throw new Error(`Guest gameId mismatch: expected ${gameId}, received ${payload.gameId}`);
       }
 
       await this.repository.saveCredentials({

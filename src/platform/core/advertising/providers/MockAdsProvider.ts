@@ -12,7 +12,6 @@ export class MockAdsProvider implements IAdsProvider {
     this.ready.add('rewarded');
     this.ready.add('interstitial');
     this.ready.add('banner');
-    this.ready.add('app_open');
     this.cached.add('rewarded');
     this.cached.add('interstitial');
   }
@@ -66,17 +65,6 @@ export class MockAdsProvider implements IAdsProvider {
   }
 
   destroyBanner(): void {}
-
-  async loadAppOpen(): Promise<void> {
-    this.ready.add('app_open');
-    this.cached.add('app_open');
-  }
-
-  async showAppOpen(placement = 'default'): Promise<AdShowResult> {
-    logger.info(`[Ads] Mock app open shown: ${placement}`);
-    await new Promise((r) => setTimeout(r, 200));
-    return { shown: true, providerPayload: { shown: true } };
-  }
 
   destroy(): void {
     this.ready.clear();

@@ -1,3 +1,5 @@
+import type { MissionProgress } from '@platform/modules/missions/mission.model';
+
 interface UserState {
   id: string;
   createdAt: number;
@@ -38,19 +40,7 @@ export interface SettingsState {
   musicEnabled: boolean;
 }
 
-type MissionStatus = 'active' | 'claimed' | 'completed';
-
-export interface MissionProgress {
-  id: string;
-  type: string;
-  target: number;
-  progress: number;
-  claimedAt?: number;
-  createdAt?: number;
-  completedAt?: number;
-  status: MissionStatus;
-  lastResetDayKey?: string | null;
-}
+export type { MissionProgress };
 
 interface MissionsState {
   missions: Record<string, MissionProgress>;
