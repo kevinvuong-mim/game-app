@@ -22,7 +22,9 @@ class AdsModuleService {
     ads.setRemoteConfig(this.runtimeConfig);
   }
 
-  async showPlacement(placement: AdPlacement | string): Promise<{ shown: boolean; error?: string }> {
+  async showPlacement(
+    placement: AdPlacement | string
+  ): Promise<{ shown: boolean; error?: string }> {
     const format = ads.resolveFormat(placement);
     if (!format) {
       return { shown: false, error: 'Unknown placement' };
