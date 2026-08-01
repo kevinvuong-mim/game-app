@@ -8,16 +8,15 @@ import {
 } from './daily-reward.model';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
-import { getLocalDateKey } from '@platform/core/utils';
+import { detectTimeManipulation, getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
 import { saveService } from '@platform/modules/save';
 import { rewardResolver, type RewardResolver, type ResolvedReward } from './reward-resolver';
 import { dailyRewardRepository, type DailyRewardRepository } from './daily-reward.repository';
 
-const BACKWARD_CLOCK_TOLERANCE_MS = 60_000;
-
 export class DailyRewardService {
   private initialized = false;
+  private claimInFlight = false;
   private model: DailyRewardModel = createDefaultModel();
 
   constructor(
@@ -39,7 +38,7 @@ export class DailyRewardService {
 
     this.model = applyStreakGapReset(this.model);
 
-    if (this.detectTimeManipulation()) {
+    if (this.detectClockSkew()) {
       this.model.timeManipulated = true;
     } else {
       this.model.timeManipulated = false;
@@ -53,33 +52,48 @@ export class DailyRewardService {
 
   canClaim(): boolean {
     if (!this.initialized) return false;
+    if (this.claimInFlight) return false;
     if (this.model.timeManipulated) return false;
     if (hasClaimedToday(this.model)) return false;
     return true;
   }
 
   async claim(): Promise<ClaimResult | null> {
+    if (this.claimInFlight) {
+      logger.warn('[DailyReward] Claim already in flight');
+      return null;
+    }
     if (!this.canClaim()) {
       logger.warn('[DailyReward] Claim blocked');
       return null;
     }
 
-    const rewardDay = this.model.currentDay;
-    const resolved = this.resolver.resolveClaim(rewardDay);
-    this.applyReward(resolved);
+    this.claimInFlight = true;
+    try {
+      if (this.model.timeManipulated || hasClaimedToday(this.model)) {
+        logger.warn('[DailyReward] Claim blocked after lock');
+        return null;
+      }
 
-    const now = Date.now();
-    this.model.lastClaimDate = getLocalDateKey();
-    this.model.lastClaimWallClock = now;
-    this.model.lastSessionTimestamp = now;
-    this.model.currentDay = rewardDay >= 7 ? 1 : rewardDay + 1;
+      const rewardDay = this.model.currentDay;
+      const resolved = this.resolver.resolveClaim(rewardDay);
+      this.applyReward(resolved);
 
-    await this.persist();
+      const wallNow = Date.now();
+      this.model.lastClaimDate = getLocalDateKey();
+      this.model.lastClaimWallClock = wallNow;
+      this.model.lastSessionTimestamp = wallNow;
+      this.model.currentDay = rewardDay >= 7 ? 1 : rewardDay + 1;
 
-    const result = toClaimResult(resolved);
-    eventBus.emit('daily:claim', { day: result.day, streak: rewardDay });
-    logger.info('[DailyReward] Claimed', result);
-    return result;
+      await this.persist();
+
+      const result = toClaimResult(resolved);
+      eventBus.emit('daily:claim', { day: result.day, streak: rewardDay });
+      logger.info('[DailyReward] Claimed', result);
+      return result;
+    } finally {
+      this.claimInFlight = false;
+    }
   }
 
   getRewardProgress(): RewardProgress {
@@ -94,7 +108,7 @@ export class DailyRewardService {
   refreshSessionTimestamp(): void {
     this.model = applyStreakGapReset(this.model);
 
-    if (this.detectTimeManipulation()) {
+    if (this.detectClockSkew()) {
       this.model.timeManipulated = true;
     } else {
       // Clock is consistent again — clear a previous lock so claims can resume.
@@ -104,22 +118,12 @@ export class DailyRewardService {
     void this.persist();
   }
 
-  private detectTimeManipulation(now = Date.now()): boolean {
-    const { lastSessionTimestamp, lastClaimWallClock } = this.model;
-
-    if (lastSessionTimestamp > 0 && now < lastSessionTimestamp - BACKWARD_CLOCK_TOLERANCE_MS) {
-      return true;
-    }
-
-    if (lastClaimWallClock > 0 && now < lastClaimWallClock - BACKWARD_CLOCK_TOLERANCE_MS) {
-      return true;
-    }
-
-    if (lastClaimWallClock > now + BACKWARD_CLOCK_TOLERANCE_MS) {
-      return true;
-    }
-
-    return false;
+  private detectClockSkew(wallNow = Date.now()): boolean {
+    return detectTimeManipulation({
+      now: wallNow,
+      lastSessionTimestamp: this.model.lastSessionTimestamp,
+      lastClaimWallClock: this.model.lastClaimWallClock,
+    });
   }
 
   private applyReward(reward: ResolvedReward): void {

@@ -17,6 +17,7 @@ class MissionController {
       }),
 
       events.on('app:resume', () => {
+        this.service.refreshClockIntegrity();
         void this.handleResets();
       }),
     ];

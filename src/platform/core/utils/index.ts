@@ -1,3 +1,5 @@
+export { BACKWARD_CLOCK_TOLERANCE_MS, detectTimeManipulation } from './clock-integrity';
+
 /**
  * Shared time source for platform modules.
  * Centralizes device time so server time can be wired in later.

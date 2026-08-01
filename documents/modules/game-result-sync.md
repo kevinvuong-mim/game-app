@@ -23,12 +23,15 @@ Trên native Preferences, key được lưu với prefix `gsk:` (vật lý: `gsk
 ```text
 HMAC-SHA256(
   replaySecret,
-  `${gameId}|${guestId}|${clientResultId}|${score}|${playedAt || ''}`
+  `${gameId}|${guestId}|${clientResultId}|${score}|${playedAt || ''}|${canonicalMetadata}`
 )
 ```
 
 - `playedAt`: ISO8601 string (dùng đúng chuỗi gốc khi ký).
+- `canonicalMetadata`: `JSON.stringify` với keys đã sort; thiếu metadata → chuỗi rỗng.
 - Field gửi lên API: `signature` (hex).
+
+**Lưu ý:** HMAC chỉ là soft integrity (client cũng giữ secret) — **không phải anti-cheat**.
 
 ## Request
 

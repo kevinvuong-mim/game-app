@@ -80,11 +80,14 @@ export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
     LEADERBOARD: 'banner',
     EXTRA_LIFE: 'rewarded',
     DOUBLE_COIN: 'rewarded',
+    /** Completes WATCH_AD mission progress only — no immediate coin grant. */
+    MISSION_WATCH: 'rewarded',
     GAME_OVER: 'interstitial',
   },
   rewards: {
     DOUBLE_COIN: { type: 'coins', amount: 100 },
     EXTRA_LIFE: { type: 'extra_life', amount: 1 },
+    MISSION_WATCH: { type: 'mission_progress', amount: 1 },
   },
 };
 

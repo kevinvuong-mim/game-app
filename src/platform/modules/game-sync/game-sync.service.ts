@@ -147,7 +147,14 @@ export class GameSyncService {
   private async runFlush(gameId: string, guestId: string): Promise<number | null> {
     do {
       this.dirty = false;
-      await this.flushForGuest(gameId, guestId);
+      try {
+        await this.flushForGuest(gameId, guestId);
+      } catch (error) {
+        // Preserve dirty so a concurrent flush waiter / retry can drain the queue.
+        this.dirty = true;
+        logger.error('[GameSync] Flush failed — will retry on next trigger', error);
+        throw error;
+      }
     } while (this.dirty);
     return this.lastApiRank;
   }
@@ -221,18 +228,23 @@ export class GameSyncService {
     for (let i = 0; i < prepared.length; i += MAX_BATCH_SIZE) {
       const batch = prepared.slice(i, i + MAX_BATCH_SIZE);
       const signedBatch = await Promise.all(
-        batch.map(async (item) => ({
-          ...item,
-          guestId,
-          signature: await computeReplaySignature({
-            gameId,
+        batch.map(async (item) => {
+          const metadata = sanitizeMetadata(item.metadata);
+          return {
+            ...item,
             guestId,
-            clientResultId: item.clientResultId,
-            score: item.score,
-            playedAt: item.playedAt,
-            replaySecret,
-          }),
-        }))
+            metadata,
+            signature: await computeReplaySignature({
+              gameId,
+              guestId,
+              clientResultId: item.clientResultId,
+              score: item.score,
+              playedAt: item.playedAt,
+              replaySecret,
+              metadata,
+            }),
+          };
+        })
       );
 
       try {
@@ -243,7 +255,7 @@ export class GameSyncService {
             score,
             playedAt,
             signature,
-            metadata: sanitizeMetadata(metadata),
+            metadata,
           }))
         );
 

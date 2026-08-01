@@ -26,8 +26,8 @@ const ACTION_BTN_HEIGHT = 52;
 const PROGRESS_BAR_HEIGHT = 22;
 const PROGRESS_BAR_COLOR = 0x3cb043;
 const PROGRESS_FILL_COLOR = 0x1f5c2e;
-/** Rewarded placement used for WATCH_AD mission progress. */
-const MISSION_AD_PLACEMENT = 'DOUBLE_COIN';
+/** Rewarded placement for WATCH_AD progress — no coin grant (coins come from mission claim). */
+const MISSION_AD_PLACEMENT = 'MISSION_WATCH';
 const FALLBACK_MISSION_ICON = 'mission-item-1';
 
 function formatMissionNumber(value: number): string {
@@ -60,13 +60,6 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     this.onNavigate = options.onNavigate;
     scene.add.existing(this);
     this.build();
-    if (
-      missions.applyResets() ||
-      missions.syncReachScoreFromHighScore() ||
-      missions.recordDailyLogin()
-    ) {
-      void saveService.saveLocal();
-    }
     this.renderMissions();
     this.bindEvents();
   }
@@ -208,8 +201,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     });
     container.add(titleText);
 
-    const progressY =
-      titleText.y + titleText.height + titleToBarGap + PROGRESS_BAR_HEIGHT / 2;
+    const progressY = titleText.y + titleText.height + titleToBarGap + PROGRESS_BAR_HEIGHT / 2;
     container.add(
       this.createProgressBar(contentLeft, progressY, barWidth, progress, mission.target, ratio)
     );

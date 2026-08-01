@@ -14,8 +14,11 @@ export type MissionProgressHandler = (
 export class MissionTracker {
   bind(events: IEventBus, onProgress: MissionProgressHandler): () => void {
     const unsubs = [
-      events.on('ad:reward', () => {
-        onProgress('WATCH_AD', 1);
+      events.on('ad:reward', ({ placement }) => {
+        // Only mission placement counts — DOUBLE_COIN / EXTRA_LIFE must not farm WATCH_AD.
+        if (placement === 'MISSION_WATCH') {
+          onProgress('WATCH_AD', 1);
+        }
       }),
 
       events.on('game:start', () => {

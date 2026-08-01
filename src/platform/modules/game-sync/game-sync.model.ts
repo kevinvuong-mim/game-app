@@ -62,14 +62,27 @@ export interface ResultSubmitData {
   rejected?: Array<{ clientResultId: string; reason: string }>;
 }
 
+function canonicalizeMetadata(metadata?: Record<string, string | number | boolean | null>): string {
+  if (!metadata) return '';
+  const keys = Object.keys(metadata).sort();
+  if (keys.length === 0) return '';
+  const sorted: Record<string, string | number | boolean | null> = {};
+  for (const key of keys) {
+    sorted[key] = metadata[key];
+  }
+  return JSON.stringify(sorted);
+}
+
 function buildReplayPayload(params: {
   score: number;
   gameId: string;
   guestId: string;
   playedAt?: string;
   clientResultId: string;
+  metadata?: Record<string, string | number | boolean | null>;
 }): string {
-  return `${params.gameId}|${params.guestId}|${params.clientResultId}|${params.score}|${params.playedAt ?? ''}`;
+  const metadataPart = canonicalizeMetadata(params.metadata);
+  return `${params.gameId}|${params.guestId}|${params.clientResultId}|${params.score}|${params.playedAt ?? ''}|${metadataPart}`;
 }
 
 /**
@@ -83,6 +96,7 @@ export async function computeReplaySignature(params: {
   playedAt?: string;
   replaySecret: string;
   clientResultId: string;
+  metadata?: Record<string, string | number | boolean | null>;
 }): Promise<string> {
   const payload = buildReplayPayload(params);
   const key = await crypto.subtle.importKey(

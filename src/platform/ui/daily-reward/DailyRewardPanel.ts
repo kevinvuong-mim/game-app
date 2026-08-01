@@ -52,6 +52,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private calendarContainer?: Phaser.GameObjects.Container;
   private calendarLayout!: CalendarLayout;
   private unsubscribers: Array<() => void> = [];
+  private claimPending = false;
 
   constructor(
     scene: Phaser.Scene,
@@ -102,12 +103,20 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
         this.render(progress);
       }),
       eventBus.on('daily:claim:result', ({ success, message }) => {
+        this.claimPending = false;
         if (!success && message === 'time_manipulated') {
           toast.show({ message: t('dailyReward.timeManipulated'), type: 'error' });
         }
         eventBus.emit('daily:progress:request', undefined);
       })
     );
+  }
+
+  private requestClaim(): void {
+    if (this.claimPending) return;
+    this.claimPending = true;
+    this.claimButton?.setVisible(false);
+    eventBus.emit('daily:claim:request', undefined);
   }
 
   private build(): void {
@@ -174,7 +183,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
         },
       },
       sound: 'coin-drop',
-      onClick: () => eventBus.emit('daily:claim:request', undefined),
+      onClick: () => this.requestClaim(),
     });
     this.claimButton.setVisible(false);
     this.add(this.claimButton);
@@ -371,7 +380,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
       const hit = this.scene.add
         .rectangle(0, 0, width, height, 0x000000, 0)
         .setInteractive({ useHandCursor: true });
-      hit.on('pointerdown', () => eventBus.emit('daily:claim:request', undefined));
+      hit.on('pointerdown', () => this.requestClaim());
       container.add(hit);
       this.scene.tweens.add({
         targets: container,
@@ -396,7 +405,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     const hit = this.scene.add
       .rectangle(0, 0, cellWidth, cellHeight, 0x000000, 0)
       .setInteractive({ useHandCursor: true });
-    hit.on('pointerdown', () => eventBus.emit('daily:claim:request', undefined));
+    hit.on('pointerdown', () => this.requestClaim());
     container.add(hit);
 
     this.scene.tweens.add({

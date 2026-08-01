@@ -54,6 +54,9 @@ export interface MissionProgress {
 
 interface MissionsState {
   missions: Record<string, MissionProgress>;
+  timeManipulated: boolean;
+  lastClaimWallClock: number;
+  lastSessionTimestamp: number;
 }
 
 export interface DailyRewardState {
@@ -78,6 +81,9 @@ export interface PlatformState {
 export const DEFAULT_STATE: PlatformState = {
   missions: {
     missions: {},
+    timeManipulated: false,
+    lastClaimWallClock: 0,
+    lastSessionTimestamp: 0,
   },
   progress: {
     highScore: 0,

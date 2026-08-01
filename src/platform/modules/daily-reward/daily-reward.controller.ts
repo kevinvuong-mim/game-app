@@ -1,6 +1,5 @@
 import { logger } from '@platform/core/error';
 import type { IEventBus } from '@platform/core/events';
-import { saveService } from '@platform/modules/save';
 import { trackDailyClaim } from '@platform/core/analytics/events';
 import { dailyRewards, type DailyRewardService } from './daily-reward.service';
 
@@ -53,8 +52,6 @@ class DailyRewardController {
       day: result.day,
       coins: result.coins,
     });
-
-    await saveService.saveLocal();
 
     events.emit('daily:claim:result', {
       success: true,

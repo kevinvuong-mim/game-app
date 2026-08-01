@@ -23,6 +23,7 @@ export interface ShopItem {
 
 class ShopService {
   private items: ShopItem[] = catalog.items as ShopItem[];
+  private purchaseInFlight = false;
 
   getItems(type?: ShopItemType): ShopItem[] {
     if (!type) return this.items;
@@ -63,39 +64,49 @@ class ShopService {
   }
 
   async purchase(itemId: string): Promise<boolean> {
+    if (this.purchaseInFlight) {
+      logger.warn(`[Shop] Purchase already in flight: ${itemId}`);
+      return false;
+    }
+
     const item = this.getItem(itemId);
     if (!item) {
       logger.warn(`[Shop] Item not found: ${itemId}`);
       return false;
     }
 
-    if (item.currency === 'iap' && item.productKey) {
-      if (item.type === 'entitlement' && this.isOwned(itemId)) return false;
+    this.purchaseInFlight = true;
+    try {
+      if (item.currency === 'iap' && item.productKey) {
+        if (item.type === 'entitlement' && this.isOwned(itemId)) return false;
 
-      const product = getProductByKey(item.productKey);
-      const result = await iap.purchase(product);
+        const product = getProductByKey(item.productKey);
+        const result = await iap.purchase(product);
 
-      if (result.success) {
-        // Coin packs are fulfilled via iap:purchase:success (also covers timeout recovery).
-        eventBus.emit('shop:purchase', { itemId, price: item.price });
-        return true;
+        if (result.success) {
+          // Coin packs are fulfilled via iap:purchase:success (also covers timeout recovery).
+          eventBus.emit('shop:purchase', { itemId, price: item.price });
+          return true;
+        }
+
+        if (!result.cancelled) {
+          logger.error('[Shop] IAP purchase failed', result.error);
+        }
+        return false;
       }
 
-      if (!result.cancelled) {
-        logger.error('[Shop] IAP purchase failed', result.error);
+      if (item.currency === 'coins') {
+        if (!usePlatformStore.getState().spendCoins(item.price)) return false;
+      } else {
+        return false;
       }
-      return false;
-    }
 
-    if (item.currency === 'coins') {
-      if (!usePlatformStore.getState().spendCoins(item.price)) return false;
-    } else {
-      return false;
+      this.grantItem(item);
+      eventBus.emit('shop:purchase', { itemId, price: item.price });
+      return true;
+    } finally {
+      this.purchaseInFlight = false;
     }
-
-    this.grantItem(item);
-    eventBus.emit('shop:purchase', { itemId, price: item.price });
-    return true;
   }
 
   /** Grant coin packs after IAP success / restore of an unconsumed consumable. */
