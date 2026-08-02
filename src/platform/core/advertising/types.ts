@@ -3,7 +3,8 @@ export type AdState =
   'IDLE' | 'ERROR' | 'READY' | 'LOADING' | 'SHOWING' | 'COMPLETED' | 'DESTROYED';
 export type BannerState = 'IDLE' | 'HIDDEN' | 'LOADING' | 'VISIBLE' | 'DESTROYED';
 export type AdContext = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'GAMEPLAY' | 'GAME_OVER';
-export type AdPlacement = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'MISSION_WATCH' | 'GAME_OVER';
+export type AdPlacement =
+  'HOME' | 'SHOP' | 'GAME_OVER' | 'LEADERBOARD' | 'DOUBLE_COINS' | 'MISSION_WATCH';
 
 interface AdReward {
   type: string;
@@ -70,11 +71,17 @@ export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
     HOME: 'banner',
     SHOP: 'banner',
     LEADERBOARD: 'banner',
+    /**
+     * Game Over opt-in: doubles run coins.
+     * Amount is applied by GameOverScene (equals coins earned that run).
+     */
+    DOUBLE_COINS: 'rewarded',
     /** Completes WATCH_AD mission progress only — no immediate coin grant. */
     MISSION_WATCH: 'rewarded',
     GAME_OVER: 'interstitial',
   },
   rewards: {
+    DOUBLE_COINS: { type: 'coins', amount: 0 },
     MISSION_WATCH: { type: 'mission_progress', amount: 1 },
   },
 };

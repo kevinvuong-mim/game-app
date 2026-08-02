@@ -211,7 +211,7 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
         scene: this.scene,
         position: { x: quitX, y: buttonsY },
         size: { width: buttonWidth, height: buttonHeight },
-        background: { key: 'share-button-background' },
+        background: { key: 'quit-button-background' },
         text: {
           content: t('game.quitConfirm').toUpperCase(),
           style: {

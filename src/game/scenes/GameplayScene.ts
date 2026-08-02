@@ -17,7 +17,6 @@ import {
   type GameRunSnapshot,
 } from '@game/gameplay';
 import { gameConfig } from '@game/config';
-import { usePlatformStore } from '@platform/ui';
 import { randomSpawnLevel } from '@game/fruits';
 import { eventBus } from '@platform/core/events';
 import { soundManager } from '@platform/ui/audio/SoundManager';
@@ -55,7 +54,6 @@ export class GameplayScene extends Phaser.Scene {
   private hud!: GameplayHUD;
   private returnTo = 'Home';
   private sessionEnded = false;
-  private startingHighScore = 0;
   private sessionStarted = false;
   private factory!: FruitFactory;
   private skillBar!: SkillBarView;
@@ -92,7 +90,6 @@ export class GameplayScene extends Phaser.Scene {
     this.sessionEnded = false;
     this.sessionStarted = false;
     this.canDrop = true;
-    this.startingHighScore = usePlatformStore.getState().progress.highScore;
     this.undoSnapshot = null;
 
     this.factory = new FruitFactory(this, this.fruits);
@@ -180,12 +177,10 @@ export class GameplayScene extends Phaser.Scene {
       },
       onQuit: () => {
         if (!this.gameActive) return;
-        const isNewRecord = this.score > this.startingHighScore;
         this.completeSession();
         this.scene.start('GameOver', {
           score: this.score,
           returnTo: this.returnTo,
-          isNewRecord,
         });
       },
       onQuitConfirmOpen: () => {
@@ -470,7 +465,6 @@ export class GameplayScene extends Phaser.Scene {
   private triggerGameOver(violators: FruitBody[]): void {
     if (!this.gameActive || this.sessionEnded) return;
 
-    const isNewRecord = this.score > this.startingHighScore;
     // Complete immediately so deeplink/pause during the flash still syncs the match
     // and abortSession cannot re-persist a cleared lose-state run.
     this.completeSession();
@@ -486,7 +480,6 @@ export class GameplayScene extends Phaser.Scene {
       this.scene.start('GameOver', {
         score: this.score,
         returnTo: this.returnTo,
-        isNewRecord,
       });
     });
   }

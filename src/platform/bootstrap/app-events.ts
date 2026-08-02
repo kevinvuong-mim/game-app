@@ -79,6 +79,8 @@ export function bindAppEvents(): () => void {
 
     events.on('ad:reward', ({ placement, reward }) => {
       trackAdReward({ placement, reward: JSON.stringify(reward) });
+      // Persist after rewarded grants (e.g. Game Over x2 coins) and mission progress.
+      void saveService.saveLocal();
     }),
 
     events.on('app:resume', () => {

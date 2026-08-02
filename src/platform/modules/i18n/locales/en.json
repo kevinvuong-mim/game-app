@@ -28,9 +28,9 @@
   "game": {
     "scoreLabel": "SCORE",
     "yourScore": "YOUR SCORE",
+    "rank": "Rank: #{{rank}}",
     "coinsEarned": "COINS EARNED",
     "gameOver": "GAME OVER",
-    "newRecord": "NEW RECORD",
     "retry": "PLAY AGAIN",
     "home": "HOME",
     "shareScore": "SHARE",

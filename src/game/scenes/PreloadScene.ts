@@ -47,7 +47,6 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'no-ads-icon', path: '/assets/images/no-ads-icon.png' },
   { key: 'speaker-icon', path: '/assets/images/speaker-icon.png' },
   { key: 'checked-icon', path: '/assets/images/checked-icon.png' },
-  { key: 'firework-icon', path: '/assets/images/firework-icon.png' },
   { key: 'missions-icon', path: '/assets/images/missions-icon.png' },
   { key: 'how-to-play-icon', path: '/assets/images/how-to-play.png' },
   { key: 'mission-item-1', path: '/assets/images/mission-item-1.png' },
@@ -67,11 +66,11 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'watermelon-character', path: '/assets/images/watermelon-character.png' },
   { key: 'play-button-background', path: '/assets/images/play-button-background.png' },
   { key: 'home-button-background', path: '/assets/images/home-button-background.png' },
+  { key: 'quit-button-background', path: '/assets/images/quit-button-background.png' },
   { key: 'share-button-background', path: '/assets/images/share-button-background.png' },
   { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
   { key: 'gameover-background-image', path: '/assets/images/gameover-background-image.webp' },
   { key: 'settings-button-background', path: '/assets/images/settings-button-background.png' },
-  { key: 'best-score-background-image', path: '/assets/images/best-score-background-image.png' },
 ];
 
 const FALLBACK_TEXTURES: FallbackTexture[] = [
@@ -98,7 +97,6 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'mission-item-4', width: 96, height: 96, color: 0x3cb043 },
   { key: 'mission-item-5', width: 96, height: 96, color: 0xffc107 },
   { key: 'mission-item-6', width: 96, height: 96, color: 0x9b59b6 },
-  { key: 'firework-icon', width: 120, height: 116, color: 0xff9800 },
   { key: 'how-to-play-icon', width: 80, height: 80, color: 0x3cb043 },
   { key: 'gameover-banner', width: 400, height: 313, color: 0xc62828 },
   { key: 'musical-note-icon', width: 81, height: 95, color: 0x3cb043 },
@@ -112,11 +110,11 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'watermelon-character', width: 255, height: 168, color: 0x3cb043 },
   { key: 'play-button-background', width: 256, height: 78, color: 0x4a90d9 },
   { key: 'home-button-background', width: 265, height: 98, color: 0x8e44ad },
+  { key: 'quit-button-background', width: 265, height: 98, color: 0xe67e22 },
   { key: 'general-background-image', width: 16, height: 16, color: 0x16213e },
   { key: 'share-button-background', width: 265, height: 98, color: 0xe67e22 },
   { key: 'gameover-background-image', width: 16, height: 16, color: 0x16213e },
   { key: 'settings-button-background', width: 256, height: 78, color: 0x4a90d9 },
-  { key: 'best-score-background-image', width: 265, height: 97, color: 0xe74c3c },
   { key: 'leaderboard-button-background', width: 256, height: 78, color: 0x4a90d9 },
 ];
 
