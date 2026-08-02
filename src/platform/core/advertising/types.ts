@@ -1,13 +1,9 @@
 export type AdFormat = 'banner' | 'rewarded' | 'interstitial';
-
-export type AdPlacement = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'MISSION_WATCH' | 'GAME_OVER';
-
-export type AdContext = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'GAMEPLAY' | 'GAME_OVER';
-
 export type AdState =
   'IDLE' | 'ERROR' | 'READY' | 'LOADING' | 'SHOWING' | 'COMPLETED' | 'DESTROYED';
-
 export type BannerState = 'IDLE' | 'HIDDEN' | 'LOADING' | 'VISIBLE' | 'DESTROYED';
+export type AdContext = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'GAMEPLAY' | 'GAME_OVER';
+export type AdPlacement = 'HOME' | 'SHOP' | 'LEADERBOARD' | 'MISSION_WATCH' | 'GAME_OVER';
 
 interface AdReward {
   type: string;

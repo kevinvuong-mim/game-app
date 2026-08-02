@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import {
+  GameplayHUD,
   MergeSystem,
   saveGameRun,
   SkillBarView,
@@ -19,7 +20,6 @@ import { gameConfig } from '@game/config';
 import { usePlatformStore } from '@platform/ui';
 import { randomSpawnLevel } from '@game/fruits';
 import { eventBus } from '@platform/core/events';
-import { GameplayHUD } from '@game/ui/GameplayHUD';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 
 /**

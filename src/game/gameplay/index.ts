@@ -7,6 +7,7 @@ export {
   type GameRunSnapshot,
 } from './GameRunSave';
 export { CONTAINER_INSET } from './types';
+export { GameplayHUD } from './GameplayHUD';
 export { MergeSystem } from './MergeSystem';
 export { FruitFactory } from './FruitFactory';
 export { SkillBarView } from './SkillBarView';
