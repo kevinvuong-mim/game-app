@@ -56,7 +56,7 @@ Then customize:
 ## Project Structure
 
 ```
-game-apps/
+game-app/
 ├── src/
 │   ├── main.ts                # Entry → GameEngine.bootstrap()
 │   ├── platform/              # Reusable platform (keep as-is across games)

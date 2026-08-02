@@ -108,7 +108,7 @@ xcodebuild -version
 ### 1. Cài dependency
 
 ```bash
-cd game-apps
+cd game-app
 npm install
 ```
 
@@ -434,7 +434,7 @@ Verify AdMob trong Info.plist:
 ### Android — full flow CLI
 
 ```bash
-cd game-apps
+cd game-app
 npm run build:android
 cd android && ./gradlew assembleDebug
 
@@ -450,7 +450,7 @@ adb logcat -s Capacitor/Console
 ### iOS — full flow CLI
 
 ```bash
-cd game-apps
+cd game-app
 npm run build:ios
 open -a Simulator
 
