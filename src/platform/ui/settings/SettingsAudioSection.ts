@@ -46,6 +46,7 @@ export class SettingsAudioSection {
         soundManager.syncMusic();
       }
     );
+    y += 8;
 
     y = this.buildAudioRow(
       left,
@@ -98,6 +99,6 @@ export class SettingsAudioSection {
       })
     );
 
-    return y + rowHeight + 8;
+    return y + rowHeight;
   }
 }

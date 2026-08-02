@@ -121,7 +121,8 @@
     "restoringPurchases": "Restoring purchases…",
     "restorePurchasesSuccess": "Purchases restored",
     "restorePurchasesEmpty": "No purchases to restore",
-    "restorePurchasesFailed": "Could not restore purchases"
+    "restorePurchasesFailed": "Could not restore purchases",
+    "version": "Version {{version}}"
   },
   "missions": {
     "title": "Missions",

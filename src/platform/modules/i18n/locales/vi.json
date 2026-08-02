@@ -121,7 +121,8 @@
     "restoringPurchases": "Đang khôi phục…",
     "restorePurchasesSuccess": "Đã khôi phục giao dịch",
     "restorePurchasesEmpty": "Không có giao dịch để khôi phục",
-    "restorePurchasesFailed": "Không thể khôi phục giao dịch"
+    "restorePurchasesFailed": "Không thể khôi phục giao dịch",
+    "version": "Phiên bản {{version}}"
   },
   "missions": {
     "title": "Nhiệm vụ",

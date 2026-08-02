@@ -6,6 +6,7 @@ import {
   PANEL_LIST_PADDING,
   PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
+import { gameConfig } from '@game/config';
 import type { ToastOptions } from '../types';
 import { toast } from '../toast/ToastManager';
 import { eventBus } from '@platform/core/events';
@@ -14,12 +15,12 @@ import { createUIButton } from '../button/UIButton';
 import { drawRoundedRect } from '../panel/graphics';
 import { t } from '@platform/modules/i18n/i18n.service';
 import { SettingsAdsSection } from './SettingsAdsSection';
-import { DIVIDER_COLOR, DIVIDER_GAP } from './settingsShared';
 import { IAP_EVENTS } from '@platform/modules/iap/iap.events';
 import { SettingsAudioSection } from './SettingsAudioSection';
 import { SettingsLegalSection } from './SettingsLegalSection';
 import { SettingsProfileSection } from './SettingsProfileSection';
 import { SettingsLanguageSection } from './SettingsLanguageSection';
+import { DIVIDER_COLOR, DIVIDER_GAP, LABEL_COLOR } from './settingsShared';
 
 /**
  * Settings UI — Shop-style beige panel matching the settings mock.
@@ -202,6 +203,7 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     cursorY = this.languageSection.build(contentLeft, contentRight, contentWidth, cursorY);
     cursorY = this.addDivider(width / 2, cursorY + DIVIDER_GAP, contentWidth + 24) + DIVIDER_GAP;
     cursorY = legalSection.build(contentLeft, contentRight, contentWidth, cursorY);
+    cursorY = this.buildVersion(width / 2, cursorY + DIVIDER_GAP);
 
     const panelHeight = cursorY - panelTop + PANEL_LIST_PADDING + 16;
     const panel = this.scene.add.graphics();
@@ -238,6 +240,20 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
         })
         .setOrigin(0.5)
     );
+  }
+
+  private buildVersion(centerX: number, y: number): number {
+    const label = t('settings.version', { version: gameConfig.version });
+    const text = this.scene.add
+      .text(centerX, y, label, {
+        fontSize: '16px',
+        color: LABEL_COLOR,
+        fontFamily: FREDOKA_FONT,
+      })
+      .setOrigin(0.5, 0)
+      .setAlpha(0.75);
+    this.add(text);
+    return y + text.height;
   }
 
   private addDivider(centerX: number, y: number, width: number): number {

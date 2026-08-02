@@ -120,7 +120,7 @@ export class SettingsAdsSection {
     });
     this.parent.add(this.hideAdsToggle);
 
-    return y + rowHeight + 8;
+    return y + rowHeight;
   }
 
   private async restorePurchases(): Promise<void> {
