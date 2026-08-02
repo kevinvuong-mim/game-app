@@ -2,7 +2,9 @@ import {
   hasClaimedToday,
   type ClaimResult,
   createDefaultModel,
+  resolveClaimReward,
   applyStreakGapReset,
+  buildRewardProgress,
   type RewardProgress,
   type DailyRewardModel,
 } from './daily-reward.model';
@@ -11,7 +13,7 @@ import { eventBus } from '@platform/core/events';
 import { saveService } from '@platform/modules/save';
 import { getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
-import { rewardResolver, type RewardResolver, type ResolvedReward } from './reward-resolver';
+import { trackDailyClaim } from '@platform/core/analytics/events';
 import { dailyRewardRepository, type DailyRewardRepository } from './daily-reward.repository';
 
 export class DailyRewardService {
@@ -19,10 +21,7 @@ export class DailyRewardService {
   private claimInFlight = false;
   private model: DailyRewardModel = createDefaultModel();
 
-  constructor(
-    private readonly repository: DailyRewardRepository = dailyRewardRepository,
-    private readonly resolver: RewardResolver = rewardResolver
-  ) {}
+  constructor(private readonly repository: DailyRewardRepository = dailyRewardRepository) {}
 
   async init(): Promise<void> {
     this.model = await this.repository.load();
@@ -51,21 +50,16 @@ export class DailyRewardService {
 
     this.claimInFlight = true;
     try {
-      if (hasClaimedToday(this.model)) {
-        logger.warn('[DailyReward] Claim blocked after lock');
-        return null;
-      }
-
       const rewardDay = this.model.currentDay;
-      const resolved = this.resolver.resolveClaim(rewardDay);
-      this.applyReward(resolved);
+      const result = resolveClaimReward(rewardDay);
+      usePlatformStore.getState().addCoins(result.coins);
 
       this.model.lastClaimDate = getLocalDateKey();
       this.model.currentDay = rewardDay >= 7 ? 1 : rewardDay + 1;
 
       await this.persist();
 
-      const result = toClaimResult(resolved);
+      trackDailyClaim({ day: result.day, coins: result.coins });
       eventBus.emit('daily:claim', { day: result.day, streak: rewardDay });
       logger.info('[DailyReward] Claimed', result);
       return result;
@@ -78,7 +72,7 @@ export class DailyRewardService {
     return {
       currentDay: this.model.currentDay,
       canClaim: this.canClaim(),
-      days: this.resolver.buildProgress(this.model.currentDay),
+      days: buildRewardProgress(this.model.currentDay),
     };
   }
 
@@ -88,23 +82,12 @@ export class DailyRewardService {
     void this.persist();
   }
 
-  private applyReward(reward: ResolvedReward): void {
-    usePlatformStore.getState().addCoins(reward.coins);
-  }
-
   private async persist(): Promise<void> {
     // Preferences is the only durable store for daily-reward; do not mirror onto PlatformState.
     await this.repository.save(this.model);
     // Persist currency/other store changes (e.g. coins from claim).
     await saveService.saveLocal();
   }
-}
-
-function toClaimResult(reward: ResolvedReward): ClaimResult {
-  return {
-    day: reward.day,
-    coins: reward.coins,
-  };
 }
 
 export const dailyRewards = new DailyRewardService();

@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 
-import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { PanelHeader } from '../panel/PanelHeader';
 import { drawRoundedRect } from '../panel/graphics';
@@ -10,6 +9,7 @@ import type {
   RewardProgress,
   RewardDayProgress,
 } from '@platform/modules/daily-reward/daily-reward.model';
+import { dailyRewards } from '@platform/modules/daily-reward';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER, PANEL_CORNER_RADIUS } from '../panel/panelTheme';
 
@@ -54,7 +54,6 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private header?: PanelHeader;
   private calendarLayout!: CalendarLayout;
   private statusText?: Phaser.GameObjects.Text;
-  private unsubscribers: Array<() => void> = [];
   private claimButton?: Phaser.GameObjects.Container;
   private latestProgress: RewardProgress | null = null;
   private calendarContainer?: Phaser.GameObjects.Container;
@@ -71,13 +70,10 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     this.onNavigate = options.onNavigate;
     scene.add.existing(this);
     this.build();
-    this.bindEvents();
-    eventBus.emit('daily:progress:request', undefined);
+    this.applyProgress(dailyRewards.getRewardProgress());
   }
 
   destroy(fromScene?: boolean): void {
-    for (const unsub of this.unsubscribers) unsub();
-    this.unsubscribers = [];
     this.header = undefined;
     super.destroy(fromScene);
   }
@@ -102,26 +98,23 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     return { gridWidth, cellWidth, cellHeight, day7Width, day7Height, contentHeight };
   }
 
-  private bindEvents(): void {
-    this.unsubscribers.push(
-      eventBus.on('daily:progress', (progress) => {
-        this.latestProgress = progress;
-        this.calendarRebuild.schedule();
-      }),
-      eventBus.on('daily:claim:result', () => {
-        this.claimPending = false;
-        this.calendarRebuild.setLocked(false);
-        eventBus.emit('daily:progress:request', undefined);
-      })
-    );
+  private applyProgress(progress: RewardProgress): void {
+    this.latestProgress = progress;
+    this.calendarRebuild.schedule();
   }
 
-  private requestClaim(): void {
+  private async requestClaim(): Promise<void> {
     if (this.claimPending) return;
     this.claimPending = true;
     this.calendarRebuild.setLocked(true);
     this.claimButton?.setVisible(false);
-    eventBus.emit('daily:claim:request', undefined);
+    try {
+      await dailyRewards.claim();
+      this.applyProgress(dailyRewards.getRewardProgress());
+    } finally {
+      this.claimPending = false;
+      this.calendarRebuild.setLocked(false);
+    }
   }
 
   private build(): void {

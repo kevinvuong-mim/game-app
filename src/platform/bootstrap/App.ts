@@ -3,19 +3,18 @@ import {
   guest,
   missions,
   settings,
+  adsModule,
   leaderboard,
   saveService,
   dailyRewards,
-  shopController,
   gameRunService,
+  deepLinkService,
   guestController,
-  bindAdsController,
+  syncGuestToStore,
   bindIapController,
   missionController,
-  deepLinkController,
   gameSyncController,
-  dailyRewardController,
-  leaderboardController,
+  bindGuestStoreSync,
   notificationController,
 } from '@platform/modules';
 import {
@@ -31,7 +30,6 @@ import { usePlatformStore } from '@platform/core/state';
 import { trackSessionEnd } from '@platform/core/analytics/events';
 import { bindNavigationEvents } from '@platform/modules/navigation';
 import { bindAppEvents, bindAppLifecycle } from '@platform/bootstrap/app-events';
-import { syncGuestToStore, bindGuestStoreSync } from '@platform/modules/guest/guest-store-sync';
 
 const { ads, config, events, analytics } = services;
 
@@ -41,7 +39,6 @@ const { ads, config, events, analytics } = services;
  */
 class App {
   private initialized = false;
-  private dailyRewardUnsubscribe?: () => void;
   private unsubscribers: Array<() => void> = [];
   private controllerUnsubscribers: Array<() => void> = [];
 
@@ -96,9 +93,6 @@ class App {
       logger.warn('[App] IAP init failed — continuing without IAP', error);
     });
 
-    const { adsModule } = await import('@platform/modules/ads');
-    await adsModule.init();
-
     if (analyticsUserId) {
       analytics.setUserId(analyticsUserId);
     }
@@ -116,17 +110,14 @@ class App {
     this.unsubscribers.push(bindAppEvents());
     this.unsubscribers.push(bindAppLifecycle());
     this.unsubscribers.push(bindNavigationEvents());
-    this.dailyRewardUnsubscribe = dailyRewardController.bind(events);
     this.controllerUnsubscribers.push(
       guestController.bind(events),
-      leaderboardController.bind(events),
       gameSyncController.bind(events),
-      bindAdsController(events),
+      adsModule.bind(events),
       bindIapController(events),
       missionController.bind(events),
-      shopController.bind(events),
       notificationController.bind(events),
-      deepLinkController.bind(events)
+      deepLinkService.bind(events)
     );
 
     this.initialized = true;
@@ -140,8 +131,6 @@ class App {
     await analytics.flush();
     await analytics.shutdown();
     analytics.clearProviders();
-    this.dailyRewardUnsubscribe?.();
-    this.dailyRewardUnsubscribe = undefined;
     for (const unsub of this.controllerUnsubscribers) unsub();
     this.controllerUnsubscribers = [];
     for (const unsub of this.unsubscribers) unsub();

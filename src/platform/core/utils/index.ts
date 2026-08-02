@@ -1,11 +1,3 @@
-/**
- * Shared time source for platform modules.
- * Centralizes device time so server time can be wired in later.
- */
-export function now(): number {
-  return Date.now();
-}
-
 export enum DeviceType {
   PHONE,
   TABLET,
@@ -17,7 +9,7 @@ export function getDeviceType(): DeviceType {
 }
 
 /** Local calendar day key (`YYYY-MM-DD`). */
-export function getLocalDateKey(at: number = now()): string {
+export function getLocalDateKey(at: number = Date.now()): string {
   const date = new Date(at);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');

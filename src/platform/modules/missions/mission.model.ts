@@ -1,4 +1,4 @@
-import { getLocalDateKey, now } from '@platform/core/utils';
+import { getLocalDateKey } from '@platform/core/utils';
 
 export type MissionBehaviorType =
   'MERGE' | 'WATCH_AD' | 'PLAY_GAME' | 'REACH_SCORE' | 'DAILY_LOGIN' | 'UPDATE_NAME';
@@ -43,7 +43,7 @@ export function createMissionProgress(def: MissionDefinition): MissionProgress {
     id: def.id,
     progress: 0,
     type: def.type,
-    createdAt: now(),
+    createdAt: Date.now(),
     status: 'active',
     target: def.target,
     lastResetDayKey: getLocalDateKey(),

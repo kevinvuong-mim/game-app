@@ -45,7 +45,7 @@ cp .env.example .env
 
 Then customize:
 
-1. **`.env`** — set `VITE_GAME_ID` and `VITE_REPLAY_SECRET` (must match `game-api`)
+1. **`.env`** — set `VITE_GAME_ID`
 2. **`src/game/config.ts`** — set `name`, `version`, screen size (`width` / `height`)
 3. **`capacitor.config.ts`** — set `appId` and `appName`
 4. **`src/game/scenes/GameplayScene.ts`** — implement your game mechanics
@@ -61,13 +61,13 @@ game-apps/
 │   ├── main.ts                # Entry → GameEngine.bootstrap()
 │   ├── platform/              # Reusable platform (keep as-is across games)
 │   │   ├── core/              # events, state, storage, api, analytics, advertising, error
-│   │   ├── modules/           # i18n, shop, missions, leaderboard, notifications, save, …
+│   │   ├── modules/           # guest, game-sync, game-run, leaderboard, notifications, shop, …
 │   │   ├── ui/                # Panels, BasePanelScene, HUD, toast, audio, fonts
 │   │   └── bootstrap/         # App, GameEngine, providers, app-events, capacitor
 │   └── game/                  # YOUR game — customize per project
-│       ├── config.ts          # Display identity (id/name/size/physics) — no replaySecret
+│       ├── config.ts          # Display identity (id/name/size/physics)
+│       ├── gameplay/          # MergeSystem, DropController, GameRunSave, …
 │       ├── howToPlaySteps.ts  # Game-specific how-to content
-│       ├── utils/
 │       └── scenes/            # Boot → Preload → Home + panel wrappers
 ├── public/assets/             # Static game assets (create per project)
 │   ├── images/                # UI/game art
@@ -127,12 +127,13 @@ eventBus.emit('analytics', { event: AnalyticsEvents.SESSION_START });
 
 | Module        | Backend? | Description                                                                                                                |
 | ------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, storage `gsk:guest`)                                                  |
-| game-sync     | **API**  | Offline queue → HMAC `signature` batch upload (`POST /results`)                                                            |
+| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, storage key `guest`)                                                  |
+| game-sync     | **API**  | Offline queue → batch upload (`POST /results`) on `game:over`                                                              |
+| game-run      | Local    | Mid-run board snapshot (`gameplay-run`); schema in `@game/gameplay/GameRunSave`                                            |
 | leaderboard   | **API**  | Offline cache, TTL, Top 100 REST (`LEADERBOARD_LIMIT` = 100/page)                                                          |
 | notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)                                                            |
 | i18n          | Local    | Runtime language switch (`en` / `vi`), lazy-loaded locale JSON                                                             |
-| shop          | Local    | Catalog skins/boosts/IAP; equip skin                                                                                       |
+| shop          | Local    | Catalog boosts / remove-ads IAP / coin packs                                                                               |
 | missions      | Local    | Daily missions; claim via EventBus; WATCH_AD via `MISSION_WATCH` placement                                                 |
 | daily-reward  | Local    | 7-day streak in Preferences; claim via EventBus                                                                            |
 | save          | Local    | Single `game-save` key — hydrates Zustand (excludes daily-reward prefs)                                                    |
@@ -140,18 +141,19 @@ eventBus.emit('analytics', { event: AnalyticsEvents.SESSION_START });
 | deep-link     | Local    | Custom scheme, Universal Links / App Links, deferred cold-start navigation                                                 |
 | navigation    | Local    | Scene navigation + pending queue (notification / deeplink cold start)                                                      |
 | share         | Local    | Native share sheet helper (used from Game Over)                                                                            |
+| rate          | Local    | In-app review + store URL fallback                                                                                         |
 | ads (module)  | Local    | Placement config (`HOME` / `SHOP` / `LEADERBOARD` banner, `MISSION_WATCH` rewarded, `GAME_OVER` interstitial), reward flow |
 | IAP (module)  | Local\*  | Purchase, restore, entitlements; RevenueCat `logIn` on `guest.onReady`                                                     |
 | analytics     | Local    | Provider interface — Console + Firebase (core)                                                                             |
 | advertising   | Local    | AdMob / mock providers, placement state machines (core)                                                                    |
 
-\* IAP is client-authoritative in this starter kit (no game-api receipt validation). Local feature details: [documents/modules/local-features.md](./documents/modules/local-features.md).
+\* IAP is client-authoritative in this starter kit (no game-api receipt validation). On native production / missing RevenueCat key, IAP is **disabled** (web still falls back to mock). Local feature details: [documents/modules/local-features.md](./documents/modules/local-features.md). Mid-run save: [documents/modules/game-run.md](./documents/modules/game-run.md).
 
 ## UI Framework
 
 Feature screens are **Phaser scenes** that compose reusable **panels**. Seven panel scenes share `BasePanelScene` (`@platform/ui`) for background, close/`app:back`, optional GetCoins overlay, and ad context.
 
-Fonts: **Fredoka** (`FREDOKA_FONT`). Settings UI is split into section modules under `platform/ui/settings/`. Home’s Play button badge uses i18n key `home.playBadge`.
+Fonts: **Fredoka** (`FREDOKA_FONT`). Settings UI is split into section modules under `platform/ui/settings/`.
 
 The `@platform/ui` barrel re-exports panels, `t`/`toast`, and `BasePanelScene`. Import other helpers from their paths:
 
@@ -169,19 +171,7 @@ const button = createUIButton({
   position: { x: 0, y: 0 },
   background: { key: 'play-button-background' },
   sound: 'coin-drop',
-  badge: {
-    content: t('home.playBadge'),
-    textStyle: { fontFamily: FREDOKA_FONT },
-    background: {
-      radius: 10,
-      color: '#ff0000',
-      border: { width: 3, color: '#ffffff' },
-    },
-    position: { x: 210, y: -10 },
-  },
 });
-button.setBadgeContent('HOT');
-button.setBadgeVisible(true);
 
 // Play SFX directly (respects settings.soundEnabled)
 soundManager.playCoinDrop();
@@ -210,12 +200,11 @@ Change Fruit and Undo buttons use `sound: false` so only their skill SFX plays (
 
 ## Environment Config
 
-Copy `.env.example` to `.env` and adjust per environment. `.env.example` includes a dev sample `VITE_REPLAY_SECRET` matching `GAME_CONFIG.FRULOOP` on `game-api`; use your own secret in production.
+Copy `.env.example` to `.env` and adjust per environment.
 
 ```bash
 VITE_APP_ENV=dev              # dev | production
 VITE_GAME_ID=FRULOOP
-VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 VITE_IAP_PROVIDER=mock        # mock | revenuecat
 VITE_ADS_PROVIDER=mock        # mock | admob (AdMob used on native when admob)
 VITE_ANALYTICS_PROVIDER=console # console | firebase
@@ -240,20 +229,19 @@ VITE_ADMOB_IOS_APP_ID=
 
 Push/local toggles per env: `src/platform/core/config/notification-env.json`. Native FCM setup: [documents/setup/firebase-native.md](./documents/setup/firebase-native.md). Full variable reference: [documents/setup/environment-variables.md](./documents/setup/environment-variables.md).
 
-| Variable                                            | Description                                                                    |
-| --------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `production`)                                      |
-| `VITE_GAME_ID`                                      | Game id used by the frontend and backend                                       |
-| `VITE_REPLAY_SECRET`                                | HMAC replay secret — **64-char lowercase hex**; must match backend per game id |
-| `VITE_IAP_PROVIDER`                                 | `mock` or `revenuecat`                                                         |
-| `VITE_ADS_PROVIDER`                                 | `mock` or `admob`                                                              |
-| `VITE_ANALYTICS_PROVIDER`                           | `console` or `firebase`                                                        |
-| `VITE_ADMOB_*_APP_ID`                               | Per-platform AdMob app IDs for native builds                                   |
-| `VITE_ADMOB_*_*_ID`                                 | Production ad unit IDs per format/platform                                     |
-| `VITE_FIREBASE_*`                                   | Firebase web config (analytics + push gate on native)                          |
-| `VITE_IOS_APP_STORE_ID` / `VITE_ANDROID_PACKAGE_ID` | Store listing IDs attached when sharing scores                                 |
+| Variable                                            | Description                                           |
+| --------------------------------------------------- | ----------------------------------------------------- |
+| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `production`)             |
+| `VITE_GAME_ID`                                      | Game id used by the frontend and backend              |
+| `VITE_IAP_PROVIDER`                                 | `mock` or `revenuecat`                                |
+| `VITE_ADS_PROVIDER`                                 | `mock` or `admob`                                     |
+| `VITE_ANALYTICS_PROVIDER`                           | `console` or `firebase`                               |
+| `VITE_ADMOB_*_APP_ID`                               | Per-platform AdMob app IDs for native builds          |
+| `VITE_ADMOB_*_*_ID`                                 | Production ad unit IDs per format/platform            |
+| `VITE_FIREBASE_*`                                   | Firebase web config (analytics + push gate on native) |
+| `VITE_IOS_APP_STORE_ID` / `VITE_ANDROID_PACKAGE_ID` | Store listing IDs attached when sharing scores        |
 
-API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` calls `createConfig()` so `RuntimeConfig` reads `VITE_GAME_ID` / `VITE_REPLAY_SECRET`. `gameConfig` holds display fields (`name`, size, `physics`, `id`); it does **not** duplicate `replaySecret`. Deep-link scheme/hosts live in `src/platform/modules/deep-link/deep-link.config.ts` (keep in sync with `scripts/deeplink-config.mjs`) — not `.env`.
+API URL, ads/analytics toggles, and defaults are in `src/platform/core/config/index.ts`. At boot, `GameEngine` calls `createConfig()` so `RuntimeConfig` reads `VITE_GAME_ID`. `gameConfig` holds display fields (`name`, size, `physics`, `id`). Deep-link scheme/hosts live in `src/platform/modules/deep-link/deep-link.config.ts` (keep in sync with `scripts/deeplink-config.mjs`) — not `.env`.
 
 ## Mobile Deployment
 
@@ -276,6 +264,7 @@ npm run cap:ios        # open Xcode
 | Game config      | [documents/setup/game-configuration.md](./documents/setup/game-configuration.md)         |
 | Guest identity   | [documents/modules/guest-identity.md](./documents/modules/guest-identity.md)             |
 | Game result sync | [documents/modules/game-result-sync.md](./documents/modules/game-result-sync.md)         |
+| Mid-run save     | [documents/modules/game-run.md](./documents/modules/game-run.md)                         |
 | Leaderboard      | [documents/modules/leaderboard.md](./documents/modules/leaderboard.md)                   |
 | Notifications    | [documents/modules/notifications.md](./documents/modules/notifications.md)               |
 | Local features   | [documents/modules/local-features.md](./documents/modules/local-features.md)             |
@@ -295,25 +284,27 @@ npm run cap:ios        # open Xcode
 
 ## Scripts
 
-| Command                      | Description                                                |
-| ---------------------------- | ---------------------------------------------------------- |
-| `npm run dev`                | Vite dev server (`:5173`)                                  |
-| `npm run build`              | Typecheck + production build → `dist/`                     |
-| `npm run preview`            | Preview production build                                   |
-| `npm run lint`               | `tsc --noEmit` + ESLint on `src/`                          |
-| `npm run game:verify-config` | Validate `VITE_GAME_ID` / `VITE_REPLAY_SECRET` + API probe |
-| `npm run lint:fix`           | ESLint with auto-fix                                       |
-| `npm run format`             | Prettier write                                             |
-| `npm run format:check`       | Prettier check                                             |
-| `npm run cap:android`        | Open Android Studio                                        |
-| `npm run cap:ios`            | Open Xcode                                                 |
-| `npm run assets:generate`    | Generate app icons/splash from `resources/`                |
-| `npm run build:android`      | Full Android pipeline via `scripts/native-ops.mjs`         |
-| `npm run build:ios`          | Full iOS pipeline via `scripts/native-ops.mjs`             |
-| `npm run run:android`        | Build + compile APK + boot emulator + install + launch     |
-| `npm run run:ios`            | Build + xcodebuild simulator + install + launch            |
+| Command                      | Description                                                                      |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| `npm run dev`                | Vite dev server (`:5173`)                                                        |
+| `npm run build`              | Typecheck + production build → `dist/`                                           |
+| `npm run preview`            | Preview production build                                                         |
+| `npm run lint`               | `tsc --noEmit` + ESLint on `src/`                                                |
+| `npm run game:verify-config` | `VITE_GAME_ID` + release IAP/ads gates; API probe when `VITE_APP_ENV=production` |
+| `npm run lint:fix`           | ESLint with auto-fix                                                             |
+| `npm run format`             | Prettier write                                                                   |
+| `npm run format:check`       | Prettier check                                                                   |
+| `npm run cap:android`        | Open Android Studio                                                              |
+| `npm run cap:ios`            | Open Xcode                                                                       |
+| `npm run assets:generate`    | Generate app icons/splash from `resources/`                                      |
+| `npm run build:android`      | verify-config → full Android pipeline via `scripts/native-ops.mjs`               |
+| `npm run build:ios`          | verify-config → full iOS pipeline via `scripts/native-ops.mjs`                   |
+| `npm run run:android`        | Build + compile APK + boot emulator + install + launch                           |
+| `npm run run:ios`            | Build + xcodebuild simulator + install + launch                                  |
+| `npm run dev:android`        | Live reload on Android emulator                                                  |
+| `npm run dev:ios`            | Live reload on iOS simulator                                                     |
 
-`scripts/native-ops.mjs` accepts only `build <android|ios>`; platform creation is part of that build pipeline. There is no separate `ensure` action.
+`scripts/native-ops.mjs` accepts only `build <android|ios>`; it runs `game:verify-config` first. Platform creation is part of that build pipeline. There is no separate `ensure` action.
 
 ## Platform Updates
 

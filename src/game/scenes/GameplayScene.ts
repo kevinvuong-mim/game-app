@@ -16,10 +16,10 @@ import {
   type GameRunSnapshot,
 } from '@game/gameplay';
 import { gameConfig } from '@game/config';
+import { usePlatformStore } from '@platform/ui';
 import { randomSpawnLevel } from '@game/fruits';
 import { eventBus } from '@platform/core/events';
 import { GameplayHUD } from '@game/ui/GameplayHUD';
-import { getHighScore } from '@platform/ui/progress';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 
 /**
@@ -92,7 +92,7 @@ export class GameplayScene extends Phaser.Scene {
     this.sessionEnded = false;
     this.sessionStarted = false;
     this.canDrop = true;
-    this.startingHighScore = getHighScore();
+    this.startingHighScore = usePlatformStore.getState().progress.highScore;
     this.undoSnapshot = null;
 
     this.factory = new FruitFactory(this, this.fruits);
@@ -408,10 +408,6 @@ export class GameplayScene extends Phaser.Scene {
     const right = centerX + displayW / 2 - displayW * CONTAINER_INSET.right;
     const top = centerY - displayH / 2 + displayH * CONTAINER_INSET.top;
     const bottom = centerY + displayH / 2 - displayH * CONTAINER_INSET.bottom;
-
-    // const boundsDebug = this.add.graphics().setDepth(3);
-    // boundsDebug.lineStyle(2, 0xff0000, 1);
-    // boundsDebug.strokeRect(left, top, right - left, bottom - top);
 
     this.dangerY = top;
     this.dangerLine.setDangerY(this.dangerY);

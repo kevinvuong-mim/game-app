@@ -3,7 +3,6 @@
  * Update this file when starting a new game (after cloning this repo).
  *
  * `id` comes from `VITE_GAME_ID` and must match a `GameId` enum value on game-api.
- * Replay signing uses `getConfig().replaySecret` (RuntimeConfig) — not duplicated here.
  */
 export interface GamePhysicsConfig {
   /** Phaser physics system. Omit or set false for no physics. */

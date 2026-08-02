@@ -1,4 +1,4 @@
-import type { AdState, AdFormat, BannerState } from './types';
+import type { AdState, BannerState } from './types';
 
 const SHOWABLE_STATES: AdState[] = ['READY'];
 const LOADABLE_STATES: AdState[] = ['IDLE', 'ERROR', 'COMPLETED'];
@@ -97,13 +97,5 @@ export class BannerStateMachine {
     if (this.state !== 'DESTROYED') {
       this.state = 'IDLE';
     }
-  }
-}
-
-export class AdFormatManager {
-  readonly state: AdStateMachine;
-
-  constructor(readonly format: AdFormat) {
-    this.state = new AdStateMachine();
   }
 }

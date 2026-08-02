@@ -4,7 +4,7 @@
 
 Tài liệu này mô tả các biến môi trường runtime của `fruloop`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
 
-`src/game/config.ts` khai báo display identity: `id` từ `VITE_GAME_ID`; `name`, `width`, `height`, `version`, `physics` chỉnh trong file. **`VITE_REPLAY_SECRET` chỉ vào RuntimeConfig** (`createConfig()` / `getConfig().replaySecret`) — không nhân đôi trên `gameConfig`.
+`src/game/config.ts` khai báo display identity: `id` từ `VITE_GAME_ID`; `name`, `width`, `height`, `version`, `physics` chỉnh trong file.
 
 ---
 
@@ -13,14 +13,12 @@ Tài liệu này mô tả các biến môi trường runtime của `fruloop`. V�
 ```env
 VITE_APP_ENV=dev
 VITE_GAME_ID=FRULOOP
-VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 ```
 
-| Variable             | Values              | Default / Source     | Description                                                                  |
-| -------------------- | ------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `VITE_APP_ENV`       | `dev`, `production` | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts`                |
-| `VITE_GAME_ID`       | string              | Bắt buộc             | Game id dùng ở frontend và backend                                           |
-| `VITE_REPLAY_SECRET` | string              | Bắt buộc             | Secret replay — phải khớp `GAME_CONFIG[gameId].replaySecret` trên `game-api` |
+| Variable       | Values              | Default / Source     | Description                                                   |
+| -------------- | ------------------- | -------------------- | ------------------------------------------------------------- |
+| `VITE_APP_ENV` | `dev`, `production` | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts` |
+| `VITE_GAME_ID` | string              | Bắt buộc             | Game id dùng ở frontend và backend                            |
 
 Preset API URL trong code (`src/platform/core/config/index.ts`):
 
@@ -29,9 +27,7 @@ Preset API URL trong code (`src/platform/core/config/index.ts`):
 | `dev`        | `https://game-api-s5kn.onrender.com/api` |
 | `production` | `https://game-api-s5kn.onrender.com/api` |
 
-Cả hai preset hiện trỏ Render. Để dùng API local, tạm sửa `apiUrl` trong `src/platform/core/config/index.ts` (client không đọc `VITE_API_URL`).
-
-`VITE_REPLAY_SECRET` phải là **64-char lowercase hex** (`/^[0-9a-f]{64}$/`). Secret sai/thiếu → client **không sync** và **giữ** offline queue (không xóa im lặng).
+Cả hai preset hiện trỏ Render. Client **không** đọc `VITE_API_URL`. Để dùng API local, tạm sửa `apiUrl` trong `src/platform/core/config/index.ts`.
 
 Production nên dùng HTTPS.
 
@@ -51,7 +47,15 @@ VITE_REVENUECAT_IOS_API_KEY=
 | `VITE_REVENUECAT_ANDROID_API_KEY` | string               | Public API key cho Android RevenueCat         |
 | `VITE_REVENUECAT_IOS_API_KEY`     | string               | Public API key cho iOS RevenueCat             |
 
-Nếu `VITE_IAP_PROVIDER=revenuecat` nhưng không đủ điều kiện native + API key, app fallback sang mock provider. IAP service vẫn chỉ chạy khi `ENV_CONFIGS[env].iapEnabled` là `true`.
+Hành vi khi thiếu key / dùng mock (`src/platform/bootstrap/providers.ts`):
+
+| Context                                               | Behavior                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------ |
+| **Web** + `revenuecat` thiếu key                      | Fallback sang **mock** provider                              |
+| **Native** + `revenuecat` thiếu key platform hiện tại | Log error, `iap.setEnabled(false)` — **không** fallback mock |
+| **Native** production / Vite `PROD` native + `mock`   | IAP **disabled** (block mock trên store builds)              |
+
+IAP service vẫn chỉ chạy khi `ENV_CONFIGS[env].iapEnabled` là `true` và provider đăng ký thành công.
 
 ---
 
@@ -69,9 +73,16 @@ VITE_ADMOB_IOS_APP_ID=
 | `VITE_ADMOB_ANDROID_APP_ID` | string          | Android AdMob app id cho native build                   |
 | `VITE_ADMOB_IOS_APP_ID`     | string          | iOS AdMob app id cho native build                       |
 
-Nếu app id của platform hiện tại không có giá trị, code sẽ coi platform đó là testing và dùng Google sample ad units.
+Nếu app id của platform hiện tại trống, runtime coi platform đó là testing và dùng Google sample ad units (trừ khi bị chặn bởi release gate bên dưới).
 
-Production ad unit IDs chỉ cần khi muốn dùng ad unit thật:
+Hành vi production native:
+
+| Context                                         | Behavior                                                               |
+| ----------------------------------------------- | ---------------------------------------------------------------------- |
+| Native production / Vite `PROD` native + `mock` | Ads **disabled**                                                       |
+| Native + `admob` thiếu cấu hình                 | `ads.setEnabled(false)` — không silent-fallback mock trên store builds |
+
+Production ad unit IDs (bắt buộc khi `game:verify-config` enforce release monetization):
 
 ```env
 VITE_ADMOB_ANDROID_BANNER_ID=
@@ -82,6 +93,28 @@ VITE_ADMOB_IOS_BANNER_ID=
 VITE_ADMOB_IOS_INTERSTITIAL_ID=
 VITE_ADMOB_IOS_REWARDED_ID=
 ```
+
+`apply-*-native` chỉ cho phép Google sample AdMob app ids khi `VITE_APP_ENV != production`.
+
+---
+
+## Release monetization gates
+
+`npm run game:verify-config` (và mọi `build:android` / `build:ios` qua `native-ops.mjs`) enforce khi `VITE_APP_ENV=production` **hoặc** `ENFORCE_RELEASE_MONETIZATION=true`:
+
+- `VITE_IAP_PROVIDER=revenuecat` + đủ cả hai RevenueCat keys
+- `VITE_ADS_PROVIDER=admob` + đủ AdMob app id + 8 unit ids (banner / interstitial / rewarded × iOS / Android)
+- Từ chối Google sample AdMob ids
+
+API probe (chỉ khi `VITE_APP_ENV=production`, trừ khi `SKIP_API_CHECK=true`):
+
+```
+GET {apiUrl}/leaderboards?gameId={VITE_GAME_ID}&page=1&limit=1
+```
+
+404 = `gameId` chưa có trên backend.
+
+Script-only env (không phải `VITE_*`): `ENFORCE_RELEASE_MONETIZATION`, `SKIP_API_CHECK`, `CAP_SERVER_URL`, biến emulator trong [emulator-and-simulator.md](../build/emulator-and-simulator.md).
 
 ---
 
@@ -125,7 +158,7 @@ VITE_IOS_APP_STORE_ID=
 VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
 ```
 
-Các ID này được gắn vào link khi share điểm số. Android package mặc định là `com.vraxion.fruloop`; iOS App Store ID mặc định rỗng.
+Các ID này được gắn vào link khi share điểm số và rate fallback. Android package mặc định là `com.vraxion.fruloop`; iOS App Store ID mặc định rỗng.
 
 ---
 
@@ -134,7 +167,6 @@ Các ID này được gắn vào link khi share điểm số. Android package m�
 ```env
 VITE_APP_ENV=dev
 VITE_GAME_ID=FRULOOP
-VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 
 VITE_IAP_PROVIDER=mock
 VITE_REVENUECAT_ANDROID_API_KEY=
@@ -148,6 +180,8 @@ VITE_ADMOB_IOS_APP_ID=
 VITE_IOS_APP_STORE_ID=
 VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
 ```
+
+Store / release builds: set `VITE_APP_ENV=production` + real RevenueCat / AdMob values (xem comments trong `.env.example`).
 
 ---
 

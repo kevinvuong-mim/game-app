@@ -9,8 +9,8 @@ import { logger } from '@platform/core/error';
 import { guest } from '@platform/modules/guest';
 import { eventBus } from '@platform/core/events';
 import { saveService } from '@platform/modules/save';
+import { getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
-import { getLocalDateKey, now } from '@platform/core/utils';
 
 export class MissionService {
   private definitions: MissionDefinition[] = missionsData as MissionDefinition[];
@@ -109,7 +109,7 @@ export class MissionService {
       store.addCoins(def.reward.amount);
     }
 
-    const claimedAt = now();
+    const claimedAt = Date.now();
     let nextMission: MissionProgress = {
       ...mission,
       status: 'claimed',

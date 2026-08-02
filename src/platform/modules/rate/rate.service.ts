@@ -4,7 +4,6 @@ import { logger } from '@platform/core/error';
 import { getConfig } from '@platform/core/config';
 import { saveService } from '@platform/modules/save';
 import { usePlatformStore } from '@platform/core/state';
-import { isRatePromptGamesPlayed } from './rate.fibonacci';
 import { getStoreListingUrl } from '@platform/modules/share/share.config';
 
 /** TEMP: always show rate modal on GameOver for QA — set false before ship. */
@@ -12,6 +11,31 @@ const FORCE_RATE_PROMPT = false;
 
 /** Stars at or above this threshold open the store / native review prompt. */
 const STORE_REVIEW_MIN_STARS = 4;
+
+/** True when `n` is a positive Fibonacci number (1, 1, 2, 3, 5, 8, …). */
+function isFibonacci(n: number): boolean {
+  if (!Number.isInteger(n) || n < 1) {
+    return false;
+  }
+
+  let a = 1;
+  let b = 1;
+  while (b < n) {
+    const next = a + b;
+    a = b;
+    b = next;
+  }
+
+  return a === n || b === n;
+}
+
+/**
+ * Prompt milestones: Fibonacci × 10 → 10, 20, 30, 50, 80, 130, …
+ * (game count after `game:start` increments `totalGamesPlayed`).
+ */
+function isRatePromptGamesPlayed(gamesPlayed: number): boolean {
+  return gamesPlayed > 0 && gamesPlayed % 10 === 0 && isFibonacci(gamesPlayed / 10);
+}
 
 class RateService {
   shouldPrompt(): boolean {

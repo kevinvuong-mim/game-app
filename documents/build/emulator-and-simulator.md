@@ -132,8 +132,9 @@ VITE_ADMOB_ANDROID_APP_ID=ca-app-pub-xxxxxxxx~xxxxxxxx
 VITE_ADMOB_IOS_APP_ID=ca-app-pub-xxxxxxxx~xxxxxxxx
 ```
 
-- Thiếu `VITE_ADMOB_ANDROID_APP_ID` hoặc `VITE_ADMOB_IOS_APP_ID` trên platform tương ứng → runtime dùng Google sample ad units; native build script inject Google sample App ID khi `VITE_ADS_PROVIDER=admob`.
-- `VITE_ADS_PROVIDER=admob` → script native inject AdMob App ID vào manifest/Info.plist (dùng App ID thật nếu có, không thì sample ID của Google).
+- Thiếu `VITE_ADMOB_*_APP_ID` trên platform tương ứng → runtime dùng Google sample ad units (dev).
+- `VITE_ADS_PROVIDER=admob` → script native inject AdMob App ID vào manifest/Info.plist. Sample Google App ID chỉ được inject khi `VITE_APP_ENV != production`.
+- `VITE_APP_ENV=production` → `game:verify-config` yêu cầu revenuecat + admob thật (từ chối sample ids); thiếu sẽ fail native build.
 
 Chi tiết biến môi trường: [Environment Variables](../setup/environment-variables.md).
 
@@ -165,11 +166,12 @@ npm run build:android
 
 Thứ tự thực thi:
 
-1. `npm run build` — typecheck + Vite build → `dist/`
-2. `cap add android` (nếu chưa có `android/`)
-3. `capacitor-assets generate` — icon/splash
-4. `cap sync android` — copy web assets + cập nhật plugins
-5. `node scripts/apply-android-native.mjs` — apply `MainActivity` (package từ `capacitor.config.ts`), inject AdMob + Google Services Gradle
+1. `npm run game:verify-config` — `VITE_GAME_ID` + (production) monetization gates / API probe
+2. `npm run build` — typecheck + Vite build → `dist/`
+3. `cap add android` (nếu chưa có `android/`)
+4. `capacitor-assets generate` — icon/splash
+5. `cap sync android` — copy web assets + cập nhật plugins
+6. `node scripts/apply-android-native.mjs` — apply `MainActivity` (package từ `capacitor.config.ts`), inject AdMob + Google Services Gradle
 
 Compile APK debug:
 
@@ -192,13 +194,14 @@ npm run build:ios
 
 Thứ tự thực thi:
 
-1. `npm run build` — typecheck + Vite build → `dist/`
-2. `cap add ios` (nếu chưa có `ios/`)
-3. `capacitor-assets generate` — icon/splash
-4. **`node scripts/apply-ios-native.mjs pre-sync`** — pin `GoogleUserMessagingPlatform 3.0.0` trong Podfile **trước** `pod install`
-5. `pod install --repo-update` trong `ios/App`
-6. `cap sync ios` — copy web assets + cập nhật plugins
-7. `node scripts/apply-ios-native.mjs` — copy storyboard/Swift/`App.entitlements`, inject AdMob + Associated Domains (Universal Links)
+1. `npm run game:verify-config` — `VITE_GAME_ID` + (production) monetization gates / API probe
+2. `npm run build` — typecheck + Vite build → `dist/`
+3. `cap add ios` (nếu chưa có `ios/`)
+4. `capacitor-assets generate` — icon/splash
+5. **`node scripts/apply-ios-native.mjs pre-sync`** — pin `GoogleUserMessagingPlatform 3.0.0` trong Podfile **trước** `pod install`
+6. `pod install --repo-update` trong `ios/App`
+7. `cap sync ios` — copy web assets + cập nhật plugins
+8. `node scripts/apply-ios-native.mjs` — copy storyboard/Swift/`App.entitlements`, inject AdMob + Associated Domains (Universal Links)
 
 > **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@7.x` cần UMP **3.0.0**. Script `pre-sync` pin đúng phiên bản (và upgrade pin cũ `~> 2.3` nếu còn). Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
 >

@@ -30,7 +30,6 @@ export interface RuntimeConfig {
   gameId: string;
   adsEnabled: boolean;
   iapEnabled: boolean;
-  replaySecret: string;
   deepLink: DeepLinkConfig;
   firebase: FirebaseConfig;
   analyticsEnabled: boolean;
@@ -244,7 +243,6 @@ export function createConfig(overrides?: Partial<RuntimeConfig>): RuntimeConfig 
     adsEnabled: base.adsEnabled ?? false,
     iapEnabled: base.iapEnabled ?? false,
     analyticsEnabled: base.analyticsEnabled ?? false,
-    replaySecret: import.meta.env.VITE_REPLAY_SECRET ?? '',
     pushNotificationsEnabled: resolvePushNotificationsEnabled(
       base.pushNotificationsEnabled ?? false,
       firebase

@@ -7,6 +7,13 @@ import {
   PANEL_LIST_PADDING,
   PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
+import {
+  leaderboard,
+  LEADERBOARD_LIMIT,
+  type LeaderboardView,
+  type LeaderboardEntry,
+  getLeaderboardDisplayName,
+} from '@platform/modules/leaderboard';
 import { guest } from '@platform/modules/guest';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
@@ -15,8 +22,6 @@ import { drawRoundedRect } from '../panel/graphics';
 import { createUIButton } from '../button/UIButton';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
-import type { LeaderboardEntry, LeaderboardView } from '@platform/modules/leaderboard';
-import { LEADERBOARD_LIMIT, getLeaderboardDisplayName } from '@platform/modules/leaderboard';
 
 const ROW_HEIGHT = 56;
 const CROWN_SIZE = 40;
@@ -40,7 +45,7 @@ const CROWN_KEYS: Record<1 | 2 | 3, string> = {
 /**
  * Leaderboard UI matching the ranking mock: Settings-style header, Top 100
  * scrollable list, and a fixed "Your Rank" footer.
- * Fully event-driven — emits `leaderboard:refresh` and renders `leaderboard:update`.
+ * Calls `leaderboard` service for refresh; renders on `leaderboard:update`.
  */
 export class LeaderboardPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
@@ -311,7 +316,7 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
   }
 
   private refresh(): void {
-    eventBus.emit('leaderboard:refresh', { page: 1 });
+    void leaderboard.refreshLeaderboard(1).catch(() => undefined);
   }
 
   private rebuildView(view: LeaderboardView): void {

@@ -8,16 +8,19 @@
 
 ## Scripts
 
-| Command                   | Description                                                                                                 |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `npm run build`           | Typecheck bằng `tsc --noEmit` rồi Vite build vào `dist/`                                                    |
-| `npm run cap:android`     | Mở Android Studio                                                                                           |
-| `npm run cap:ios`         | Mở Xcode                                                                                                    |
-| `npm run assets:generate` | Generate icon/splash bằng `capacitor-assets`                                                                |
-| `npm run build:android`   | Full Android pipeline: build web, add platform if missing, generate assets, sync, apply native templates    |
-| `npm run build:ios`       | Full iOS pipeline: build web, add platform if missing, generate assets, resolve pods, sync, apply templates |
-| `npm run run:android`     | Build + emulator install + launch (`scripts/run-android-emulator.sh`)                                       |
-| `npm run run:ios`         | Build + simulator install + launch (`scripts/run-ios-simulator.sh`)                                         |
+| Command                      | Description                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm run build`              | Typecheck bằng `tsc --noEmit` rồi Vite build vào `dist/`                                                    |
+| `npm run game:verify-config` | Validate `VITE_GAME_ID` + release monetization gates + (production) API probe                               |
+| `npm run cap:android`        | Mở Android Studio                                                                                           |
+| `npm run cap:ios`            | Mở Xcode                                                                                                    |
+| `npm run assets:generate`    | Generate icon/splash bằng `capacitor-assets`                                                                |
+| `npm run build:android`      | Full Android pipeline: verify-config → build web → add platform if missing → assets → sync → native patches |
+| `npm run build:ios`          | Full iOS pipeline: verify-config → build web → add platform if missing → assets → pods → sync → patches     |
+| `npm run run:android`        | Build + emulator install + launch (`scripts/run-android-emulator.sh`)                                       |
+| `npm run run:ios`            | Build + simulator install + launch (`scripts/run-ios-simulator.sh`)                                         |
+| `npm run dev:android`        | Live reload trên emulator (`CAP_SERVER_URL=http://10.0.2.2:5173`)                                           |
+| `npm run dev:ios`            | Live reload trên simulator (`CAP_SERVER_URL=http://localhost:5173`)                                         |
 
 ---
 
@@ -53,6 +56,7 @@ Khi tạo game mới, đổi ít nhất:
 ### Android (`build:android`)
 
 ```bash
+npm run game:verify-config
 npm run build
 # cap add android (nếu chưa có android/)
 npm run assets:generate
@@ -63,6 +67,7 @@ node scripts/apply-android-native.mjs
 ### iOS (`build:ios`)
 
 ```bash
+npm run game:verify-config
 npm run build
 # cap add ios (nếu chưa có ios/)
 npm run assets:generate
@@ -92,6 +97,7 @@ Các event/lifecycle chính:
 
 - `app:ready` → hide splash screen.
 - Native app state change → emit `app:pause` / `app:resume`.
+- `app:pause` / visibility hidden → `gameRunService.flush()` + `saveLocal` (+ analytics flush).
 - Back button native → emit `app:back`.
 - `app:resume` cũng kích hoạt game sync flush, mission reset checks, daily reward checks, và **notification token refresh/flush / local schedule reconcile** qua controllers.
 
@@ -99,12 +105,10 @@ Các event/lifecycle chính:
 
 ## Release Notes
 
-- Bật AdMob thật bằng `VITE_ADS_PROVIDER=admob` và App ID theo platform.
-- Bật RevenueCat bằng `VITE_IAP_PROVIDER=revenuecat`, và API key theo platform.
+- Store builds: `VITE_APP_ENV=production` + `revenuecat` (cả hai keys) + `admob` (app + unit ids thật). `game:verify-config` enforce trước native build; runtime native production cũng block mock IAP/ads.
 - Bật push: copy Firebase native config files + `VITE_FIREBASE_*` + backend `FIREBASE_*` (xem [firebase-native.md](./firebase-native.md)).
-- Chọn API URL theo `VITE_APP_ENV` trong `src/platform/core/config/index.ts`.
+- API URL lấy từ preset `VITE_APP_ENV` trong `src/platform/core/config/index.ts` (hiện cả `dev` và `production` đều trỏ Render; không có `VITE_API_URL`).
 - Đảm bảo `VITE_GAME_ID` / `src/game/config.ts` khớp `GameId` enum trên `game-api`.
-- Đảm bảo `VITE_REPLAY_SECRET` khớp `GAME_CONFIG[gameId].replaySecret` trên `game-api`.
 
 ---
 
@@ -113,4 +117,5 @@ Các event/lifecycle chính:
 - [Firebase Native Setup](./firebase-native.md)
 - [Notifications](../modules/notifications.md)
 - [Environment Variables](./environment-variables.md)
+- [Game run / mid-run save](../modules/game-run.md)
 - [Emulator / Simulator](../build/emulator-and-simulator.md)

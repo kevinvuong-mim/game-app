@@ -2,22 +2,33 @@ import { logger } from '@platform/core/error';
 import { saveService } from '@platform/modules/save';
 import type { IEventBus } from '@platform/core/events';
 import { missions, type MissionService } from './mission.service';
-import { missionTracker, type MissionTracker } from './mission.tracker';
 
 class MissionController {
-  constructor(
-    private readonly service: MissionService = missions,
-    private readonly tracker: MissionTracker = missionTracker
-  ) {}
+  constructor(private readonly service: MissionService = missions) {}
 
   bind(events: IEventBus): () => void {
     const unsubs = [
-      this.tracker.bind(events, (type, amount, mode) => {
-        void this.handleProgress(type, amount, mode ?? 'increment');
+      events.on('ad:reward', ({ placement }) => {
+        // Only mission placement counts toward WATCH_AD.
+        if (placement === 'MISSION_WATCH') {
+          void this.handleProgress('WATCH_AD', 1);
+        }
       }),
 
-      events.on('mission:claim:request', async ({ missionId }) => {
-        await this.handleClaim(events, missionId);
+      events.on('game:start', () => {
+        void this.handleProgress('PLAY_GAME', 1);
+      }),
+
+      events.on('score:update', ({ score }) => {
+        void this.handleProgress('REACH_SCORE', score, 'set');
+      }),
+
+      events.on('merge', ({ count }) => {
+        void this.handleProgress('MERGE', count ?? 1);
+      }),
+
+      events.on('player:name:updated', () => {
+        void this.handleProgress('UPDATE_NAME', 1, 'set');
       }),
 
       events.on('app:resume', () => {
@@ -30,32 +41,10 @@ class MissionController {
     };
   }
 
-  private async handleClaim(events: IEventBus, missionId: string): Promise<void> {
-    const success = this.service.claimMission(missionId);
-
-    if (!success) {
-      events.emit('mission:claim:result', {
-        missionId,
-        success: false,
-        message: 'claim_failed',
-      });
-      return;
-    }
-
-    await saveService.saveLocal();
-
-    events.emit('mission:claim:result', {
-      missionId,
-      success: true,
-    });
-
-    logger.info('[MissionController] Claim handled', { missionId });
-  }
-
   private async handleProgress(
     type: string,
     amount: number,
-    mode: 'increment' | 'set'
+    mode: 'increment' | 'set' = 'increment'
   ): Promise<void> {
     const updated =
       mode === 'set'

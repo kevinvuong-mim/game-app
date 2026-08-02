@@ -1,17 +1,9 @@
+import type { HowToPlayStepConfig } from '@platform/ui';
+
 /**
  * Fruit-merge how-to-play content. Lives in game/ so platform UI stays game-agnostic.
  */
-export interface HowToPlayStep {
-  bodyKey: string;
-  iconKey: string;
-  titleKey: string;
-  /** Texture for the merge result icon (defaults to iconKey when omitted). */
-  resultIconKey?: string;
-  /** Optional second fruit shown beside the primary (merge step). */
-  secondaryIconKey?: string;
-}
-
-export const HOW_TO_PLAY_STEPS: HowToPlayStep[] = [
+export const HOW_TO_PLAY_STEPS: HowToPlayStepConfig[] = [
   {
     iconKey: 'fruit-5',
     bodyKey: 'howToPlay.step1Body',

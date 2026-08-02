@@ -3,7 +3,6 @@ import { dirname, join } from 'node:path';
 import { loadEnvFile } from './env-file.mjs';
 import { isGoogleTestAdId } from './admob-constants.mjs';
 
-const SHA256_HEX_PATTERN = /^[a-f0-9]{64}$/;
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Must match `apiUrl` presets in `src/platform/core/config/index.ts`. */
@@ -126,20 +125,9 @@ function assertReleaseMonetizationSafe() {
 async function main() {
   loadEnvFile(root);
   const gameId = readGameIdFromEnv();
-  const replaySecret = process.env.VITE_REPLAY_SECRET ?? '';
 
   console.log('Client game config:');
-  console.log(JSON.stringify({ id: gameId, replaySecret: '<redacted>' }, null, 2));
-
-  if (!replaySecret) {
-    throw new Error('VITE_REPLAY_SECRET is required. Set it in .env before building.');
-  }
-
-  if (!SHA256_HEX_PATTERN.test(replaySecret)) {
-    throw new Error(
-      'VITE_REPLAY_SECRET must be a 64-character lowercase SHA256 hex string (^[a-f0-9]{64}$).'
-    );
-  }
+  console.log(JSON.stringify({ id: gameId }, null, 2));
 
   assertReleaseMonetizationSafe();
 

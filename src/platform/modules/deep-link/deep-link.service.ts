@@ -4,18 +4,13 @@ import {
   buildDeepLinkSceneData,
 } from './deep-link.model';
 import { logger } from '@platform/core/error';
-import { eventBus } from '@platform/core/events';
 import { getConfig } from '@platform/core/config';
 import { parseDeepLinkUrl } from './deep-link.parser';
+import { eventBus, type IEventBus } from '@platform/core/events';
 import { navigationService } from '@platform/modules/navigation/navigation.service';
 
 class DeepLinkService {
-  private bootComplete = false;
   private pendingDeepLink: DeepLinkPayload | null = null;
-
-  markBootComplete(): void {
-    this.bootComplete = true;
-  }
 
   handleUrl(url: string, source: DeepLinkSource): boolean {
     const parsed = parseDeepLinkUrl(url, getConfig().deepLink, source);
@@ -31,7 +26,7 @@ class DeepLinkService {
       source: parsed.source,
     });
 
-    if (!this.bootComplete) {
+    if (!navigationService.isBootComplete()) {
       navigationService.navigateToScene(parsed.scene, buildDeepLinkSceneData(parsed));
       return true;
     }
@@ -41,8 +36,29 @@ class DeepLinkService {
     return true;
   }
 
-  flushPendingDeepLink(): void {
-    if (!this.bootComplete || !this.pendingDeepLink) {
+  bind(events: IEventBus): () => void {
+    const unsubs = [
+      events.on('deeplink:open', (payload) => {
+        logger.info('[DeepLink] Navigating from deeplink', {
+          path: payload.path,
+          scene: payload.scene,
+        });
+        navigationService.navigateToScene(payload.scene, buildDeepLinkSceneData(payload));
+      }),
+
+      events.on('boot:preload-complete', () => {
+        this.flushPendingDeepLink();
+      }),
+    ];
+
+    return () => {
+      for (const unsub of unsubs) unsub();
+    };
+  }
+
+  /** Called from `boot:preload-complete` — Preload already peeked/started cold_start targets. */
+  private flushPendingDeepLink(): void {
+    if (!this.pendingDeepLink) {
       return;
     }
 

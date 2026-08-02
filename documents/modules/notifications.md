@@ -6,7 +6,7 @@ Module quản lý **push notification** (FCM) và **local notification** (daily 
 
 | Loại                  | Nguồn                       | Khi nào                                                                                                           |
 | --------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Push — Top 100 exited | Backend FCM                 | Player rời Top 100 (tự rớt hoặc bị đẩy)                                                                           |
+| Push — Top 100 exited | Backend FCM                 | Guest #100 bị đẩy xuống rank >100 khi submitter có previous best ngoài Top-100 score band (xem API FCM jobs)      |
 | Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (FRULOOP mặc định: 9:00 Thứ 7 VN); FCM type `rank_push`                  |
 | Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                                             |
 | Local — Daily reward  | Client schedule             | 07:00 mỗi sáng khi chưa claim (calendar cron); claim trước 07:00 thì bỏ hôm nay và arm horizon các sáng tiếp theo |
@@ -52,12 +52,14 @@ Chỉ chạy trên `Capacitor.isNativePlatform()`.
 
 Mục tiêu: **07:00 mỗi sáng nếu chưa claim** — không phụ thuộc “vừa claim hôm qua”.
 
-| Trạng thái                               | Schedule                                                                   |
-| ---------------------------------------- | -------------------------------------------------------------------------- |
-| `canClaim === true`                      | Capacitor `on: { hour: 7, minute: 0 }` (calendar cron, lặp hàng ngày)      |
-| Đã claim **sau** 07:00                   | Giữ / re-arm cùng cron (lần fire tiếp theo = sáng mai)                     |
-| Đã claim **trước** 07:00                 | Cancel cron hôm nay; arm one-shot 07:00 cho **7 sáng tiếp theo** (horizon) |
-| Cold start / `app:resume` / đổi ngôn ngữ | `reconcileDailyRewardSchedule(canClaim)`                                   |
+| Trạng thái                               | Schedule                                                                                                    |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `canClaim === true`                      | Capacitor `on: { hour: 7, minute: 0 }` (calendar cron, lặp hàng ngày)                                       |
+| Đã claim **sau** 07:00                   | Giữ / re-arm cùng cron (lần fire tiếp theo = sáng mai)                                                      |
+| Đã claim **trước** 07:00                 | Cancel cron hôm nay; arm one-shot 07:00 cho **7 sáng tiếp theo** (`DAILY_REWARD_REMINDER_HORIZON_DAYS = 7`) |
+| Cold start / `app:resume` / đổi ngôn ngữ | `reconcileDailyRewardSchedule(canClaim)`                                                                    |
+
+Android channel id: `game_alerts` (khớp backend FCM). Local notification id base `1001`.
 
 `at` + `repeats: true` **không** dùng: trên Android/iOS interval lặp = thời gian tới lần fire đầu (sai với daily).
 

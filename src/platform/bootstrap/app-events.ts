@@ -12,6 +12,8 @@ import { services } from '@platform/core/services';
 import { saveService } from '@platform/modules/save';
 import { usePlatformStore } from '@platform/core/state';
 import { gameRunService } from '@platform/modules/game-run';
+import { leaderboard } from '@platform/modules/leaderboard';
+import { dailyRewards } from '@platform/modules/daily-reward';
 import { hideNativeSplash } from '@platform/bootstrap/capacitor';
 
 const { events, analytics } = services;
@@ -77,6 +79,11 @@ export function bindAppEvents(): () => void {
 
     events.on('ad:reward', ({ placement, reward }) => {
       trackAdReward({ placement, reward: JSON.stringify(reward) });
+    }),
+
+    events.on('app:resume', () => {
+      dailyRewards.refreshOnResume();
+      void leaderboard.fetchLeaderboard({ force: false }).catch(() => undefined);
     }),
   ];
 

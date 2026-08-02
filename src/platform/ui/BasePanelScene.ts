@@ -1,9 +1,7 @@
 import Phaser from 'phaser';
 
 import { eventBus } from '@platform/core/events';
-import { t } from '@platform/modules/i18n/i18n.service';
 import type { AdContext } from '@platform/core/advertising';
-import { createUIButton, UIButtonBackgroundKey } from '@platform/ui/button/UIButton';
 
 export interface PanelSceneData {
   returnTo?: string;
@@ -109,18 +107,6 @@ export abstract class BasePanelScene extends Phaser.Scene {
 
   protected goBack(): void {
     this.scene.start(this.returnTo, this.returnData);
-  }
-
-  protected addCloseButton(yRatio = 0.9): void {
-    const { width, height } = this.cameras.main;
-    createUIButton({
-      scene: this,
-      onClick: () => this.goBack(),
-      size: { width: 200, height: 48 },
-      text: { content: t('common.close') },
-      position: { x: width / 2, y: height * yRatio },
-      background: { key: UIButtonBackgroundKey.Primary },
-    });
   }
 
   protected openScreen(sceneKey: string, data?: Record<string, unknown>): void {

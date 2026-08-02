@@ -1,11 +1,9 @@
 import Phaser from 'phaser';
 
-import { t } from '@platform/ui';
 import { eventBus } from '@platform/core/events';
 import { CoinBar } from '@platform/ui/panel/CoinBar';
+import { t, missions, dailyRewards } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
-import { canClaimDailyReward } from '@platform/ui/dailyReward';
-import { getClaimableMissionCount } from '@platform/ui/missionsStatus';
 
 export class HomeScene extends Phaser.Scene {
   private coinBar?: CoinBar;
@@ -94,7 +92,9 @@ export class HomeScene extends Phaser.Scene {
       onClick: () => this.openScreen('Shop'),
     });
 
-    const claimableMissions = getClaimableMissionCount();
+    const claimableMissions = missions
+      .getMissions()
+      .filter((mission) => mission.status === 'completed').length;
 
     createUIButton({
       scene: this,
@@ -135,7 +135,7 @@ export class HomeScene extends Phaser.Scene {
       },
       badge: {
         content: '!',
-        visible: canClaimDailyReward(),
+        visible: dailyRewards.canClaim(),
         position: { x: 82, y: 2 },
         minSize: { width: 36, height: 36 },
         padding: { horizontal: 5, vertical: 3 },

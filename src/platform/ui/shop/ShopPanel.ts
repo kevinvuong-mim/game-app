@@ -9,7 +9,6 @@ import {
 } from '../panel/panelTheme';
 import type { UIButton } from '../types';
 import { toast } from '../toast/ToastManager';
-import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { PanelHeader } from '../panel/PanelHeader';
 import { createUIButton } from '../button/UIButton';
@@ -34,7 +33,6 @@ const FALLBACK_ITEM_ICON = 'shop-item-1';
  */
 export class ShopPanel extends Phaser.GameObjects.Container {
   private readonly onBack: () => void;
-  private readonly unsubscribers: Array<() => void> = [];
   private readonly onNavigate: (sceneKey: string) => void;
   private readonly listRebuild = new DeferredListRebuild(() => this.rebuildItems());
 
@@ -56,25 +54,9 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     this.build();
     this.listRebuild.runNow();
-    this.unsubscribers.push(
-      eventBus.on('shop:purchase:result', ({ success }) => {
-        if (!this.purchaseUiLocked) return;
-
-        if (!success) {
-          toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
-          this.setPriceButtonsLocked(false);
-          return;
-        }
-
-        this.setPriceButtonsLocked(false);
-        this.renderItems();
-      })
-    );
   }
 
   destroy(fromScene?: boolean): void {
-    for (const unsub of this.unsubscribers) unsub();
-    this.unsubscribers.length = 0;
     this.header = undefined;
     super.destroy(fromScene);
   }
@@ -268,7 +250,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
       }
     });
   }
-  private purchaseItem(item: ShopItem): void {
+  private async purchaseItem(item: ShopItem): Promise<void> {
     if (this.purchaseUiLocked || shop.isPurchaseInFlight()) {
       return;
     }
@@ -281,6 +263,15 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     }
 
     this.setPriceButtonsLocked(true);
-    eventBus.emit('shop:purchase:request', { itemId: item.id });
+    try {
+      const success = await shop.purchase(item.id);
+      if (!success) {
+        toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
+        return;
+      }
+      this.renderItems();
+    } finally {
+      this.setPriceButtonsLocked(false);
+    }
   }
 }

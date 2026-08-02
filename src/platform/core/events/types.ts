@@ -1,8 +1,9 @@
 /**
  * Platform event map.
  *
- * Contract: game emits gameplay; controllers handle commands (*:request → *:result);
- * services emit domain facts (e.g. daily:claim, mission:complete).
+ * Contract: game emits gameplay; UI calls services for feature commands;
+ * services emit domain facts (e.g. daily:claim, mission:complete);
+ * EventBus covers lifecycle and cross-cutting ads/IAP/sync.
  */
 import type {
   IapPurchaseFailedPayload,
@@ -14,7 +15,6 @@ import type { AdContext, AdPlacement } from '@platform/core/advertising';
 import type { AnalyticsEvent, AnalyticsParams } from '../analytics/types';
 import type { DeepLinkPayload } from '@platform/modules/deep-link/deep-link.model';
 import type { LeaderboardView } from '@platform/modules/leaderboard/leaderboard.model';
-import type { RewardProgress } from '@platform/modules/daily-reward/daily-reward.model';
 
 export type PlatformEvent = keyof PlatformEventMap;
 
@@ -38,39 +38,17 @@ export interface PlatformEventMap {
 
   // Platform
   'shop:restore': void;
-  'daily:claim:result': {
-    day?: number;
-    coins?: number;
-    success: boolean;
-    message?: string;
-  };
-  'mission:claim:result': {
-    message?: string;
-    success: boolean;
-    missionId: string;
-  };
-  'shop:purchase:result': {
-    itemId: string;
-    price?: number;
-    success: boolean;
-    message?: string;
-  };
-  'daily:claim:request': void;
   'boot:preload-complete': void;
-  'daily:progress:request': void;
-  'daily:progress': RewardProgress;
   'deeplink:open': DeepLinkPayload;
   'leaderboard:update': LeaderboardView;
   'player:name:updated': { name: string };
   'mission:complete': { missionId: string };
-  'shop:purchase:request': { itemId: string };
   'ad:reward:result': {
     message?: string;
     success: boolean;
     placement: string;
     reward?: { type: string; amount: number };
   };
-  'mission:claim:request': { missionId: string };
   'daily:claim': { day: number; streak: number };
   'iap:purchase:failed': IapPurchaseFailedPayload;
   'iap:restore:success': IapRestoreSuccessPayload;
@@ -84,7 +62,6 @@ export interface PlatformEventMap {
   'settings:change': { key: string; value: unknown };
   'shop:purchase': { itemId: string; price: number };
   'ad:reward': { placement: string; reward: unknown };
-  'leaderboard:refresh': { page?: number } | undefined;
   'ad:context:change': { context: AdContext | string };
   'ad:show:request': { placement: AdPlacement | string };
   'iap:entitlement:changed': IapEntitlementChangedPayload;

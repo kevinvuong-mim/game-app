@@ -10,13 +10,13 @@ import { logger } from '../error';
 import { Capacitor } from '@capacitor/core';
 import { createAdsProvider } from './providers';
 import { getConfig, getEnvironment } from '../config';
-import { AdFormatManager, BannerStateMachine } from './AdStateMachine';
+import { AdStateMachine, BannerStateMachine } from './AdStateMachine';
 import { BANNER_ALLOWED_PLACEMENTS, DEFAULT_REMOTE_CONFIG } from './types';
 
 class AdsService {
   private readonly formats = {
-    rewarded: new AdFormatManager('rewarded'),
-    interstitial: new AdFormatManager('interstitial'),
+    rewarded: new AdStateMachine(),
+    interstitial: new AdStateMachine(),
   };
   private readonly bannerState = new BannerStateMachine();
 
@@ -138,10 +138,10 @@ class AdsService {
     }
 
     const manager = this.formats.rewarded;
-    if (!manager.state.canShow() && this.getProvider().isReady('rewarded')) {
-      manager.state.markReady();
+    if (!manager.canShow() && this.getProvider().isReady('rewarded')) {
+      manager.markReady();
     }
-    if (!manager.state.startShowing()) {
+    if (!manager.startShowing()) {
       return { shown: false, error: 'Rewarded ad busy' };
     }
 
@@ -152,12 +152,12 @@ class AdsService {
       }
       return result;
     } catch (error) {
-      manager.state.markError();
+      manager.markError();
       logger.warn('[Ads] Rewarded show failed', error);
       return { shown: false, error: 'Rewarded ad failed' };
     } finally {
-      if (manager.state.getState() === 'SHOWING') {
-        manager.state.markCompleted();
+      if (manager.getState() === 'SHOWING') {
+        manager.markCompleted();
       }
       void this.loadRewarded();
     }
@@ -180,10 +180,10 @@ class AdsService {
       return { shown: false, error: 'Offline without cached interstitial' };
     }
 
-    if (!manager.state.canShow() && provider.isReady('interstitial')) {
-      manager.state.markReady();
+    if (!manager.canShow() && provider.isReady('interstitial')) {
+      manager.markReady();
     }
-    if (!manager.state.startShowing()) {
+    if (!manager.startShowing()) {
       return { shown: false, error: 'Interstitial busy' };
     }
 
@@ -194,12 +194,12 @@ class AdsService {
       }
       return result;
     } catch (error) {
-      manager.state.markError();
+      manager.markError();
       logger.warn('[Ads] Interstitial show failed', error);
       return { shown: false, error: 'Interstitial failed' };
     } finally {
-      if (manager.state.getState() === 'SHOWING') {
-        manager.state.markCompleted();
+      if (manager.getState() === 'SHOWING') {
+        manager.markCompleted();
       }
       void this.loadInterstitial();
     }
@@ -315,13 +315,13 @@ class AdsService {
 
   private async loadFormat(format: AdFormat, loader: () => Promise<void>): Promise<void> {
     const manager = this.formats[format as keyof typeof this.formats];
-    if (!manager || !manager.state.startLoading()) return;
+    if (!manager || !manager.startLoading()) return;
 
     try {
       await loader();
-      manager.state.markReady();
+      manager.markReady();
     } catch (error) {
-      manager.state.markError();
+      manager.markError();
       logger.warn(`[Ads] Failed to preload ${format}`, error);
     }
   }

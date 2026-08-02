@@ -29,15 +29,27 @@ export const gameConfig: GameConfig = {
 | `version` | File           | Phiên bản game (semver)                            |
 | `physics` | File           | Optional Phaser physics (`matter` / omit for none) |
 
-**Replay secret** không nằm trong `gameConfig`. `GameEngine` gọi `createConfig()` → `RuntimeConfig.replaySecret` từ `VITE_REPLAY_SECRET`. Game-sync / HMAC đọc `getConfig().replaySecret`. Gameplay nên emit `getConfig().gameId` (hoặc cùng `VITE_GAME_ID` qua `gameConfig.id`).
+Gameplay nên emit `getConfig().gameId` (hoặc cùng `VITE_GAME_ID` qua `gameConfig.id`).
 
-> **Game mới:** không chỉ đổi env trên kit. Mỗi game mới cần **1 PR `game-api`** (`GameId` + `GAME_CONFIG` + migrate) rồi mới set `VITE_GAME_ID` / `VITE_REPLAY_SECRET`. Chi tiết: [Adding a new game](../../../game-api/documents/setup/adding-new-game.md).
+> **Game mới:** không chỉ đổi env trên kit. Mỗi game mới cần **1 PR `game-api`** (`GameId` + `GAME_CONFIG` + migrate) rồi mới set `VITE_GAME_ID`. Chi tiết: [Adding a new game](../../../game-api/documents/setup/adding-new-game.md).
 
 ## Env
 
 ```bash
-VITE_REPLAY_SECRET=<64-char-lowercase-sha256-hex>
 VITE_GAME_ID=FRULOOP
 ```
 
-Chạy `npm run game:verify-config` trước build production.
+Chạy `npm run game:verify-config` trước build production. `build:android` / `build:ios` tự gọi script này trước `npm run build`. Khi `VITE_APP_ENV=production` (hoặc `ENFORCE_RELEASE_MONETIZATION=true`), script còn enforce IAP/ads release gates + API probe — xem [environment-variables.md](./environment-variables.md).
+
+## Bootstrap (`GameEngine`)
+
+`src/platform/bootstrap/GameEngine.ts` là entry shell:
+
+1. `createConfig()` / `setConfig()` / `refreshServicesFromConfig()` — `RuntimeConfig.gameId` từ `VITE_GAME_ID`
+2. `iap.setEnabled(config.iapEnabled)` rồi `App.init()` (guest, save, **game-run load**, controllers, …)
+3. Capacitor plugins + fonts
+4. `new Phaser.Game` với scenes từ `gameScenes`, physics từ `buildPhaserPhysics(gameConfig)` (omit / `default: false` → không gắn physics)
+5. Scale: tablet `FIT` + letterbox blur backdrop; phone `ENVELOP`
+6. `backgroundColor: '#1a1a2e'`, target FPS 60
+
+Mid-run board restore: [game-run.md](../modules/game-run.md).

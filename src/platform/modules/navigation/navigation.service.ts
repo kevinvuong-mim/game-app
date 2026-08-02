@@ -1,7 +1,7 @@
 import type Phaser from 'phaser';
 
 import { logger } from '@platform/core/error';
-import { eventBus, registerBootNavigationResolver } from '@platform/core/events';
+import { eventBus } from '@platform/core/events';
 import type { NotificationRoute } from '@platform/modules/notifications/notification.model';
 
 interface PendingNavigation {
@@ -17,6 +17,10 @@ class NavigationService {
   setGame(game: Phaser.Game): void {
     this.game = game;
     this.bootComplete = false;
+  }
+
+  isBootComplete(): boolean {
+    return this.bootComplete;
   }
 
   markBootComplete(): void {
@@ -70,11 +74,6 @@ class NavigationService {
 }
 
 export const navigationService = new NavigationService();
-
-registerBootNavigationResolver(() => {
-  const pending = navigationService.peekPendingNavigation();
-  return { sceneKey: pending?.sceneKey ?? 'Home', data: pending?.data };
-});
 
 export function bindNavigationEvents(): () => void {
   return eventBus.on('boot:preload-complete', () => {

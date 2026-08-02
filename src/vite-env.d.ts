@@ -4,7 +4,6 @@ interface ImportMetaEnv {
   readonly VITE_APP_ENV: 'dev' | 'production';
 
   readonly VITE_GAME_ID: string;
-  readonly VITE_REPLAY_SECRET: string;
 
   readonly VITE_IAP_PROVIDER: 'mock' | 'revenuecat';
   readonly VITE_REVENUECAT_IOS_API_KEY?: string;

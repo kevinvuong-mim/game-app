@@ -2,9 +2,20 @@
 
 Các module dưới đây chạy **offline trên client**. Chúng không gọi `game-api` — API chỉ phục vụ guest / results / leaderboard / devices.
 
+## Mid-run save (`game-run`)
+
+- Durable key `gameplay-run`; schema game-owned (`GameRunSnapshot` v1 trong `src/game/gameplay/GameRunSave.ts`).
+- Persist khi leave/pause mid-run; clear khi game over thật. **Không** gọi `game-api`.
+- Chi tiết: [game-run.md](./game-run.md).
+
+## Rate / share
+
+- **rate**: in-app review + fallback store URL từ `VITE_IOS_APP_STORE_ID` / `VITE_ANDROID_PACKAGE_ID`.
+- **share**: native share sheet (Game Over).
+
 ## Shop
 
-- Catalog: `src/platform/modules/shop/catalog.json` (boosts, remove-ads IAP, coin packs).
+- Catalog: `src/platform/modules/shop/catalog.json` (boosts, remove-ads IAP, coin packs). Không có skin/equip trong catalog hiện tại.
 - **Boosts**: mua bằng coins → quantity trong inventory; gameplay skill bar đọc qua `shop` từ `@platform/ui` (`boost_hammer`, …).
 - **Remove ads**: IAP entitlement — client-authoritative trong starter kit (xem README IAP warning).
 - UI: EventBus `shop:purchase:request` / `shop:purchase:result` → `shopController` (cùng pattern daily/missions); nút mua disable + loading khi locked.
@@ -51,4 +62,5 @@ Missions / Shop / Daily reward / Leaderboard dùng `DeferredListRebuild` — coa
 
 ## Related
 
+- Mid-run save: [game-run](./game-run.md)
 - API-backed modules: [guest-identity](./guest-identity.md), [game-result-sync](./game-result-sync.md), [leaderboard](./leaderboard.md), [notifications](./notifications.md)

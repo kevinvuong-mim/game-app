@@ -3,10 +3,11 @@ import {
   type AdContext,
   type AdPlacement,
   type AdsRemoteConfig,
-  BANNER_HIDDEN_CONTEXTS,
   DEFAULT_REMOTE_CONFIG,
+  BANNER_HIDDEN_CONTEXTS,
   CONTEXT_TO_BANNER_PLACEMENT,
 } from '@platform/core/advertising';
+import type { IEventBus } from '@platform/core/events';
 import { t } from '@platform/modules/i18n/i18n.service';
 
 interface RewardRequestResult {
@@ -17,10 +18,6 @@ interface RewardRequestResult {
 
 class AdsModuleService {
   private runtimeConfig: AdsRemoteConfig = { ...DEFAULT_REMOTE_CONFIG };
-
-  async init(): Promise<void> {
-    ads.setRemoteConfig(this.runtimeConfig);
-  }
 
   async showPlacement(
     placement: AdPlacement | string
@@ -87,6 +84,36 @@ class AdsModuleService {
     return {
       success: true,
       reward,
+    };
+  }
+
+  bind(events: IEventBus): () => void {
+    const unsubs = [
+      events.on('ad:reward:request', async ({ placement }) => {
+        const result = await this.requestReward(placement);
+        events.emit('ad:reward:result', {
+          placement,
+          reward: result.reward,
+          success: result.success,
+          message: result.message,
+        });
+
+        if (result.success && result.reward) {
+          events.emit('ad:reward', { placement, reward: result.reward });
+        }
+      }),
+
+      events.on('ad:show:request', async ({ placement }) => {
+        await this.showPlacement(placement);
+      }),
+
+      events.on('ad:context:change', ({ context }) => {
+        void this.applyBannerForContext(context);
+      }),
+    ];
+
+    return () => {
+      for (const unsub of unsubs) unsub();
     };
   }
 }

@@ -1,1 +1,1 @@
-export { deepLinkController } from './deep-link.controller';
+export { deepLinkService } from './deep-link.service';

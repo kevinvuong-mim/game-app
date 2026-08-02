@@ -74,11 +74,11 @@ Examples:
 Deeplink URL
   → Capacitor App plugin (AppBridge)
   → DeepLinkService (pendingDeepLink on cold start)
-  → EventBus (deeplink:received / deeplink:open)
+  → EventBus (deeplink:open)
   → navigationService.navigateToScene()
   → Phaser Scene
 ```
 
-Cold start: `getLaunchUrl()` chạy trước Phaser boot; destination defer qua `navigationService` pending tới `PreloadScene`.
+Cold start: `getLaunchUrl()` chạy trước Phaser boot; destination defer qua `navigationService` pending tới `PreloadScene` (Preload peeks pending navigation). Sau khi Preload đã peek cold-start link, `flushPendingDeepLink` không mở lại cùng destination.
 
 AASA / `assetlinks.json`: sửa trực tiếp `documents/deeplink/` (`TEAM_ID`, package/bundle id khớp `appId`, SHA-256 fingerprint) rồi upload lên server — không qua `.env`.

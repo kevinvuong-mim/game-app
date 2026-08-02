@@ -1,11 +1,9 @@
 import {
   MAX_BATCH_SIZE,
-  sanitizeMetadata,
+  toResultMetadata,
   toNonNegativeInt,
   MAX_SYNC_ATTEMPTS,
-  isValidReplaySecret,
   type ResultSubmitData,
-  computeReplaySignature,
   type PendingGameResult,
   isTransientSyncErrorCode,
 } from './game-sync.model';
@@ -160,14 +158,6 @@ export class GameSyncService {
   }
 
   private async flushForGuest(gameId: string, guestId: string): Promise<void> {
-    const { replaySecret } = getConfig();
-    if (!isValidReplaySecret(replaySecret)) {
-      logger.error(
-        '[GameSync] Invalid or missing VITE_REPLAY_SECRET — refusing to sync (queue preserved)'
-      );
-      return;
-    }
-
     const prepared = await this.withQueueLock(async () => {
       let queue = await this.repository.loadQueue();
       let mutated = false;
@@ -227,41 +217,21 @@ export class GameSyncService {
 
     for (let i = 0; i < prepared.length; i += MAX_BATCH_SIZE) {
       const batch = prepared.slice(i, i + MAX_BATCH_SIZE);
-      const signedBatch = await Promise.all(
-        batch.map(async (item) => {
-          const metadata = sanitizeMetadata(item.metadata);
-          return {
-            ...item,
-            guestId,
-            metadata,
-            signature: await computeReplaySignature({
-              gameId,
-              guestId,
-              clientResultId: item.clientResultId,
-              score: item.score,
-              playedAt: item.playedAt,
-              replaySecret,
-              metadata,
-            }),
-          };
-        })
-      );
 
       try {
         const response = await this.repository.sync(
           gameId,
-          signedBatch.map(({ clientResultId, score, playedAt, signature, metadata }) => ({
+          batch.map(({ clientResultId, score, playedAt, metadata }) => ({
             clientResultId,
             score,
             playedAt,
-            signature,
-            metadata,
+            metadata: toResultMetadata(metadata),
           }))
         );
 
         await this.withQueueLock(async () => {
           let queue = await this.repository.loadQueue();
-          queue = this.applyBatchSyncResults(queue, batch, response, gameId, guestId);
+          queue = this.applyBatchSyncResults(queue, batch, gameId, guestId);
           this.applyRankFromApi(response);
           queue = this.pruneQueue(queue);
           await this.repository.saveQueue(queue);
@@ -306,39 +276,16 @@ export class GameSyncService {
   private applyBatchSyncResults(
     queue: PendingGameResult[],
     batch: PendingGameResult[],
-    response: ResultSubmitData,
     gameId: string,
     guestId: string
   ): PendingGameResult[] {
-    const rejectedById = new Map(
-      (response.rejected ?? []).map((item) => [item.clientResultId, item.reason])
-    );
     const batchIds = new Set(batch.map((item) => item.localId));
 
-    return queue.flatMap((item) => {
+    return queue.map((item) => {
       if (!batchIds.has(item.localId) || item.gameId !== gameId) {
-        return [item];
+        return item;
       }
-
-      const rejectReason = rejectedById.get(item.clientResultId);
-      if (rejectReason === 'invalid_signature') {
-        // Secret mismatch — count toward drop; do not retry forever.
-        logger.error(
-          '[GameSync] Result rejected (invalid_signature) — will drop after max attempts; check VITE_REPLAY_SECRET',
-          { clientResultId: item.clientResultId }
-        );
-        return [this.markAttemptFailed(item, 'invalid_signature')];
-      }
-
-      if (rejectReason) {
-        logger.warn('[GameSync] Result rejected', {
-          clientResultId: item.clientResultId,
-          reason: rejectReason,
-        });
-        return [];
-      }
-
-      return [{ ...item, synced: true, guestId }];
+      return { ...item, synced: true, guestId };
     });
   }
 

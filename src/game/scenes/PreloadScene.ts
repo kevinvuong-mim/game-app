@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 
-import { t } from '@platform/ui';
 import {
   soundManager,
   SOUND_POP_KEY,
@@ -13,8 +12,9 @@ import {
   SOUND_CHANGE_TURNS_KEY,
   SOUND_INCREASE_SIZE_KEY,
 } from '@platform/ui/audio/SoundManager';
+import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
-import { eventBus, getBootNavigationTarget } from '@platform/core/events';
+import { t, navigationService } from '@platform/ui';
 import { FRUIT_TYPES, fruitImagePath, fruitTextureKey } from '@game/fruits';
 
 type ImageAsset = { key: string; path: string };
@@ -179,13 +179,15 @@ export class PreloadScene extends Phaser.Scene {
     this.setProgress(1);
 
     this.time.delayedCall(PRELOAD_DELAY_MS, () => {
-      const target = getBootNavigationTarget();
+      const pending = navigationService.peekPendingNavigation();
+      const sceneKey = pending?.sceneKey ?? 'Home';
+      const data = pending?.data;
 
       eventBus.emit('boot:preload-complete', undefined);
       soundManager.syncMusic();
 
       // Must transition from this scene — game.scene.start() would leave Preload visible.
-      this.scene.start(target.sceneKey, target.data);
+      this.scene.start(sceneKey, data);
     });
   }
 

@@ -10,16 +10,18 @@ Guest identity quản lý anonymous player cho `game-api`.
 
 ## Storage
 
-| Key                      | Provider                                                    | Nội dung                                                  |
-| ------------------------ | ----------------------------------------------------------- | --------------------------------------------------------- |
-| `gsk:guest`              | Durable StorageService (Preferences native / IndexedDB web) | `{ guestId, secretToken, name?, nameSyncPending? }`       |
-| `gsk:guest:pending-name` | cùng provider                                               | Tên local khi chưa có credentials (first-install offline) |
+Logical keys (API của `StorageService`):
 
-Web builds migrate one-shot từ legacy `localStorage` sang IndexedDB nếu còn dữ liệu cũ.
+| Key                  | Nội dung                                                  |
+| -------------------- | --------------------------------------------------------- |
+| `guest`              | `{ guestId, secretToken, name?, nameSyncPending? }`       |
+| `guest:pending-name` | Tên local khi chưa có credentials (first-install offline) |
+
+Trên native Preferences / legacy localStorage, key vật lý có prefix `gsk:` (`gsk:guest`, …). IndexedDB dùng logical key **không** prefix. Web builds migrate one-shot từ legacy `localStorage` sang IndexedDB nếu còn dữ liệu cũ.
 
 ## `guest.init()` flow
 
-1. Đọc `gsk:guest` từ storage.
+1. Đọc `guest` từ storage.
 2. Nếu có → `apiClient.setAuthToken(secretToken)`, xong (cold start không gọi mạng).
 3. Nếu không → giữ `pending`, **không block** cold start; `POST /api/guest/init` chạy nền khi online.
 4. Khi create xong → nếu `payload.gameId` **không khớp** `RuntimeConfig.gameId` thì **từ chối lưu credentials** (log error, giữ `pending`, retry khi online). Khớp thì lưu `{ guestId, secretToken }`, `markReady`, adopt pending name nếu có.
@@ -28,10 +30,10 @@ Nếu offline / create fail ở bước 3–4, guest ở `pending` và tự retr
 
 Khi API trả 401, `guest.recoverFromUnauthorized()`:
 
-- Xóa credentials cũ (`gsk:guest`) và reset notification state (`notification-state-v1`)
-- **Xóa** queue `game-sync:pending` — score cũ không được gắn sang guest mới (tránh orphan HMAC)
+- Xóa credentials cũ (`guest`) và reset notification state (`notification-state-v1`)
+- **Xóa** queue `game-sync:pending` — score cũ không được gắn sang guest mới
 - Tạo guest mới qua `init()`, rồi re-bind FCM device token cho guest mới
-- `ApiClient` **không** replay request cũ sau recovery (tránh HMAC ký với guest cũ)
+- `ApiClient` **không** replay request cũ sau recovery (tránh gắn body của guest cũ)
 
 `init()` và `recoverFromUnauthorized()` dùng mutex để tránh race khi retry song song.
 
@@ -43,14 +45,13 @@ Khi guest trở thành `ready` (kể cả sau offline retry), `App.ts` gọi `ia
 
 Đổi tên qua `guest.updateName()` (cho phép kể cả khi guest còn `pending`):
 
-1. Cập nhật local ngay (`displayName` trong store + `saveLocal`).
-2. Nếu đã có credentials → set `nameSyncPending: true` trên `gsk:guest`.
-3. Nếu chưa có credentials → lưu `gsk:guest:pending-name`; khi guest create xong sẽ adopt sang credentials.
+1. Cập nhật local ngay (`displayName` trong store + `saveLocal`). Tên normalize 1–26 chars (`PLAYER_NAME_MAX_LENGTH`).
+2. Nếu đã có credentials → set `nameSyncPending: true` trên `guest`.
+3. Nếu chưa có credentials → lưu `guest:pending-name`; khi guest create xong sẽ adopt sang credentials.
 4. Gọi `PATCH /api/guest/name` khi guest `ready` và online.
 
-`guest.controller.ts` gọi `flushPendingName()` khi:
+`App.init` gọi `guest.flushPendingName()` sau `saveService.loadLocal()`. `guest.controller` cũng flush khi:
 
-- Sau `saveService.loadLocal()` trong `App.init` (tránh wipe progress)
 - `app:resume`
 - `guest.onReady` (sau hydrate)
 - `window.online` (web)

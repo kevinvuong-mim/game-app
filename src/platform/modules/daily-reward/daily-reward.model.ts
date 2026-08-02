@@ -33,6 +33,40 @@ export interface ClaimResult {
   coins: number;
 }
 
+const REWARD_CYCLE: ReadonlyArray<{ day: number; coins: number }> = [
+  { day: 1, coins: 100 },
+  { day: 2, coins: 200 },
+  { day: 3, coins: 300 },
+  { day: 4, coins: 500 },
+  { day: 5, coins: 800 },
+  { day: 6, coins: 1300 },
+  { day: 7, coins: 2100 },
+];
+
+export function resolveClaimReward(day: number): ClaimResult {
+  const normalized = ((day - 1) % 7) + 1;
+  const definition = REWARD_CYCLE.find((entry) => entry.day === normalized) ?? REWARD_CYCLE[0];
+  return { day: definition.day, coins: definition.coins };
+}
+
+export function buildRewardProgress(currentDay: number): RewardDayProgress[] {
+  return REWARD_CYCLE.map((entry) => {
+    let status: RewardDayProgress['status'] = 'locked';
+
+    if (entry.day < currentDay) {
+      status = 'claimed';
+    } else if (entry.day === currentDay) {
+      status = 'current';
+    }
+
+    return {
+      status,
+      day: entry.day,
+      coins: entry.coins,
+    };
+  });
+}
+
 export function createDefaultModel(): DailyRewardModel {
   return {
     currentDay: 1,
