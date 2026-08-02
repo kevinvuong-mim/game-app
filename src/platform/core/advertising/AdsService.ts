@@ -125,7 +125,11 @@ class AdsService {
   }
 
   resolveFormat(placement: string): AdFormat | null {
-    return this.remoteConfig.placements[placement as AdPlacement] ?? null;
+    return (
+      this.remoteConfig.placements[placement as AdPlacement] ??
+      DEFAULT_REMOTE_CONFIG.placements[placement as AdPlacement] ??
+      null
+    );
   }
 
   async loadRewarded(): Promise<void> {

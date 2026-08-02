@@ -65,7 +65,9 @@ class AdsModuleService {
       return { success: false, message: t('ads.rewardUnavailable') };
     }
 
-    const reward = this.runtimeConfig.rewards[placement as AdPlacement];
+    const reward =
+      this.runtimeConfig.rewards[placement as AdPlacement] ??
+      DEFAULT_REMOTE_CONFIG.rewards[placement as AdPlacement];
     if (!reward) {
       return {
         success: false,

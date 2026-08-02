@@ -362,13 +362,14 @@ export class GameOverScene extends Phaser.Scene {
     const ring = this.add.graphics();
     const gfx = this.add.graphics();
     const icon = this.add
-      .text(1, -1, '▶', {
+      .text(0, 0, '▶', {
         color: '#5c3a00',
-        fontSize: '26px',
+        fontSize: '36px',
         fontStyle: 'bold',
         fontFamily: FREDOKA_FONT,
       })
-      .setOrigin(0.5);
+      // ▶ reads heavy on the right — bias origin so it sits visually centered.
+      .setOrigin(0.52, 0.52);
 
     const hit = this.add.zone(0, 0, MERGE_ORB_SIZE + 16, MERGE_ORB_SIZE + 16);
     hit.setInteractive({ useHandCursor: true });
@@ -389,32 +390,20 @@ export class GameOverScene extends Phaser.Scene {
       this.tweens.add({ targets: orb, scale: 0.9, duration: 70, ease: 'Power2' });
     });
 
+    // Fire the request immediately on pointerup — do not wait on a tween onComplete.
+    // (pointerout often kills that tween on touch and the ad never starts.)
     hit.on('pointerup', () => {
       if (this.doubleClaimed || this.doubleRequesting) return;
       this.tweens.killTweensOf(orb);
-      this.tweens.add({
-        targets: orb,
-        scale: 1,
-        duration: 110,
-        ease: 'Back.easeOut',
-        onComplete: () => this.requestDoubleCoins(),
-      });
+      orb.setScale(1);
+      this.requestDoubleCoins();
     });
 
     hit.on('pointerout', () => {
+      if (this.doubleClaimed || this.doubleRequesting) return;
       this.tweens.killTweensOf(orb);
-      this.tweens.add({ targets: orb, scale: 1, duration: 100, ease: 'Back.easeOut' });
-    });
-
-    this.tweens.add({
-      targets: orb,
-      scaleX: 1.08,
-      scaleY: 1.08,
-      yoyo: true,
-      repeat: -1,
-      duration: 700,
-      ease: 'Sine.InOut',
-      delay: 400,
+      orb.setScale(1);
+      this.startMergeOrbPulse();
     });
 
     this.tweens.add({
@@ -423,6 +412,29 @@ export class GameOverScene extends Phaser.Scene {
       duration: 4200,
       repeat: -1,
       ease: 'Linear',
+    });
+
+    this.time.delayedCall(400, () => {
+      if (!this.doubleClaimed && !this.doubleRequesting && orb.active) {
+        this.startMergeOrbPulse();
+      }
+    });
+  }
+
+  private startMergeOrbPulse(): void {
+    const orb = this.mergeOrb;
+    if (!orb?.active || this.doubleClaimed || this.doubleRequesting) return;
+
+    this.tweens.killTweensOf(orb);
+    orb.setScale(1);
+    this.tweens.add({
+      targets: orb,
+      scaleX: 1.08,
+      scaleY: 1.08,
+      yoyo: true,
+      repeat: -1,
+      duration: 700,
+      ease: 'Sine.InOut',
     });
   }
 
@@ -501,6 +513,7 @@ export class GameOverScene extends Phaser.Scene {
     if (!success) {
       this.drawMergeOrb(false);
       this.mergeHit?.setInteractive({ useHandCursor: true });
+      this.startMergeOrbPulse();
       if (message) toast.show({ message, type: 'error' });
       return;
     }
