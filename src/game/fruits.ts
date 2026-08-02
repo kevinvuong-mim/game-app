@@ -37,3 +37,11 @@ export function fruitImagePath(level: number): string {
 export function randomSpawnLevel(): number {
   return Math.floor(Math.random() * (SPAWN_MAX_LEVEL + 1));
 }
+
+/** Random spawn level guaranteed different from `exclude` (when more than one tier exists). */
+export function randomSpawnLevelExcept(exclude: number): number {
+  const count = SPAWN_MAX_LEVEL + 1;
+  if (count <= 1) return 0;
+  const roll = Math.floor(Math.random() * (count - 1));
+  return roll >= exclude ? roll + 1 : roll;
+}

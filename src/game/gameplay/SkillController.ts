@@ -1,12 +1,12 @@
 import type Phaser from 'phaser';
 
 import { t } from '@platform/ui';
-import { FRUIT_TYPES } from '@game/fruits';
 import type { FruitFactory } from './FruitFactory';
 import type { SkillBarView } from './SkillBarView';
 import type { ActiveSkill, FruitBody } from './types';
 import { toast } from '@platform/ui/toast/ToastManager';
 import { soundManager } from '@platform/ui/audio/SoundManager';
+import { FRUIT_TYPES, randomSpawnLevelExcept } from '@game/fruits';
 import { type SkillId, getSkillQuantity, consumeSkill } from '@game/skills/skillInventory';
 
 export type SkillControllerCallbacks = {
@@ -57,15 +57,22 @@ export class SkillController {
     if (getSkillQuantity(id) <= 0) return;
 
     if (id === 'boost_change') {
-      if (!this.callbacks.canDrop()) return;
       // Consume before checkpoint so a failed consume never clobbers undo state.
       if (!consumeSkill(id)) return;
+
+      // Cancel targeting skills so the dropper can show the new fruit.
+      this.clearSelectionTint();
+      this.activeSkill = null;
+      this.skillBar.setHint('');
+      this.skillBar.updateSelectionVisual();
+
       this.callbacks.pushUndoCheckpoint();
-      const prev = this.callbacks.getCurrentLevel();
-      this.callbacks.setLevels(this.callbacks.getNextLevel(), prev);
+      // Reroll the hanging fruit across the spawn pool — never just swap with
+      // next (that only oscillates between two fruits).
+      const rolled = randomSpawnLevelExcept(this.callbacks.getCurrentLevel());
+      this.callbacks.setLevels(rolled, this.callbacks.getNextLevel());
       this.callbacks.refreshDropper();
       this.skillBar.refreshInventory(id);
-      this.skillBar.setHint('');
       soundManager.playChangeTurns();
       return;
     }

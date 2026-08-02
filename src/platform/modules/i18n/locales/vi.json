@@ -69,7 +69,7 @@
       },
       "boost_change": {
         "name": "Đổi Trái",
-        "description": "Đổi trái hiện tại với trái tiếp theo!"
+        "description": "Đổi trái đang treo thành một trái ngẫu nhiên!"
       },
       "boost_swap": {
         "name": "Hoán Đổi",

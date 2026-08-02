@@ -16,7 +16,7 @@
       "id": "boost_change",
       "icon": "shop-item-2",
       "name": "Change Fruit",
-      "description": "Swap the current fruit with the next one!"
+      "description": "Change the hanging fruit to a random one!"
     },
     {
       "price": 1500,
