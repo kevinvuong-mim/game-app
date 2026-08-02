@@ -11,8 +11,8 @@ import {
 import notificationEnvConfigs from './notification-env.json';
 
 type IapProvider = 'mock' | 'revenuecat';
-export type Environment = 'dev' | 'production';
 type AnalyticsProvider = 'console' | 'firebase';
+export type Environment = 'development' | 'production';
 
 interface FirebaseConfig {
   appId: string;
@@ -58,12 +58,12 @@ interface AdsConfig {
 }
 
 const ENV_CONFIGS: Record<Environment, Partial<RuntimeConfig>> = {
-  dev: {
+  development: {
     debug: true,
     adsEnabled: true,
     iapEnabled: true,
     analyticsEnabled: true,
-    ...notificationEnvConfigs.dev,
+    ...notificationEnvConfigs.development,
     apiUrl: 'https://game-api-s5kn.onrender.com/api',
   },
   production: {
@@ -79,7 +79,7 @@ const ENV_CONFIGS: Record<Environment, Partial<RuntimeConfig>> = {
 function resolveEnvironment(): Environment {
   const env = import.meta.env.VITE_APP_ENV as Environment | undefined;
   if (env && env in ENV_CONFIGS) return env;
-  return import.meta.env.PROD ? 'production' : 'dev';
+  return import.meta.env.PROD ? 'production' : 'development';
 }
 
 function resolveAnalyticsProvider(): AnalyticsProvider {

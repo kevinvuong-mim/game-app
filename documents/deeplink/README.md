@@ -23,7 +23,7 @@ Sửa scheme + hosts tại:
 | `src/platform/modules/deep-link/deep-link.config.ts` | Runtime (parser / `allowedHosts`)                          |
 | `scripts/deeplink-config.mjs`                        | Native apply (`apply-ios-native` / `apply-android-native`) |
 
-Hai file phải khớp nhau. Host active theo `VITE_APP_ENV` (`production` → prod, còn lại → dev).
+Hai file phải khớp nhau. Host active theo `VITE_APP_ENV` (`production` → prod, còn lại → development).
 
 ## iOS (Universal Links)
 

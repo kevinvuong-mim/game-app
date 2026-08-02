@@ -11,21 +11,21 @@ Tài liệu này mô tả các biến môi trường runtime của `fruloop`. V�
 ## Core
 
 ```env
-VITE_APP_ENV=dev
+VITE_APP_ENV=development
 VITE_GAME_ID=FRULOOP
 ```
 
-| Variable       | Values              | Default / Source     | Description                                                   |
-| -------------- | ------------------- | -------------------- | ------------------------------------------------------------- |
-| `VITE_APP_ENV` | `dev`, `production` | `dev` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts` |
-| `VITE_GAME_ID` | string              | Bắt buộc             | Game id dùng ở frontend và backend                            |
+| Variable       | Values                      | Default / Source             | Description                                                   |
+| -------------- | --------------------------- | ---------------------------- | ------------------------------------------------------------- |
+| `VITE_APP_ENV` | `development`, `production` | `development` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts` |
+| `VITE_GAME_ID` | string                      | Bắt buộc                     | Game id dùng ở frontend và backend                            |
 
 Preset API URL trong code (`src/platform/core/config/index.ts`):
 
-| Env          | API URL                                  |
-| ------------ | ---------------------------------------- |
-| `dev`        | `https://game-api-s5kn.onrender.com/api` |
-| `production` | `https://game-api-s5kn.onrender.com/api` |
+| Env           | API URL                                  |
+| ------------- | ---------------------------------------- |
+| `development` | `https://game-api-s5kn.onrender.com/api` |
+| `production`  | `https://game-api-s5kn.onrender.com/api` |
 
 Cả hai preset hiện trỏ Render. Client **không** đọc `VITE_API_URL`. Để dùng API local, tạm sửa `apiUrl` trong `src/platform/core/config/index.ts`.
 
@@ -135,10 +135,10 @@ VITE_FIREBASE_MEASUREMENT_ID=
 | ----------------- | ----------------------------------------------------------------------- |
 | `VITE_FIREBASE_*` | Web config từ Firebase Console → Project settings → General → Your apps |
 
-| Env          | Analytics               | Push (native) | Local notifications |
-| ------------ | ----------------------- | ------------- | ------------------- |
-| `dev`        | on (`analyticsEnabled`) | on\*\*        | on\*                |
-| `production` | on                      | on\*\*        | on\*                |
+| Env           | Analytics               | Push (native) | Local notifications |
+| ------------- | ----------------------- | ------------- | ------------------- |
+| `development` | on (`analyticsEnabled`) | on\*\*        | on\*                |
+| `production`  | on                      | on\*\*        | on\*                |
 
 \* Local chỉ active trên native (`resolveLocalNotificationsEnabled()`).  
 \*\* Push chỉ active khi `Capacitor.isNativePlatform()` **và** đủ 5 biến `VITE_FIREBASE_*` (`isFirebaseConfigured()`). Provider analytics (`console` / `firebase`) độc lập với cờ `analyticsEnabled`.
@@ -165,7 +165,7 @@ Các ID này được gắn vào link khi share điểm số và rate fallback. 
 ## Example `.env`
 
 ```env
-VITE_APP_ENV=dev
+VITE_APP_ENV=development
 VITE_GAME_ID=FRULOOP
 
 VITE_IAP_PROVIDER=mock

@@ -107,7 +107,7 @@ Các event/lifecycle chính:
 
 - Store builds: `VITE_APP_ENV=production` + `revenuecat` (cả hai keys) + `admob` (app + unit ids thật). `game:verify-config` enforce trước native build; runtime native production cũng block mock IAP/ads.
 - Bật push: copy Firebase native config files + `VITE_FIREBASE_*` + backend `FIREBASE_*` (xem [firebase-native.md](./firebase-native.md)).
-- API URL lấy từ preset `VITE_APP_ENV` trong `src/platform/core/config/index.ts` (hiện cả `dev` và `production` đều trỏ Render; không có `VITE_API_URL`).
+- API URL lấy từ preset `VITE_APP_ENV` trong `src/platform/core/config/index.ts` (hiện cả `development` và `production` đều trỏ Render; không có `VITE_API_URL`).
 - Đảm bảo `VITE_GAME_ID` / `src/game/config.ts` khớp `GameId` enum trên `game-api`.
 
 ---

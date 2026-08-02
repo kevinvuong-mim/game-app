@@ -18,7 +18,7 @@ const FIREBASE_ENV_KEYS = [
 function resolveEnvironment() {
   const env = process.env.VITE_APP_ENV;
   if (env && env in NOTIFICATION_ENV_CONFIGS) return env;
-  return process.env.NODE_ENV === 'production' ? 'production' : 'dev';
+  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
 }
 
 function isFirebaseConfigured(env = process.env) {

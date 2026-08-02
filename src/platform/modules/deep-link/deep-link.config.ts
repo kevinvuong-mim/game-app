@@ -15,10 +15,10 @@ const DEEP_LINK_CONFIG = {
 
 function resolveEnvironment(): Environment {
   const env = import.meta.env.VITE_APP_ENV as Environment | undefined;
-  if (env === 'dev' || env === 'production') {
+  if (env === 'development' || env === 'production') {
     return env;
   }
-  return import.meta.env.PROD ? 'production' : 'dev';
+  return import.meta.env.PROD ? 'production' : 'development';
 }
 
 function resolveHost(environment: Environment): string {

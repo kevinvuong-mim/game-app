@@ -203,7 +203,7 @@ Change Fruit and Undo buttons use `sound: false` so only their skill SFX plays (
 Copy `.env.example` to `.env` and adjust per environment.
 
 ```bash
-VITE_APP_ENV=dev              # dev | production
+VITE_APP_ENV=development      # development | production
 VITE_GAME_ID=FRULOOP
 VITE_IAP_PROVIDER=mock        # mock | revenuecat
 VITE_ADS_PROVIDER=mock        # mock | admob (AdMob used on native when admob)
@@ -231,7 +231,7 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 
 | Variable                                            | Description                                           |
 | --------------------------------------------------- | ----------------------------------------------------- |
-| `VITE_APP_ENV`                                      | Runtime environment (`dev`, `production`)             |
+| `VITE_APP_ENV`                                      | Runtime environment (`development`, `production`)     |
 | `VITE_GAME_ID`                                      | Game id used by the frontend and backend              |
 | `VITE_IAP_PROVIDER`                                 | `mock` or `revenuecat`                                |
 | `VITE_ADS_PROVIDER`                                 | `mock` or `admob`                                     |

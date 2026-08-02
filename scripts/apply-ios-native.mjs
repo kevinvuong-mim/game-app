@@ -434,7 +434,7 @@ if (existsSync(nativeDir)) {
       stripApsEnvironment(join(iosAppDir, ENTITLEMENTS_FILE));
     } else {
       const apsEnv =
-        (process.env.VITE_APP_ENV ?? 'dev') === 'production' ? 'production' : 'development';
+        (process.env.VITE_APP_ENV ?? 'development') === 'production' ? 'production' : 'development';
       setApsEnvironment(join(iosAppDir, ENTITLEMENTS_FILE), apsEnv);
       console.log(`[ios-native] aps-environment set to ${apsEnv}`);
     }

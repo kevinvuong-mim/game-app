@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_APP_ENV: 'dev' | 'production';
+  readonly VITE_APP_ENV: 'development' | 'production';
 
   readonly VITE_GAME_ID: string;
 

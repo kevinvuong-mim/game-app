@@ -56,10 +56,10 @@ native/firebase/GoogleService-Info.plist
 
 Push/local bật theo `src/platform/core/config/notification-env.json`, merge vào `ENV_CONFIGS` trong `src/platform/core/config/index.ts`:
 
-| Env          | Push\* | Local\* |
-| ------------ | ------ | ------- |
-| `dev`        | on     | on      |
-| `production` | on     | on      |
+| Env            | Push\* | Local\* |
+| -------------- | ------ | ------- |
+| `development`  | on     | on      |
+| `production`   | on     | on      |
 
 \* Push chỉ thực sự bật khi native **và** đủ 5 biến Firebase sau. Local cũng bị tắt trên web vì `resolveLocalNotificationsEnabled()` yêu cầu native.
 

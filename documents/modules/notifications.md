@@ -17,10 +17,10 @@ Push cần Firebase native + backend `FIREBASE_*`. Local chỉ cần `@capacitor
 
 Preset trong `src/platform/core/config/notification-env.json`, merge vào `ENV_CONFIGS` tại `src/platform/core/config/index.ts`:
 
-| Env          | Push\* | Local\* |
-| ------------ | ------ | ------- |
-| `dev`        | on     | on      |
-| `production` | on     | on      |
+| Env           | Push\* | Local\* |
+| ------------- | ------ | ------- |
+| `development` | on     | on      |
+| `production`  | on     | on      |
 
 \* Push chỉ bật khi native + đủ `VITE_FIREBASE_*` (xem [Firebase Native Setup](../setup/firebase-native.md)). Local preset `on` cũng bị tắt trên web vì `resolveLocalNotificationsEnabled()` yêu cầu native.
 

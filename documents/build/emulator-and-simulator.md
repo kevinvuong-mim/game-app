@@ -123,7 +123,7 @@ cp .env.example .env
 Các biến quan trọng khi chạy native với AdMob:
 
 ```env
-VITE_APP_ENV=dev
+VITE_APP_ENV=development
 VITE_GAME_ID=FRULOOP
 
 VITE_ADS_PROVIDER=admob
@@ -140,7 +140,7 @@ Chi tiết biến môi trường: [Environment Variables](../setup/environment-v
 
 ### 3. Backend API (tuỳ chọn nhưng khuyến nghị)
 
-App gọi guest init, leaderboard, game sync qua API URL theo `VITE_APP_ENV` trong `src/platform/core/config/index.ts`. Preset `dev` và `production` đều dùng `https://game-api-s5kn.onrender.com/api` (khớp `scripts/verify-game-config.mjs`).
+App gọi guest init, leaderboard, game sync qua API URL theo `VITE_APP_ENV` trong `src/platform/core/config/index.ts`. Preset `development` và `production` đều dùng `https://game-api-s5kn.onrender.com/api` (khớp `scripts/verify-game-config.mjs`).
 
 Để test với `game-api` local, tạm sửa `apiUrl` trong config rồi (nếu Android emulator) reverse cổng:
 

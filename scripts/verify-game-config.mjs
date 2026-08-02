@@ -99,7 +99,7 @@ function assertReleaseAdsSafe(adsProvider) {
 }
 
 function assertReleaseMonetizationSafe() {
-  const appEnv = process.env.VITE_APP_ENV ?? 'dev';
+  const appEnv = process.env.VITE_APP_ENV ?? 'development';
   const enforce =
     appEnv === 'production' || process.env.ENFORCE_RELEASE_MONETIZATION === 'true';
 
@@ -137,7 +137,7 @@ async function main() {
   }
 
   // Local packaging with mock providers should not require network.
-  if ((process.env.VITE_APP_ENV ?? 'dev') !== 'production') {
+  if ((process.env.VITE_APP_ENV ?? 'development') !== 'production') {
     console.log('Skipped backend check (VITE_APP_ENV is not production).');
     return;
   }

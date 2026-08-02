@@ -10,7 +10,7 @@ const { ads, config, analytics } = services;
 
 /**
  * Native shell + Vite production bundle. Block mock monetization even when
- * `VITE_APP_ENV=dev` was left in the release env by mistake.
+ * `VITE_APP_ENV=development` was left in the release env by mistake.
  */
 function isNativeProductionBundle(): boolean {
   return Capacitor.isNativePlatform() && import.meta.env.PROD;
