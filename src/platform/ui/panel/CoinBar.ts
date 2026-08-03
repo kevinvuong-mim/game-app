@@ -11,6 +11,7 @@ import { t } from '@platform/modules/i18n/i18n.service';
 import { usePlatformStore } from '@platform/core/state';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from './panelTheme';
+import { getWorldPosition, spawnCoinsFlyTo } from '../effects/coinFly';
 import { COINS_10000_AMOUNT, COINS_10000_PRICE } from '@platform/modules/iap/iap.config';
 
 const COIN_BAR_GAP = 10;
@@ -354,12 +355,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
       success = await shop.purchase(COINS_PACK_ITEM_ID);
       if (success) {
         soundManager.playCoinDrop();
-        toast.show({
-          type: 'success',
-          message: t('shop.getCoins.purchaseSuccess', {
-            coins: formatNumber(COINS_10000_AMOUNT),
-          }),
-        });
+        this.playPurchaseCoinFly();
       } else {
         toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
       }
@@ -371,6 +367,22 @@ export class CoinBar extends Phaser.GameObjects.Container {
     if (success) {
       this.hideGetCoinsModal();
     }
+  }
+
+  /** Coins fly from the buy button into the CoinBar after a successful IAP pack purchase. */
+  private playPurchaseCoinFly(): void {
+    const { width, height } = this.scene.cameras.main;
+    const from = this.buyCoinsButton
+      ? getWorldPosition(this.buyCoinsButton)
+      : { x: width / 2, y: height / 2 };
+    const to = this.getCoinIconWorldPosition();
+    const count = Math.min(10, Math.max(6, Math.round(COINS_10000_AMOUNT / 1200)));
+
+    spawnCoinsFlyTo(this.scene, from, to, {
+      count,
+      size: 30,
+      onCoinArrive: () => this.pulseReceive(),
+    });
   }
 
   private build(): void {
