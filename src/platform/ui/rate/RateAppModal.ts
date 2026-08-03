@@ -11,23 +11,14 @@ import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { rateService } from '@platform/modules/rate';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
-import { soundManager } from '@platform/ui/audio/SoundManager';
 
 const MODAL_DEPTH = 50;
-const STAR_FILL = 0xff8a1a;
-const STAR_EMPTY = 0xe8d4b0;
-const STAR_STROKE = 0x8b4513;
 
 export class RateAppModal {
   private readonly scene: Phaser.Scene;
   private readonly root: Phaser.GameObjects.Container;
 
-  private starsY = 0;
-  private starsCenterX = 0;
-  private selectedStars = 0;
   private submitting = false;
-  private starHits: Phaser.GameObjects.Zone[] = [];
-  private starGfx: Phaser.GameObjects.Graphics[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -45,10 +36,11 @@ export class RateAppModal {
     const padTop = 40;
     const padBottom = 40;
     const panelWidth = Math.min(420, width * 0.9);
-    const panelHeight = Math.min(640, height * 0.8);
-    const panelX = width / 2 - panelWidth / 2;
-    const panelY = height / 2 - panelHeight / 2;
+    const panelHeight = Math.min(560, height * 0.75);
     const centerX = width / 2;
+    const centerY = height / 2;
+    const panelX = centerX - panelWidth / 2;
+    const panelY = centerY - panelHeight / 2;
     const contentWidth = panelWidth - padX * 2;
 
     const overlay = this.scene.add
@@ -68,7 +60,7 @@ export class RateAppModal {
     );
 
     const panelHit = this.scene.add
-      .rectangle(centerX, height / 2, panelWidth, panelHeight, 0x000000, 0)
+      .rectangle(centerX, centerY, panelWidth, panelHeight, 0x000000, 0)
       .setInteractive();
 
     this.root.add([overlay, panelGfx, panelHit]);
@@ -110,8 +102,6 @@ export class RateAppModal {
         })
         .setOrigin(0.5, 0)
     );
-
-    this.buildStars(centerX, panelY + padTop + 350);
 
     const buttonWidth = 260;
     const buttonHeight = 76;
@@ -156,69 +146,13 @@ export class RateAppModal {
     );
   }
 
-  private buildStars(centerX: number, y: number): void {
-    this.starsCenterX = centerX;
-    this.starsY = y;
-
-    const count = 5;
-    const spacing = 52;
-    const startX = centerX - ((count - 1) * spacing) / 2;
-    const hitSize = 44;
-
-    for (let i = 0; i < count; i++) {
-      const x = startX + i * spacing;
-      const gfx = this.scene.add.graphics();
-      this.starGfx.push(gfx);
-      this.root.add(gfx);
-
-      const hit = this.scene.add
-        .zone(x, y, hitSize, hitSize)
-        .setInteractive({ useHandCursor: true });
-      hit.on('pointerup', () => this.setStars(i + 1));
-      this.starHits.push(hit);
-      this.root.add(hit);
-    }
-
-    this.redrawStars();
-  }
-
-  private setStars(value: number): void {
-    this.selectedStars = value;
-    soundManager.playPop();
-    this.redrawStars();
-  }
-
-  private redrawStars(): void {
-    const count = 5;
-    const spacing = 52;
-    const startX = this.starsCenterX - ((count - 1) * spacing) / 2;
-    const outerR = 18;
-    const innerR = 8;
-
-    for (let i = 0; i < count; i++) {
-      const gfx = this.starGfx[i];
-      if (!gfx) continue;
-      gfx.clear();
-      drawStar(gfx, startX + i * spacing, this.starsY, outerR, innerR, i < this.selectedStars);
-    }
-  }
-
   private async handleRateNow(): Promise<void> {
     if (this.submitting) return;
 
-    if (this.selectedStars < 1) {
-      toast.show({ message: t('rateApp.selectStars'), type: 'warning' });
-      return;
-    }
-
     this.submitting = true;
     try {
-      const result = await rateService.submitRating(this.selectedStars);
-      if (result === 'saved') {
-        toast.show({ message: t('rateApp.thanksFeedback'), type: 'success' });
-      } else {
-        toast.show({ message: t('rateApp.thanks'), type: 'success' });
-      }
+      await rateService.submitRating();
+      toast.show({ message: t('rateApp.thanks'), type: 'success' });
       this.destroy();
     } finally {
       this.submitting = false;
@@ -235,47 +169,4 @@ export class RateAppModal {
       this.submitting = false;
     }
   }
-}
-
-function drawStar(
-  gfx: Phaser.GameObjects.Graphics,
-  cx: number,
-  cy: number,
-  outerR: number,
-  innerR: number,
-  filled: boolean
-): void {
-  const points: Phaser.Math.Vector2[] = [];
-  for (let i = 0; i < 5; i++) {
-    const outerAngle = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
-    const innerAngle = outerAngle + Math.PI / 5;
-    points.push(
-      new Phaser.Math.Vector2(
-        cx + Math.cos(outerAngle) * outerR,
-        cy + Math.sin(outerAngle) * outerR
-      )
-    );
-    points.push(
-      new Phaser.Math.Vector2(
-        cx + Math.cos(innerAngle) * innerR,
-        cy + Math.sin(innerAngle) * innerR
-      )
-    );
-  }
-
-  gfx.lineStyle(3, STAR_STROKE, 1);
-  if (filled) {
-    gfx.fillStyle(STAR_FILL, 1);
-  } else {
-    gfx.fillStyle(STAR_EMPTY, 1);
-  }
-
-  gfx.beginPath();
-  gfx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    gfx.lineTo(points[i].x, points[i].y);
-  }
-  gfx.closePath();
-  gfx.fillPath();
-  gfx.strokePath();
 }

@@ -176,9 +176,7 @@
     "message": "Please rate us to help improve the game!",
     "rateNow": "RATE NOW",
     "later": "LATER",
-    "selectStars": "Please select a star rating",
-    "thanks": "Thanks for your rating!",
-    "thanksFeedback": "Thanks for your feedback!"
+    "thanks": "Thanks for your rating!"
   },
   "notifications": {
     "dailyReward": {

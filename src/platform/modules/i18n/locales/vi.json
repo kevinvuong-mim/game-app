@@ -176,9 +176,7 @@
     "message": "Hãy đánh giá để giúp chúng tôi cải thiện trò chơi tốt hơn nhé!",
     "rateNow": "ĐÁNH GIÁ NGAY",
     "later": "ĐỂ SAU",
-    "selectStars": "Chọn số sao để đánh giá",
-    "thanks": "Cảm ơn bạn đã đánh giá!",
-    "thanksFeedback": "Cảm ơn phản hồi của bạn!"
+    "thanks": "Cảm ơn bạn đã đánh giá!"
   },
   "notifications": {
     "dailyReward": {

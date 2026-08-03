@@ -9,9 +9,6 @@ import { getStoreListingUrl } from '@platform/modules/share/share.config';
 /** TEMP: always show rate modal on GameOver for QA — set false before ship. */
 const FORCE_RATE_PROMPT = false;
 
-/** Stars at or above this threshold open the store / native review prompt. */
-const STORE_REVIEW_MIN_STARS = 4;
-
 /** True when `n` is a positive Fibonacci number (1, 1, 2, 3, 5, 8, …). */
 function isFibonacci(n: number): boolean {
   if (!Number.isInteger(n) || n < 1) {
@@ -71,30 +68,23 @@ class RateService {
   }
 
   /**
-   * Persist the in-app star rating, then try native review (4–5★).
+   * Mark the app as rated, then try native review.
    * Falls back to the Play Store / App Store listing when native review is unavailable.
    */
-  async submitRating(stars: number): Promise<'reviewed' | 'store' | 'saved'> {
-    const clamped = Math.min(5, Math.max(1, Math.round(stars)));
+  async submitRating(): Promise<'reviewed' | 'store' | 'saved'> {
     const gamesPlayed = usePlatformStore.getState().progress.totalGamesPlayed;
 
     usePlatformStore.getState().setRatePromptProgress({
       hasRatedApp: true,
-      lastAppRating: clamped,
       lastRatePromptGamesPlayed: gamesPlayed,
     });
     await saveService.saveLocal();
-
-    if (clamped < STORE_REVIEW_MIN_STARS) {
-      logger.info('[Rate] Low rating saved in-app', { stars: clamped });
-      return 'saved';
-    }
 
     if (Capacitor.isNativePlatform()) {
       try {
         const { InAppReview } = await import('@capacitor-community/in-app-review');
         await InAppReview.requestReview();
-        logger.info('[Rate] Native in-app review requested', { stars: clamped });
+        logger.info('[Rate] Native in-app review requested');
         return 'reviewed';
       } catch (error) {
         logger.warn('[Rate] Native review failed, opening store listing', error);
