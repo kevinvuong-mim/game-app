@@ -8,6 +8,11 @@ type AdMobRewardItem = {
   amount?: number;
 };
 
+type AdMobErrorEvent = {
+  code?: number;
+  message?: string;
+};
+
 type AdMobConsentInfo = {
   status: string;
   isConsentFormAvailable: boolean;
@@ -28,20 +33,25 @@ type AdMobModule = {
     hideBanner: () => Promise<void>;
     removeBanner: () => Promise<void>;
     showInterstitial: () => Promise<void>;
-    addListener: (
-      event: string,
-      handler: (event: AdMobRewardItem) => void
-    ) => Promise<{ remove: () => void }>;
     showConsentForm: () => Promise<AdMobConsentInfo>;
     showRewardVideoAd: () => Promise<AdMobRewardItem>;
     requestTrackingAuthorization: () => Promise<void>;
     requestConsentInfo: () => Promise<AdMobConsentInfo>;
+    addListener: (
+      event: string,
+      handler: (event: AdMobRewardItem | AdMobErrorEvent) => void
+    ) => Promise<{ remove: () => void }>;
     prepareInterstitial: (opts: { adId: string }) => Promise<void>;
     trackingAuthorizationStatus: () => Promise<{ status: string }>;
     prepareRewardVideoAd: (opts: { adId: string }) => Promise<void>;
     initialize: (opts: { initializeForTesting?: boolean }) => Promise<void>;
   };
-  RewardAdPluginEvents: { Rewarded: string; Dismissed: string; FailedToLoad: string };
+  RewardAdPluginEvents: {
+    Rewarded: string;
+    Dismissed: string;
+    FailedToLoad: string;
+    FailedToShow: string;
+  };
   InterstitialAdPluginEvents: { Loaded: string; Dismissed: string; FailedToLoad: string };
 };
 
@@ -126,73 +136,107 @@ export class AdMobAdsProvider implements IAdsProvider {
     }
 
     const transactionId = `admob-${Date.now()}-${placement}`;
-    let rewardItem: AdMobRewardItem | null = null;
-    let dismissed = false;
-    let failed = false;
+    // Object box avoids TS narrowing `let` mutated only inside async listeners to `never`.
+    const session: {
+      failed: boolean;
+      dismissed: boolean;
+      reward: AdMobRewardItem | null;
+    } = { reward: null, dismissed: false, failed: false };
 
-    // Attach listeners BEFORE show — Rewarded can fire (and Android may resolve
-    // showRewardVideoAd early) before we would otherwise subscribe.
+    // Capacitor AdMob only resolves showRewardVideoAd() on earn-reward.
+    // Closing early fires Dismissed but leaves that promise pending forever —
+    // so we must race listeners, not await show alone.
+    let settleSession!: () => void;
+    const sessionEnded = new Promise<void>((resolve) => {
+      settleSession = resolve;
+    });
+    const trySettle = (): void => {
+      if (session.reward != null || session.dismissed || session.failed) settleSession();
+    };
+
     const rewardHandle = await this.admob!.AdMob.addListener(
       this.admob!.RewardAdPluginEvents.Rewarded,
       (reward) => {
-        rewardItem = reward;
+        if (isRewardItem(reward as AdMobRewardItem)) {
+          session.reward = reward as AdMobRewardItem;
+        }
+        trySettle();
       }
     );
     const dismissHandle = await this.admob!.AdMob.addListener(
       this.admob!.RewardAdPluginEvents.Dismissed,
       () => {
-        dismissed = true;
+        session.dismissed = true;
+        trySettle();
       }
     );
-    const failHandle = await this.admob!.AdMob.addListener(
-      this.admob!.RewardAdPluginEvents.FailedToLoad,
+    const failShowHandle = await this.admob!.AdMob.addListener(
+      this.admob!.RewardAdPluginEvents.FailedToShow,
       () => {
-        failed = true;
+        session.failed = true;
+        trySettle();
       }
     );
 
     try {
-      const showResult = await this.admob!.AdMob.showRewardVideoAd();
-      // `type` is the reward *name* (e.g. "coins"), not the string "rewarded".
-      if (!rewardItem && isRewardItem(showResult)) {
-        rewardItem = showResult;
+      void this.admob!.AdMob.showRewardVideoAd()
+        .then((showResult) => {
+          // `type` is the reward *name* (e.g. "coins"), not the string "rewarded".
+          if (!session.reward && isRewardItem(showResult)) {
+            session.reward = showResult;
+          }
+          trySettle();
+        })
+        .catch((error) => {
+          session.failed = true;
+          logger.warn('[Ads] AdMob rewarded show rejected', error);
+          trySettle();
+        });
+
+      const timedOut = await Promise.race([
+        sessionEnded.then(() => false),
+        new Promise<boolean>((resolve) => {
+          setTimeout(() => resolve(true), 5 * 60_000);
+        }),
+      ]);
+
+      if (timedOut) {
+        session.failed = true;
+        logger.warn('[Ads] AdMob rewarded session timed out');
       }
 
-      // Wait until the ad finishes (Rewarded / Dismissed). show() may resolve early on Android.
-      const deadline = Date.now() + 5 * 60_000;
-      while (!rewardItem && !dismissed && !failed && Date.now() < deadline) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-
-      this.ready.delete('rewarded');
-      this.cached.delete('rewarded');
-
-      if (failed && !rewardItem) {
+      if (session.failed && !session.reward && !session.dismissed) {
         return { shown: false, error: 'Rewarded ad failed' };
       }
 
-      const rewarded = rewardItem != null;
+      const reward = session.reward;
+      const rewarded = reward != null;
+      // Dismiss without reward still counts as shown (UI opened).
+      const shown = rewarded || session.dismissed;
       return {
-        shown: true,
+        shown,
         rewarded,
         transactionId,
         providerPayload: {
-          shown: true,
+          shown,
           rewarded,
           transactionId,
           placement,
-          rewardType: rewardItem?.type,
-          rewardAmount: rewardItem?.amount,
+          rewardType: reward?.type,
+          rewardAmount: reward?.amount,
         },
       };
     } catch (error) {
       logger.warn('[Ads] AdMob rewarded show failed', error);
       return { shown: false, error: 'Rewarded ad failed' };
     } finally {
+      // Ad instance is consumed after show/dismiss — clear so preload can run again.
+      this.ready.delete('rewarded');
+      this.cached.delete('rewarded');
       await Promise.allSettled([
         rewardHandle.remove(),
         dismissHandle.remove(),
-        failHandle.remove(),
+        failShowHandle.remove(),
       ]);
     }
   }

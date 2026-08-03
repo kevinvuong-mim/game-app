@@ -151,7 +151,8 @@ class AdsService {
 
     try {
       const result = await this.getProvider().showRewarded(placement);
-      if (result.shown) {
+      // Only cooldown after a completed reward — early close must allow retry.
+      if (result.shown && result.rewarded) {
         this.lastRewardedAt = Date.now();
       }
       return result;
