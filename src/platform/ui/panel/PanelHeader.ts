@@ -48,6 +48,18 @@ export class PanelHeader extends Phaser.GameObjects.Container {
     return !!this.coinBar?.isGetCoinsModalOpen();
   }
 
+  getCoinIconWorldPosition(): { x: number; y: number } | null {
+    return this.coinBar?.getCoinIconWorldPosition() ?? null;
+  }
+
+  pulseCoinReceive(): void {
+    this.coinBar?.pulseReceive();
+  }
+
+  playCoinSpendDip(amount: number): void {
+    this.coinBar?.playSpendDip(amount);
+  }
+
   showGetCoinsModal(): void {
     this.coinBar?.showGetCoinsModal();
   }

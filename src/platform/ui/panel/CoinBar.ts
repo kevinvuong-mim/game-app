@@ -19,11 +19,14 @@ const COIN_ICON_SIZE = 48;
 const COIN_PLUS_SIZE = 48;
 const COIN_BAR_HEIGHT = 54;
 const GET_COINS_PAD_TOP = 52;
+const SPEND_DIP_BG = 0xf5c4b8;
 const COIN_BAR_MIN_WIDTH = 120;
 const GET_COINS_BTN_HEIGHT = 80;
 const GET_COINS_PAD_BOTTOM = 28;
 const GET_COINS_ACTION_GAP = 12;
 const GET_COINS_SECTION_GAP = 18;
+const SPEND_DIP_TEXT = '#c62828';
+const SPEND_DIP_BORDER = 0xc45c4a;
 const GET_COINS_DIVIDER_THICKNESS = 2;
 const COINS_PACK_ITEM_ID = 'coins_10000';
 
@@ -96,6 +99,92 @@ export class CoinBar extends Phaser.GameObjects.Container {
 
   isGetCoinsModalOpen(): boolean {
     return !!this.getCoinsModal?.visible;
+  }
+
+  /** World-space center of the coin icon (for fly-in VFX). */
+  getCoinIconWorldPosition(): { x: number; y: number } {
+    if (!this.coinIcon) {
+      return { x: this.anchorX, y: this.barY };
+    }
+    const matrix = this.coinIcon.getWorldTransformMatrix();
+    return { x: matrix.tx, y: matrix.ty };
+  }
+
+  /** Quick pop when a flying coin lands in the bar. */
+  pulseReceive(): void {
+    if (!this.coinIcon) return;
+    this.scene.tweens.killTweensOf(this.coinIcon);
+    this.coinIcon.setDisplaySize(COIN_ICON_SIZE, COIN_ICON_SIZE);
+    this.scene.tweens.add({
+      targets: this.coinIcon,
+      displayWidth: COIN_ICON_SIZE * 1.22,
+      displayHeight: COIN_ICON_SIZE * 1.22,
+      duration: 90,
+      yoyo: true,
+      ease: 'Quad.Out',
+    });
+  }
+
+  /**
+   * Spend feedback: bar dips red briefly and a floating "-N" rises from the balance.
+   */
+  playSpendDip(amount: number): void {
+    if (amount <= 0 || !this.coinText || !this.coinBarGfx) return;
+
+    this.scene.tweens.killTweensOf(this.coinText);
+    this.coinText.setColor(SPEND_DIP_TEXT);
+    this.coinText.setScale(1);
+
+    this.redrawBar(SPEND_DIP_BG, SPEND_DIP_BORDER);
+
+    this.scene.tweens.add({
+      targets: this.coinText,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 110,
+      yoyo: true,
+      ease: 'Quad.Out',
+      onComplete: () => {
+        this.coinText?.setColor(TEXT_COLOR);
+        this.coinText?.setScale(1);
+      },
+    });
+
+    this.scene.time.delayedCall(160, () => {
+      if (!this.active) return;
+      this.layout();
+    });
+
+    const origin = this.getBalanceWorldPosition();
+    const label = this.scene.add
+      .text(origin.x, origin.y - 8, `-${formatNumber(amount)}`, {
+        fontSize: '22px',
+        fontStyle: 'bold',
+        color: SPEND_DIP_TEXT,
+        fontFamily: FREDOKA_FONT,
+        stroke: '#000000',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(220);
+
+    this.scene.tweens.add({
+      targets: label,
+      y: origin.y - 52,
+      alpha: 0,
+      duration: 720,
+      ease: 'Cubic.Out',
+      onComplete: () => label.destroy(),
+    });
+  }
+
+  /** World-space center of the balance text (for spend VFX). */
+  getBalanceWorldPosition(): { x: number; y: number } {
+    if (!this.coinText) {
+      return { x: this.anchorX, y: this.barY };
+    }
+    const matrix = this.coinText.getWorldTransformMatrix();
+    return { x: matrix.tx, y: matrix.ty };
   }
 
   showGetCoinsModal(): void {
@@ -330,17 +419,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
       this.align === 'right' ? this.anchorX - coinBarWidth : this.anchorX - coinBarWidth / 2;
     const centerY = this.barY;
 
-    this.coinBarGfx.clear();
-    drawRoundedRect(
-      this.coinBarGfx,
-      left,
-      centerY - COIN_BAR_HEIGHT / 2,
-      coinBarWidth,
-      COIN_BAR_HEIGHT,
-      COIN_BAR_HEIGHT / 2,
-      PANEL_BG,
-      PANEL_BORDER
-    );
+    this.redrawBar(PANEL_BG, PANEL_BORDER, left, centerY, coinBarWidth);
 
     const coinIconX = left + COIN_BAR_PAD_X + COIN_ICON_SIZE / 2;
 
@@ -356,6 +435,40 @@ export class CoinBar extends Phaser.GameObjects.Container {
     const textX = left + coinBarWidth - COIN_BAR_PAD_X - textWidth / 2;
     this.coinIcon.setPosition(coinIconX, centerY);
     this.coinText.setPosition(textX, centerY);
+  }
+
+  private redrawBar(
+    fill: number,
+    border: number,
+    left?: number,
+    centerY?: number,
+    coinBarWidth?: number
+  ): void {
+    if (!this.coinBarGfx || !this.coinText) return;
+
+    const textWidth = Math.ceil(this.coinText.width);
+    const trailingWidth = this.plusButton ? COIN_BAR_GAP + COIN_PLUS_SIZE : 0;
+    const width =
+      coinBarWidth ??
+      Math.max(
+        COIN_BAR_MIN_WIDTH,
+        COIN_BAR_PAD_X * 2 + COIN_ICON_SIZE + COIN_BAR_GAP + textWidth + trailingWidth
+      );
+    const barLeft =
+      left ?? (this.align === 'right' ? this.anchorX - width : this.anchorX - width / 2);
+    const y = centerY ?? this.barY;
+
+    this.coinBarGfx.clear();
+    drawRoundedRect(
+      this.coinBarGfx,
+      barLeft,
+      y - COIN_BAR_HEIGHT / 2,
+      width,
+      COIN_BAR_HEIGHT,
+      COIN_BAR_HEIGHT / 2,
+      fill,
+      border
+    );
   }
 
   private bindStore(): void {

@@ -19,6 +19,7 @@ import type { MissionProgress } from '@platform/core/state';
 import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
 import { missions } from '@platform/modules/missions/mission.service';
+import { getWorldPosition, spawnCoinsFlyTo } from '../effects/coinFly';
 
 const ACTION_BTN_WIDTH = 88;
 const REWARD_ICON_SIZE = 36;
@@ -211,8 +212,11 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     container.add(
       this.createProgressBar(contentLeft, progressY, barWidth, progress, mission.target, ratio)
     );
-    container.add(this.createReward(rewardX, coins));
-    container.add(this.createActionButton(mission, def?.type, def?.goScene, actionX));
+    const reward = this.createReward(rewardX, coins);
+    container.add(reward.root);
+    container.add(
+      this.createActionButton(mission, def?.type, def?.goScene, actionX, reward.coin, coins)
+    );
 
     return container;
   }
@@ -265,13 +269,16 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     return container;
   }
 
-  private createReward(x: number, coins: number): Phaser.GameObjects.Container {
-    const container = this.scene.add.container(x, 0);
+  private createReward(
+    x: number,
+    coins: number
+  ): { root: Phaser.GameObjects.Container; coin: Phaser.GameObjects.Image } {
+    const root = this.scene.add.container(x, 0);
     const coin = this.scene.add.image(0, -12, 'coin-icon');
     coin.setDisplaySize(REWARD_ICON_SIZE, REWARD_ICON_SIZE);
-    container.add(coin);
+    root.add(coin);
 
-    container.add(
+    root.add(
       this.scene.add
         .text(0, 18, formatNumber(coins), {
           fontSize: '16px',
@@ -282,14 +289,16 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
         .setOrigin(0.5)
     );
 
-    return container;
+    return { root, coin };
   }
 
   private createActionButton(
     mission: MissionProgress,
     type: string | undefined,
     goScene: string | undefined,
-    x: number
+    x: number,
+    rewardCoin?: Phaser.GameObjects.Image,
+    rewardCoins = 0
   ): Phaser.GameObjects.GameObject {
     if (mission.status === 'completed') {
       return createUIButton({
@@ -306,7 +315,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
           },
         },
         sound: 'coin-drop',
-        onClick: () => this.handleClaim(mission.id),
+        onClick: () => this.handleClaim(mission.id, rewardCoin, rewardCoins),
       });
     }
 
@@ -349,7 +358,14 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     }
   }
 
-  private async handleClaim(missionId: string): Promise<void> {
+  private async handleClaim(
+    missionId: string,
+    rewardCoin?: Phaser.GameObjects.Image,
+    rewardCoins = 0
+  ): Promise<void> {
+    const from = rewardCoin ? getWorldPosition(rewardCoin) : null;
+    const to = this.header?.getCoinIconWorldPosition() ?? null;
+
     const success = missions.claimMission(missionId);
     if (!success) {
       toast.show({ message: t('missions.claimFailed'), type: 'error' });
@@ -359,5 +375,22 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     await saveService.saveLocal();
     this.retainedClaimedIds.add(missionId);
     this.renderMissions();
+
+    if (from && to && rewardCoins > 0) {
+      this.playClaimCoinFly(from, to, rewardCoins);
+    }
+  }
+
+  private playClaimCoinFly(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    coins: number
+  ): void {
+    const count = Math.min(8, Math.max(4, Math.round(coins / 250)));
+    spawnCoinsFlyTo(this.scene, from, to, {
+      count,
+      size: 28,
+      onCoinArrive: () => this.header?.pulseCoinReceive(),
+    });
   }
 }

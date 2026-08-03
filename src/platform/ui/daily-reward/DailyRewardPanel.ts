@@ -11,6 +11,7 @@ import type {
 } from '@platform/modules/daily-reward/daily-reward.model';
 import { dailyRewards } from '@platform/modules/daily-reward';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
+import { getWorldPosition, spawnCoinsFlyTo } from '../effects/coinFly';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER, PANEL_CORNER_RADIUS } from '../panel/panelTheme';
 
 const DAY7_GAP = 36;
@@ -57,6 +58,8 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private claimButton?: Phaser.GameObjects.Container;
   private latestProgress: RewardProgress | null = null;
   private calendarContainer?: Phaser.GameObjects.Container;
+  /** Claimable day coin / chest used as the fly-out origin. */
+  private claimSourceObject: Phaser.GameObjects.GameObject | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -108,13 +111,35 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     this.claimPending = true;
     this.calendarRebuild.setLocked(true);
     this.claimButton?.setVisible(false);
+
+    const from = this.claimSourceObject ? getWorldPosition(this.claimSourceObject) : null;
+    const to = this.header?.getCoinIconWorldPosition() ?? null;
+    const rewardCoins = this.latestProgress?.days.find((d) => d.status === 'current')?.coins ?? 0;
+
     try {
-      await dailyRewards.claim();
+      const result = await dailyRewards.claim();
       this.applyProgress(dailyRewards.getRewardProgress());
+
+      if (result && from && to) {
+        this.playClaimCoinFly(from, to, result.coins || rewardCoins);
+      }
     } finally {
       this.claimPending = false;
       this.calendarRebuild.setLocked(false);
     }
+  }
+
+  private playClaimCoinFly(
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+    coins: number
+  ): void {
+    const count = Math.min(8, Math.max(4, Math.round(coins / 250)));
+    spawnCoinsFlyTo(this.scene, from, to, {
+      count,
+      size: 30,
+      onCoinArrive: () => this.header?.pulseCoinReceive(),
+    });
   }
 
   private build(): void {
@@ -203,6 +228,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private renderCalendar(days: RewardDayProgress[], canClaim: boolean): void {
     if (!this.calendarContainer) return;
     this.calendarContainer.removeAll(true);
+    this.claimSourceObject = null;
 
     const { gridWidth, cellWidth, cellHeight, day7Width, day7Height } = this.calendarLayout;
     const gridDays = days.filter((day) => day.day <= 6);
@@ -288,6 +314,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
 
     if (isAvailable) {
       this.makeClaimable(container, bg, cellWidth, cellHeight);
+      this.claimSourceObject = coin;
     }
 
     return container;
@@ -383,6 +410,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
         duration: 700,
         ease: 'Sine.easeInOut',
       });
+      this.claimSourceObject = chest;
     }
 
     return container;

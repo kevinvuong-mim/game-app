@@ -269,6 +269,9 @@ export class ShopPanel extends Phaser.GameObjects.Container {
         toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
         return;
       }
+      if (item.currency === 'coins') {
+        this.header?.playCoinSpendDip(item.price);
+      }
       this.renderItems();
     } finally {
       this.setPriceButtonsLocked(false);
