@@ -23,7 +23,11 @@ class PushNotificationService {
     this.onReceived = handlers.onReceived ?? null;
   }
 
-  async initialize(): Promise<boolean> {
+  /**
+   * System notification permission dialog only (no FCM register).
+   * Used so bootstrap can show ATT → Notifications → UMP in sequence.
+   */
+  async requestPermission(): Promise<boolean> {
     if (!Capacitor.isNativePlatform()) {
       return false;
     }
@@ -32,11 +36,29 @@ class PushNotificationService {
       const { PushNotifications } = await import('@capacitor/push-notifications');
       await ensureAndroidNotificationChannel();
       const permission = await PushNotifications.requestPermissions();
-
-      if (permission.receive !== 'granted') {
+      const granted = permission.receive === 'granted';
+      if (!granted) {
         logger.info('[PushNotification] Permission not granted');
+      }
+      return granted;
+    } catch (error) {
+      logger.warn('[PushNotification] Permission request failed', error);
+      return false;
+    }
+  }
+
+  async initialize(): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) {
+      return false;
+    }
+
+    try {
+      const granted = await this.requestPermission();
+      if (!granted) {
         return false;
       }
+
+      const { PushNotifications } = await import('@capacitor/push-notifications');
 
       if (!this.listenersBound) {
         await this.bindListeners();

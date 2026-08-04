@@ -73,21 +73,19 @@ export class AdMobAdsProvider implements IAdsProvider {
     this.config = config;
     this.admob = (await import('@capacitor-community/admob')) as unknown as AdMobModule;
 
-    // Order: initialize → ATT + UMP → then caller may preload ads.
+    // ATT here; UMP is deferred to requestUmpConsent() so App can show
+    // notifications between them (ATT → Notifications → UMP).
     await this.admob.AdMob.initialize({
       initializeForTesting: config.testing ?? false,
     });
 
-    await this.requestPrivacyConsent();
+    await this.requestTrackingAuthorization();
 
     logger.info('[Ads] AdMob provider initialized');
   }
 
-  /**
-   * ATT (iOS) + Google UMP consent before any ad load.
-   * Declining still allows ads (typically non-personalized); failures are non-fatal.
-   */
-  private async requestPrivacyConsent(): Promise<void> {
+  /** iOS ATT prompt. Declining still allows ads (typically non-personalized). */
+  private async requestTrackingAuthorization(): Promise<void> {
     if (!this.admob) return;
 
     try {
@@ -100,6 +98,14 @@ export class AdMobAdsProvider implements IAdsProvider {
     } catch (error) {
       logger.warn('[Ads] ATT request failed — continuing', error);
     }
+  }
+
+  /**
+   * Google UMP consent before ad load. Failures are non-fatal.
+   * Declining still allows ads (typically non-personalized).
+   */
+  async requestUmpConsent(): Promise<void> {
+    if (!this.admob) return;
 
     try {
       const consentInfo = await this.admob.AdMob.requestConsentInfo();

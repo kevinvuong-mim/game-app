@@ -41,6 +41,11 @@ export interface IAdsProvider {
   loadInterstitial(): Promise<void>;
   isReady(format: AdFormat): boolean;
   isCached(format: AdFormat): boolean;
+  /**
+   * Google UMP consent form (AdMob). Optional — mock/no-op providers omit this.
+   * Call after ATT + notification permission prompts so dialogs do not overlap.
+   */
+  requestUmpConsent?(): Promise<void>;
   showBanner(placement?: string): Promise<void>;
   init(config: AdsProviderConfig): Promise<void>;
   showRewarded(placement?: string): Promise<AdShowResult>;

@@ -16,12 +16,51 @@ import { localNotificationService } from './local-notification.service';
 class NotificationService {
   private pushInitialized = false;
   private localInitialized = false;
+  private resolveInitialPermissionPrompt: (() => void) | null = null;
+  private readonly initialPermissionPrompt = new Promise<void>((resolve) => {
+    this.resolveInitialPermissionPrompt = resolve;
+  });
+
+  /**
+   * Release waiters when the ATT → Notifications sequence finished (or was skipped).
+   * Safe to call more than once.
+   */
+  markInitialPermissionPromptComplete(): void {
+    this.resolveInitialPermissionPrompt?.();
+    this.resolveInitialPermissionPrompt = null;
+  }
+
+  /**
+   * Show the system notification permission dialog(s) without registering FCM
+   * or scheduling local reminders. Used by App bootstrap between ATT and UMP.
+   */
+  async requestInitialPermissions(): Promise<void> {
+    const config = getConfig();
+
+    try {
+      if (!Capacitor.isNativePlatform()) {
+        return;
+      }
+
+      if (config.localNotificationsEnabled) {
+        await localNotificationService.initialize();
+      }
+
+      if (config.pushNotificationsEnabled) {
+        await pushNotificationService.requestPermission();
+      }
+    } finally {
+      this.markInitialPermissionPromptComplete();
+    }
+  }
 
   /**
    * Local notifications do not require guest or network.
    * Retries permission/channel setup on later reconciles until granted once.
    */
   async initializeLocal(): Promise<void> {
+    await this.initialPermissionPrompt;
+
     const config = getConfig();
 
     if (!Capacitor.isNativePlatform() || this.localInitialized) {
@@ -45,6 +84,8 @@ class NotificationService {
 
   /** Push registration requires guest auth for device token sync. */
   async initializePush(): Promise<void> {
+    await this.initialPermissionPrompt;
+
     const config = getConfig();
 
     if (!Capacitor.isNativePlatform() || this.pushInitialized) {

@@ -34,7 +34,8 @@ class NotificationController {
     );
 
     if (config.localNotificationsEnabled) {
-      void notificationService.reconcileDailyRewardSchedule(dailyRewards.canClaim());
+      // Permission + first reconcile are driven by App after ATT
+      // (ATT → Notifications → UMP). Only wire claim/resume listeners here.
 
       unsubs.push(
         events.on('daily:claim', () => {
@@ -49,6 +50,7 @@ class NotificationController {
     let guestReadyUnsub = () => {};
 
     if (config.pushNotificationsEnabled) {
+      // Permission is requested in App privacy sequence; register after guest auth.
       guestReadyUnsub = guest.onReady(() => {
         void notificationService.initializePush();
         void deviceSyncService.flush().catch(() => undefined);

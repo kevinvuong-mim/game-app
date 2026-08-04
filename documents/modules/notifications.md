@@ -40,13 +40,22 @@ Preset trong `src/platform/core/config/notification-env.json`, merge vào `ENV_C
 
 ## Init flow
 
-1. `App.init()` → `notificationController.bind(events)`.
-2. Nếu `localNotificationsEnabled` → `reconcileDailyRewardSchedule(canClaim)` ngay khi bind (cold start).
-3. `guest.onReady` → `notificationService.initializePush()` (khi `pushNotificationsEnabled`).
-4. Push: xin quyền → `PushNotifications.register()` → listener `registration` → `POST /api/devices`.
-5. Local: `LocalNotifications.requestPermissions()` rồi arm one-shot horizon 07:00 theo `canClaim`.
+Thứ tự dialog hệ thống trên native cold start (orchestrated bởi `App.runPrivacyPromptSequence`):
 
-Chỉ chạy trên `Capacitor.isNativePlatform()`.
+1. **ATT** — `ads.init()` → AdMob `requestTrackingAuthorization` (iOS, khi ads bật).
+2. **Notifications** — `notificationService.requestInitialPermissions()` (local và/hoặc push, tùy flag).
+3. **UMP** — `ads.requestUmpConsentAndPreload()` (khi Google `REQUIRED`), rồi preload ads.
+
+Sau bước 2: reconcile local daily-reward schedule; `guest.onReady` → `initializePush()` (đăng ký FCM — đã chờ xong bước permission nên không đụng dialog ATT).
+
+Chi tiết:
+
+1. `App.init()` → `notificationController.bind(events)` (listeners only; không xin quyền ngay).
+2. `runPrivacyPromptSequence()` (fire-and-forget, không block game shell).
+3. Push sau guest ready: `PushNotifications.register()` → listener `registration` → `POST /api/devices`.
+4. Local: sau permission, arm one-shot horizon 07:00 theo `canClaim`.
+
+Chỉ xin quyền / schedule trên `Capacitor.isNativePlatform()`.
 
 ## Local daily reward reminder
 

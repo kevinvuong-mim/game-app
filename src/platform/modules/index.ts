@@ -11,5 +11,5 @@ export { deepLinkService } from './deep-link';
 export { gameSyncController } from './game-sync';
 export { guest, guestController } from './guest';
 export { missions, missionController } from './missions';
-export { notificationController } from './notifications';
 export { syncGuestToStore, bindGuestStoreSync } from './guest';
+export { notificationService, notificationController } from './notifications';

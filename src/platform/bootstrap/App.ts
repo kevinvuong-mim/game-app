@@ -15,6 +15,7 @@ import {
   missionController,
   gameSyncController,
   bindGuestStoreSync,
+  notificationService,
   notificationController,
 } from '@platform/modules';
 import {
@@ -22,6 +23,7 @@ import {
   registerIapProvider,
   registerAnalyticsProviders,
 } from '@platform/bootstrap/providers';
+import { Capacitor } from '@capacitor/core';
 import { iap } from '@platform/modules/iap';
 import { logger } from '@platform/core/error';
 import { apiClient } from '@platform/core/api';
@@ -67,9 +69,6 @@ class App {
       }
     }
 
-    void ads.init().catch((error) => {
-      logger.error('[App] ads init failed', error);
-    });
     void analytics.init().catch((error) => {
       logger.error('[App] analytics init failed', error);
     });
@@ -120,8 +119,52 @@ class App {
       deepLinkService.bind(events)
     );
 
+    // Native: ATT → Notifications → UMP (non-blocking for game shell).
+    // Web / ads-only paths still init ads without the notification step.
+    void this.runPrivacyPromptSequence().catch((error) => {
+      logger.error('[App] privacy prompt sequence failed', error);
+    });
+
     this.initialized = true;
     logger.info('[App] Platform ready');
+  }
+
+  /**
+   * Ordered system dialogs on native cold start:
+   * 1. ATT (inside ads.init for AdMob/iOS)
+   * 2. Notification permission
+   * 3. Google UMP consent (when required), then ad preload
+   */
+  private async runPrivacyPromptSequence(): Promise<void> {
+    const runtime = config();
+
+    try {
+      if (runtime.adsEnabled) {
+        try {
+          await ads.init();
+        } catch (error) {
+          logger.error('[App] ads init (ATT) failed — continuing privacy sequence', error);
+        }
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        await notificationService.requestInitialPermissions();
+
+        if (runtime.localNotificationsEnabled) {
+          void notificationService.reconcileDailyRewardSchedule(dailyRewards.canClaim());
+        }
+      } else {
+        notificationService.markInitialPermissionPromptComplete();
+      }
+
+      if (runtime.adsEnabled) {
+        await ads.requestUmpConsentAndPreload();
+      }
+    } catch (error) {
+      // Never leave push/local blocked if a later step throws.
+      notificationService.markInitialPermissionPromptComplete();
+      throw error;
+    }
   }
 
   async destroy(): Promise<void> {

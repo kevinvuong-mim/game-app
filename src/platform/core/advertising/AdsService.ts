@@ -55,6 +55,8 @@ class AdsService {
     const primaryName = this.provider.name;
 
     try {
+      // AdMob init shows ATT on iOS. UMP + preload run via requestUmpConsentAndPreload()
+      // so bootstrap can insert the notification permission prompt in between.
       await this.provider.init(providerConfig);
     } catch (error) {
       if (this.shouldFailClosedOnProviderError(primaryName)) {
@@ -68,8 +70,18 @@ class AdsService {
       this.provider = createAdsProvider('mock');
       await this.provider.init(providerConfig);
     }
+  }
 
-    if (this.enabled) {
+  /**
+   * Show Google UMP (when required), then preload ads.
+   * Call after ATT (`init`) and the notification permission prompt.
+   */
+  async requestUmpConsentAndPreload(): Promise<void> {
+    if (this.provider?.requestUmpConsent) {
+      await this.provider.requestUmpConsent();
+    }
+
+    if (this.enabled && this.provider) {
       void this.preloadCommonAds();
     }
   }
