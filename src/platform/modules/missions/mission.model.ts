@@ -1,11 +1,9 @@
 import { getLocalDateKey } from '@platform/core/utils';
 
+type MissionStatus = 'active' | 'completed' | 'claimed';
+export type MissionResetPolicy = 'daily' | 'never' | 'onClaim';
 export type MissionBehaviorType =
   'MERGE' | 'WATCH_AD' | 'PLAY_GAME' | 'REACH_SCORE' | 'DAILY_LOGIN' | 'UPDATE_NAME';
-
-type MissionStatus = 'active' | 'completed' | 'claimed';
-
-export type MissionResetPolicy = 'daily' | 'never' | 'onClaim';
 
 interface MissionReward {
   type: 'coins';
@@ -43,9 +41,9 @@ export function createMissionProgress(def: MissionDefinition): MissionProgress {
     id: def.id,
     progress: 0,
     type: def.type,
-    createdAt: Date.now(),
     status: 'active',
     target: def.target,
+    createdAt: Date.now(),
     lastResetDayKey: getLocalDateKey(),
   };
 }

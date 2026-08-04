@@ -2,8 +2,8 @@ import type {
   IAPProvider,
   RestoreResult,
   PurchaseResult,
-  ProductDefinition,
   ProviderPurchase,
+  ProductDefinition,
 } from './iap.types';
 import {
   PRODUCTS,
