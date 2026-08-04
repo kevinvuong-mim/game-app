@@ -8,7 +8,7 @@ export const NOTIFICATION_IDS = {
   DAILY_REWARD: 1001,
 } as const;
 
-/** Extra one-shot ids used when claim happens before 07:00 (1001..1001+N-1). */
+/** Extra one-shot ids for the daily reward reminder horizon (1001..1001+N-1). */
 export const DAILY_REWARD_REMINDER_HORIZON_DAYS = 7;
 
 /** Android notification channel — must match FCM default channel in native manifest. */
@@ -117,6 +117,13 @@ export function mapLocaleToDeviceLocale(language: string): DeviceLocale {
   return language.toLowerCase().startsWith('vi') ? 'VI' : 'EN';
 }
 
+/**
+ * Minimum lead time before a one-shot may be armed.
+ * Avoids Capacitor/iOS rejecting "Scheduled time must be *after* current time"
+ * when JS builds the Date and native evaluates it a moment later.
+ */
+export const DAILY_REWARD_REMINDER_MIN_LEAD_MS = 2_000;
+
 /** Today's reminder wall-clock (local), regardless of whether it is still in the future. */
 export function getDailyRewardReminderTimeOnDate(day: Date): Date {
   const scheduled = new Date(day);
@@ -127,6 +134,14 @@ export function getDailyRewardReminderTimeOnDate(day: Date): Date {
 
 export function isBeforeDailyRewardReminderHour(now = new Date()): boolean {
   return now.getTime() < getDailyRewardReminderTimeOnDate(now).getTime();
+}
+
+/**
+ * Skip today's 07:00 when the user already claimed, or when 07:00 has already
+ * passed (missed window — arm from tomorrow).
+ */
+export function shouldSkipTodayDailyRewardReminder(canClaim: boolean, now = new Date()): boolean {
+  return !canClaim || !isBeforeDailyRewardReminderHour(now);
 }
 
 /**
@@ -144,6 +159,36 @@ export function getNextDailyRewardReminderAt(
     return getDailyRewardReminderTimeOnDate(tomorrow);
   }
   return todayAtSeven;
+}
+
+/**
+ * Concrete local fire times for the rolling reminder horizon.
+ * Always returns at least one future Date (falls back to tomorrow 07:00).
+ */
+export function planDailyRewardReminderHorizon(
+  now: Date,
+  options: { skipToday: boolean; horizonDays?: number; minLeadMs?: number }
+): Date[] {
+  const horizonDays = options.horizonDays ?? DAILY_REWARD_REMINDER_HORIZON_DAYS;
+  const minLeadMs = options.minLeadMs ?? DAILY_REWARD_REMINDER_MIN_LEAD_MS;
+  const startOffset = options.skipToday ? 1 : 0;
+  const earliest = now.getTime() + minLeadMs;
+  const times: Date[] = [];
+
+  for (let day = startOffset; day < startOffset + horizonDays; day++) {
+    const dayDate = new Date(now);
+    dayDate.setDate(dayDate.getDate() + day);
+    const at = getDailyRewardReminderTimeOnDate(dayDate);
+    if (at.getTime() > earliest) {
+      times.push(at);
+    }
+  }
+
+  if (times.length === 0) {
+    times.push(getNextDailyRewardReminderAt(now, { skipToday: true }));
+  }
+
+  return times;
 }
 
 export function dailyRewardReminderNotificationId(dayOffset: number): number {

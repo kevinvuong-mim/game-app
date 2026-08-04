@@ -1,13 +1,11 @@
 import {
-  NOTIFICATION_IDS,
   NOTIFICATION_CHANNEL,
   DAILY_REWARD_REMINDER_HOUR,
   DAILY_REWARD_REMINDER_MINUTE,
-  getNextDailyRewardReminderAt,
-  isBeforeDailyRewardReminderHour,
-  getDailyRewardReminderTimeOnDate,
+  planDailyRewardReminderHorizon,
   dailyRewardReminderNotificationId,
   DAILY_REWARD_REMINDER_HORIZON_DAYS,
+  shouldSkipTodayDailyRewardReminder,
 } from './notification.model';
 import { t } from '@platform/modules/i18n';
 import { Capacitor } from '@capacitor/core';
@@ -20,29 +18,38 @@ interface ReminderNotification {
   title: string;
   channelId: string;
   extra: { route: 'DailyReward' };
-  schedule:
-    | { at: Date; allowWhileIdle: true }
-    | { on: { hour: number; minute: number }; allowWhileIdle: true };
+  schedule: { at: Date; allowWhileIdle: true };
 }
 
 class LocalNotificationService {
   private initialized = false;
+  /** Serialize cancel+schedule so resume/claim/locale cannot interleave. */
+  private reconcileQueue: Promise<void> = Promise.resolve();
 
-  /** @returns true when channel + permission request completed successfully. */
+  /**
+   * @returns true when channel setup ran and notification permission is granted.
+   * Permission must be granted before any schedule call.
+   */
   async initialize(): Promise<boolean> {
     if (!Capacitor.isNativePlatform()) {
       return false;
     }
 
     if (this.initialized) {
-      return true;
+      return this.hasPermission();
     }
 
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications');
       await ensureAndroidNotificationChannel();
-      await LocalNotifications.requestPermissions();
+      const permission = await LocalNotifications.requestPermissions();
       this.initialized = true;
+
+      if (permission.display !== 'granted') {
+        logger.warn('[LocalNotification] Permission not granted after request', permission);
+        return false;
+      }
+
       return true;
     } catch (error) {
       logger.warn('[LocalNotification] Init failed', error);
@@ -66,34 +73,45 @@ class LocalNotificationService {
   }
 
   /**
-   * Keep a 07:00 reminder armed whenever the user still needs to claim.
+   * Keep 07:00 reminders armed for the next N mornings.
    *
-   * - `canClaim` (or claimed after 07:00): calendar cron at 07:00 daily — keeps
-   *   firing without reopening the app.
-   * - Claimed before 07:00: cancel today's fire and arm one-shots for the next
-   *   N mornings so the series continues even if they stay away.
+   * Always uses one-shot `at` + `allowWhileIdle` (never Capacitor `on` cron):
+   * - Android: calendar `on` only arms the first AlarmManager shot with
+   *   allowWhileIdle; later reschedules drop to setExact(RTC) and Doze eats them.
+   * - iOS: Capacitor `getDateComponents` casts hour/minute with `as? Int`, which
+   *   fails for bridge `NSNumber` values — empty DateComponents → cron never matches.
+   *   `at` arrives as NSDate via WKWebView and builds a valid time-interval trigger.
+   *
+   * Calls are serialized so resume / claim / locale cannot cancel each other mid-flight.
    */
-  async reconcileDailyRewardSchedule(canClaim: boolean): Promise<void> {
+  reconcileDailyRewardSchedule(canClaim: boolean): Promise<void> {
+    const run = this.reconcileQueue.then(() => this.reconcileDailyRewardScheduleUnlocked(canClaim));
+    this.reconcileQueue = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  private async reconcileDailyRewardScheduleUnlocked(canClaim: boolean): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
       return;
     }
 
     const granted = await this.hasPermission();
     if (!granted) {
+      // Drop any previously armed reminders if the user revoked permission.
+      await this.cancelDailyRewardReminder();
       logger.info('[LocalNotification] Permission not granted — skipping daily reward reminder');
       return;
     }
 
-    const claimedBeforeReminderHour = !canClaim && isBeforeDailyRewardReminderHour();
+    await this.warnIfExactAlarmsDisabled();
 
     await this.cancelDailyRewardReminder();
 
-    if (claimedBeforeReminderHour) {
-      await this.scheduleReminderHorizon({ fromTomorrow: true });
-      return;
-    }
-
-    await this.scheduleDailyCronReminder();
+    const skipToday = shouldSkipTodayDailyRewardReminder(canClaim);
+    await this.scheduleReminderHorizon({ fromTomorrow: skipToday });
   }
 
   async cancelDailyRewardReminder(): Promise<void> {
@@ -113,97 +131,104 @@ class LocalNotificationService {
     }
   }
 
-  /** Repeating 07:00 local via Capacitor `on` (calendar match) — not `at`+`repeats`. */
-  private async scheduleDailyCronReminder(): Promise<void> {
-    try {
-      const { LocalNotifications } = await import('@capacitor/local-notifications');
-      const notification: ReminderNotification = {
-        id: NOTIFICATION_IDS.DAILY_REWARD,
-        title: t('notifications.dailyReward.title'),
-        body: t('notifications.dailyReward.body'),
-        channelId: NOTIFICATION_CHANNEL.ID,
-        schedule: {
-          allowWhileIdle: true,
-          on: {
-            hour: DAILY_REWARD_REMINDER_HOUR,
-            minute: DAILY_REWARD_REMINDER_MINUTE,
-          },
-        },
-        extra: {
-          route: 'DailyReward',
-        },
-      };
-
-      await LocalNotifications.schedule({ notifications: [notification] });
-
-      logger.info('[LocalNotification] Daily reward cron armed', {
-        hour: DAILY_REWARD_REMINDER_HOUR,
-        minute: DAILY_REWARD_REMINDER_MINUTE,
-      });
-    } catch (error) {
-      logger.warn('[LocalNotification] Failed to schedule daily reward cron', error);
-    }
-  }
-
   /**
-   * One-shot 07:00 reminders for the next N mornings. Used after an early claim
-   * so today's 07:00 is skipped but following mornings stay covered without
-   * needing the user to reopen the app.
+   * One-shot 07:00 reminders for the next N mornings. Each alarm uses `at`
+   * (real Date) so both iOS and Android get a concrete trigger.
+   * Scheduled one-by-one so a single native reject cannot wipe the whole horizon.
    */
   private async scheduleReminderHorizon(options: { fromTomorrow: boolean }): Promise<void> {
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications');
       const now = new Date();
-      const startOffset = options.fromTomorrow ? 1 : 0;
       const title = t('notifications.dailyReward.title');
       const body = t('notifications.dailyReward.body');
-
-      const notifications: ReminderNotification[] = [];
-      for (let day = startOffset; day < startOffset + DAILY_REWARD_REMINDER_HORIZON_DAYS; day++) {
-        const dayDate = new Date(now);
-        dayDate.setDate(dayDate.getDate() + day);
-        const at = getDailyRewardReminderTimeOnDate(dayDate);
-        if (at.getTime() <= now.getTime()) {
-          continue;
-        }
-
-        notifications.push({
-          id: dailyRewardReminderNotificationId(day - startOffset),
-          title,
-          body,
-          channelId: NOTIFICATION_CHANNEL.ID,
-          schedule: { at, allowWhileIdle: true },
-          extra: {
-            route: 'DailyReward',
-          },
-        });
-      }
-
-      if (notifications.length === 0) {
-        notifications.push({
-          id: NOTIFICATION_IDS.DAILY_REWARD,
-          title,
-          body,
-          channelId: NOTIFICATION_CHANNEL.ID,
-          schedule: {
-            at: getNextDailyRewardReminderAt(now, { skipToday: true }),
-            allowWhileIdle: true,
-          },
-          extra: {
-            route: 'DailyReward',
-          },
-        });
-      }
-
-      await LocalNotifications.schedule({ notifications });
-
-      const first = notifications[0]?.schedule;
-      logger.info('[LocalNotification] Daily reward horizon scheduled', {
-        count: notifications.length,
-        firstAt: first && 'at' in first ? first.at.toISOString() : undefined,
+      const fireTimes = planDailyRewardReminderHorizon(now, {
+        skipToday: options.fromTomorrow,
       });
+
+      const notifications: ReminderNotification[] = fireTimes.map((at, index) =>
+        this.buildReminder(dailyRewardReminderNotificationId(index), title, body, at)
+      );
+
+      const scheduledIds: number[] = [];
+      for (const notification of notifications) {
+        try {
+          await LocalNotifications.schedule({ notifications: [notification] });
+          scheduledIds.push(notification.id);
+        } catch (error) {
+          logger.warn('[LocalNotification] Failed to schedule one daily reward reminder', {
+            id: notification.id,
+            at: notification.schedule.at.toISOString(),
+            error,
+          });
+        }
+      }
+
+      // Native `add` is async on iOS; brief yield before verifying pending queue.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const pending = await LocalNotifications.getPending();
+      const pendingIds = new Set(
+        (pending.notifications ?? [])
+          .map((item) => item.id)
+          .filter((id): id is number => typeof id === 'number')
+      );
+      const missing = scheduledIds.filter((id) => !pendingIds.has(id));
+
+      logger.info('[LocalNotification] Daily reward horizon scheduled', {
+        platform: Capacitor.getPlatform(),
+        count: scheduledIds.length,
+        pendingCount: pendingIds.size,
+        hour: DAILY_REWARD_REMINDER_HOUR,
+        minute: DAILY_REWARD_REMINDER_MINUTE,
+        fromTomorrow: options.fromTomorrow,
+        fireAt: notifications.map((item) => item.schedule.at.toISOString()),
+        missingIds: missing,
+      });
+
+      if (scheduledIds.length === 0) {
+        logger.warn('[LocalNotification] No daily reward reminders were armed');
+      } else if (missing.length > 0) {
+        logger.warn(
+          '[LocalNotification] Some daily reward reminders missing from pending queue — OS may have dropped them',
+          { missing }
+        );
+      }
     } catch (error) {
       logger.warn('[LocalNotification] Failed to schedule daily reward horizon', error);
+    }
+  }
+
+  private buildReminder(id: number, title: string, body: string, at: Date): ReminderNotification {
+    return {
+      id,
+      title,
+      body,
+      channelId: NOTIFICATION_CHANNEL.ID,
+      // Clone so the bridge always receives a concrete Date instance (not a shared ref).
+      schedule: { at: new Date(at.getTime()), allowWhileIdle: true },
+      extra: {
+        route: 'DailyReward',
+      },
+    };
+  }
+
+  /** Android 12+: exact alarms can be revoked in system settings; at-schedules then become inexact or wiped. */
+  private async warnIfExactAlarmsDisabled(): Promise<void> {
+    if (Capacitor.getPlatform() !== 'android') {
+      return;
+    }
+
+    try {
+      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      const status = await LocalNotifications.checkExactNotificationSetting();
+      if (status.exact_alarm !== 'granted') {
+        logger.warn(
+          '[LocalNotification] Exact alarms not granted — daily reward timing may drift or be cleared by the OS',
+          status
+        );
+      }
+    } catch {
+      // Older native shells may not expose the exact-alarm API.
     }
   }
 }

@@ -17,7 +17,10 @@ class NotificationService {
   private pushInitialized = false;
   private localInitialized = false;
 
-  /** Local notifications do not require guest or network. Retries until success. */
+  /**
+   * Local notifications do not require guest or network.
+   * Retries permission/channel setup on later reconciles until granted once.
+   */
   async initializeLocal(): Promise<void> {
     const config = getConfig();
 
@@ -31,6 +34,8 @@ class NotificationService {
 
     const ok = await localNotificationService.initialize();
     if (!ok) {
+      // Keep localInitialized false so the next resume/claim retries after the
+      // user enables notifications in system settings.
       return;
     }
 
