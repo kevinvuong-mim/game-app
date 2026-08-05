@@ -4,13 +4,13 @@ import {
   soundManager,
   SOUND_POP_KEY,
   SOUND_BGM_KEY,
-  SOUND_SWOOSH_KEY,
-  SOUND_REVERSE_KEY,
   SOUND_COMBINE_KEY,
   SOUND_COIN_DROP_KEY,
-  SOUND_DISAPPEAR_KEY,
-  SOUND_CHANGE_TURNS_KEY,
-  SOUND_INCREASE_SIZE_KEY,
+  SOUND_BOOST_SIZE_KEY,
+  SOUND_BOOST_SWAP_KEY,
+  SOUND_BOOST_UNDO_KEY,
+  SOUND_BOOST_HAMMER_KEY,
+  SOUND_BOOST_CHANGE_KEY,
 } from '@platform/ui/audio/SoundManager';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
@@ -159,14 +159,14 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     this.load.audio(SOUND_POP_KEY, '/assets/audio/pop.mp3');
-    this.load.audio(SOUND_SWOOSH_KEY, '/assets/audio/swoosh.mp3');
     this.load.audio(SOUND_COMBINE_KEY, '/assets/audio/combine.mp3');
-    this.load.audio(SOUND_REVERSE_KEY, '/assets/audio/reverse.mp3');
     this.load.audio(SOUND_COIN_DROP_KEY, '/assets/audio/coin-drop.mp3');
-    this.load.audio(SOUND_DISAPPEAR_KEY, '/assets/audio/disappear.mp3');
     this.load.audio(SOUND_BGM_KEY, '/assets/audio/background-music.mp3');
-    this.load.audio(SOUND_CHANGE_TURNS_KEY, '/assets/audio/change-turns.mp3');
-    this.load.audio(SOUND_INCREASE_SIZE_KEY, '/assets/audio/increase-size.mp3');
+    this.load.audio(SOUND_BOOST_SIZE_KEY, '/assets/audio/boost-size.mp3');
+    this.load.audio(SOUND_BOOST_SWAP_KEY, '/assets/audio/boost-swap.mp3');
+    this.load.audio(SOUND_BOOST_UNDO_KEY, '/assets/audio/boost-undo.mp3');
+    this.load.audio(SOUND_BOOST_HAMMER_KEY, '/assets/audio/boost-hammer.mp3');
+    this.load.audio(SOUND_BOOST_CHANGE_KEY, '/assets/audio/boost-change.mp3');
   }
 
   create(): void {

@@ -73,7 +73,7 @@ export class SkillController {
       this.callbacks.setLevels(rolled, this.callbacks.getNextLevel());
       this.callbacks.refreshDropper();
       this.skillBar.refreshInventory(id);
-      soundManager.playChangeTurns();
+      soundManager.playBoostChange();
       return;
     }
 
@@ -87,7 +87,7 @@ export class SkillController {
       this.clear();
       this.skillBar.refreshInventory(id);
       this.skillBar.setHint('');
-      soundManager.playReverse();
+      soundManager.playBoostUndo();
       return;
     }
 
@@ -128,7 +128,7 @@ export class SkillController {
       this.factory.burst(fruit);
       this.skillBar.refreshInventory(skillId);
       this.clear();
-      soundManager.playDisappear();
+      soundManager.playBoostHammer();
       return;
     }
 
@@ -143,7 +143,7 @@ export class SkillController {
       this.factory.spawn(x, y, next, multiplier);
       this.skillBar.refreshInventory(skillId);
       this.clear();
-      soundManager.playIncreaseSize();
+      soundManager.playBoostSize();
       return;
     }
 
@@ -195,7 +195,7 @@ export class SkillController {
 
     this.skillBar.refreshInventory(skillId);
     this.clear();
-    soundManager.playSwoosh();
+    soundManager.playBoostSwap();
   }
 
   private clearSelectionTint(): void {

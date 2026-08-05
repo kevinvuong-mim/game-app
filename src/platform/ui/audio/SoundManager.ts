@@ -4,14 +4,14 @@ import { eventBus } from '@platform/core/events';
 import { usePlatformStore } from '@platform/core/state';
 
 export const SOUND_POP_KEY = 'pop';
-export const SOUND_SWOOSH_KEY = 'swoosh';
 export const SOUND_COMBINE_KEY = 'combine';
-export const SOUND_REVERSE_KEY = 'reverse';
 export const SOUND_COIN_DROP_KEY = 'coin-drop';
-export const SOUND_DISAPPEAR_KEY = 'disappear';
 export const SOUND_BGM_KEY = 'background-music';
-export const SOUND_CHANGE_TURNS_KEY = 'change-turns';
-export const SOUND_INCREASE_SIZE_KEY = 'increase-size';
+export const SOUND_BOOST_SIZE_KEY = 'boost-size';
+export const SOUND_BOOST_SWAP_KEY = 'boost-swap';
+export const SOUND_BOOST_UNDO_KEY = 'boost-undo';
+export const SOUND_BOOST_HAMMER_KEY = 'boost-hammer';
+export const SOUND_BOOST_CHANGE_KEY = 'boost-change';
 
 class SoundManager {
   private unlockBound = false;
@@ -79,24 +79,24 @@ class SoundManager {
     this.play(SOUND_COMBINE_KEY);
   }
 
-  playDisappear(): void {
-    this.play(SOUND_DISAPPEAR_KEY);
+  playBoostHammer(): void {
+    this.play(SOUND_BOOST_HAMMER_KEY);
   }
 
-  playChangeTurns(): void {
-    this.play(SOUND_CHANGE_TURNS_KEY);
+  playBoostChange(): void {
+    this.play(SOUND_BOOST_CHANGE_KEY);
   }
 
-  playSwoosh(): void {
-    this.play(SOUND_SWOOSH_KEY);
+  playBoostSwap(): void {
+    this.play(SOUND_BOOST_SWAP_KEY);
   }
 
-  playIncreaseSize(): void {
-    this.play(SOUND_INCREASE_SIZE_KEY);
+  playBoostSize(): void {
+    this.play(SOUND_BOOST_SIZE_KEY);
   }
 
-  playReverse(): void {
-    this.play(SOUND_REVERSE_KEY);
+  playBoostUndo(): void {
+    this.play(SOUND_BOOST_UNDO_KEY);
   }
 
   /** Start or stop looping BGM according to the current music setting. */

@@ -182,17 +182,17 @@ soundManager.playCombine();
 
 Assets live in `public/assets/audio/` and are preloaded in `PreloadScene`. Playback goes through `soundManager` (`src/platform/ui/audio/SoundManager.ts`) and respects `settings.soundEnabled` / `settings.musicEnabled`.
 
-| File                   | Method               | When                               |
-| ---------------------- | -------------------- | ---------------------------------- |
-| `pop.mp3`              | `playPop()`          | UI button press (default)          |
-| `coin-drop.mp3`        | `playCoinDrop()`     | Coin reward / coin-drop buttons    |
-| `combine.mp3`          | `playCombine()`      | Two fruits merge                   |
-| `disappear.mp3`        | `playDisappear()`    | Explosive Hammer destroys a fruit  |
-| `change-turns.mp3`     | `playChangeTurns()`  | Change Fruit rerolls hanging fruit |
-| `swoosh.mp3`           | `playSwoosh()`       | Swap exchanges two fruits          |
-| `increase-size.mp3`    | `playIncreaseSize()` | Size Increase upgrades a fruit     |
-| `reverse.mp3`          | `playReverse()`      | Undo restores the last move        |
-| `background-music.mp3` | `syncMusic()`        | Looping BGM (music setting)        |
+| File                   | Method              | When                               |
+| ---------------------- | ------------------- | ---------------------------------- |
+| `pop.mp3`              | `playPop()`         | UI button press (default)          |
+| `coin-drop.mp3`        | `playCoinDrop()`    | Coin reward / coin-drop buttons    |
+| `combine.mp3`          | `playCombine()`     | Two fruits merge                   |
+| `boost-hammer.mp3`     | `playBoostHammer()` | Explosive Hammer destroys a fruit  |
+| `boost-change.mp3`     | `playBoostChange()` | Change Fruit rerolls hanging fruit |
+| `boost-swap.mp3`       | `playBoostSwap()`   | Swap exchanges two fruits          |
+| `boost-size.mp3`       | `playBoostSize()`   | Size Increase upgrades a fruit     |
+| `boost-undo.mp3`       | `playBoostUndo()`   | Undo restores the last move        |
+| `background-music.mp3` | `syncMusic()`       | Looping BGM (music setting)        |
 
 Change Fruit and Undo buttons use `sound: false` so only their skill SFX plays (no default pop).
 
