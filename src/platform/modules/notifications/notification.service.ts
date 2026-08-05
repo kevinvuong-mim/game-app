@@ -14,12 +14,13 @@ import { pushNotificationService } from './push-notification.service';
 import { localNotificationService } from './local-notification.service';
 
 class NotificationService {
-  private pushInitialized = false;
-  private localInitialized = false;
-  private resolveInitialPermissionPrompt: (() => void) | null = null;
   private readonly initialPermissionPrompt = new Promise<void>((resolve) => {
     this.resolveInitialPermissionPrompt = resolve;
   });
+
+  private pushInitialized = false;
+  private localInitialized = false;
+  private resolveInitialPermissionPrompt: (() => void) | null = null;
 
   /**
    * Release waiters when the ATT → Notifications sequence finished (or was skipped).
