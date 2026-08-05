@@ -122,7 +122,7 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
         size: { width: 80, height: 80 },
         background: { key: 'back-icon' },
         onClick: this.onBack,
-        position: { x: width * 0.18, y: height * 0.08 },
+        position: { x: width * 0.17, y: height * 0.08 },
       })
     );
 

@@ -77,7 +77,7 @@ export class PanelHeader extends Phaser.GameObjects.Container {
         size: { width: 80, height: 80 },
         background: { key: 'back-icon' },
         onClick: options.onBack,
-        position: { x: width * 0.18, y: headerY },
+        position: { x: width * 0.17, y: headerY },
       })
     );
 
