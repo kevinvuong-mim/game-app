@@ -21,7 +21,7 @@ export function generateId(prefix = 'id'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Compact labels from 10K: 9_999 → 9999, 12_000 → 12K, 1_500_000 → 1.5M, … */
+/** Compact labels from 1M: 999_999 → 999999, 1_500_000 → 1.5M, 2_000_000_000 → 2B, … */
 export function formatNumber(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? '-' : '';
@@ -35,6 +35,5 @@ export function formatNumber(value: number): string {
   if (abs >= 1e12) return formatScaled(abs / 1e12, 'T');
   if (abs >= 1e9) return formatScaled(abs / 1e9, 'B');
   if (abs >= 1e6) return formatScaled(abs / 1e6, 'M');
-  if (abs >= 1e4) return formatScaled(abs / 1e3, 'K');
   return `${sign}${Math.round(abs)}`;
 }

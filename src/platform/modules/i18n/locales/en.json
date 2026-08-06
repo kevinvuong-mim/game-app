@@ -58,7 +58,10 @@
     "getCoins": {
       "missions": "Missions",
       "dailyReward": "Daily Reward",
-      "buyCoins": "{{coins}} Coins · {{price}}",
+      "or": "or",
+      "coinPackAmount": "{{coins}}",
+      "coinPackLabel": "Coins",
+      "buyPrice": "{{price}}",
       "purchasing": "Processing purchase…",
       "purchaseSuccess": "Got {{coins}} coins!"
     },

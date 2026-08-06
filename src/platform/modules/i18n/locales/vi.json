@@ -58,7 +58,10 @@
     "getCoins": {
       "missions": "Nhiệm vụ",
       "dailyReward": "Quà hàng ngày",
-      "buyCoins": "{{coins}} xu · {{price}}",
+      "or": "hoặc",
+      "coinPackAmount": "{{coins}}",
+      "coinPackLabel": "xu",
+      "buyPrice": "{{price}}",
       "purchasing": "Đang xử lý mua hàng…",
       "purchaseSuccess": "Nhận {{coins}} xu!"
     },
