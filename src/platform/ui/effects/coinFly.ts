@@ -12,9 +12,9 @@ export interface CoinFlyOptions {
   count?: number;
   /** Scene depth for flying coins. Defaults to 200. */
   depth?: number;
-  /** Stagger between coins in ms. Defaults to 55. */
+  /** Stagger between coins in ms. Defaults to 110. */
   stagger?: number;
-  /** Base flight duration in ms. Defaults to 520. */
+  /** Base flight duration in ms. Defaults to 1040. */
   duration?: number;
   /** Called once after the last coin arrives. */
   onComplete?: () => void;
@@ -33,8 +33,8 @@ export function spawnCoinsFlyTo(
 ): void {
   const count = Math.max(1, options.count ?? 6);
   const size = options.size ?? 28;
-  const duration = options.duration ?? 520;
-  const stagger = options.stagger ?? 55;
+  const duration = options.duration ?? 1040;
+  const stagger = options.stagger ?? 110;
   const depth = options.depth ?? 200;
 
   for (let i = 0; i < count; i += 1) {
@@ -48,7 +48,7 @@ export function spawnCoinsFlyTo(
     const midX = (from.x + to.x) / 2 + spread;
     const midY = Math.min(from.y, to.y) - 70 - Math.abs(spread) * 0.35;
     const delay = i * stagger;
-    const flight = duration + i * 20;
+    const flight = duration + i * 40;
     const progress = { t: 0 };
 
     scene.tweens.add({
