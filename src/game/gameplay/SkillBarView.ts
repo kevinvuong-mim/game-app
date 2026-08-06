@@ -13,6 +13,13 @@ const SKILL_ICONS: Record<SkillId, string> = {
   boost_change: 'shop-item-2',
 };
 
+/** Source texture is 626×149 — slice caps so rounded corners don't stretch with width. */
+const SKILL_BAR_BG_SLICE = {
+  leftWidth: 74,
+  topHeight: 36,
+  rightWidth: 74,
+  bottomHeight: 36,
+} as const;
 const SKILL_BAR_BG_KEY = 'skill-bar-background-image';
 
 export type SkillBarViewCallbacks = {
@@ -54,11 +61,11 @@ export class SkillBarView {
   private skillSwipeActive = false;
   private ownedSkillIds: SkillId[] = [];
   private skillHint?: Phaser.GameObjects.Text;
-  private skillPanelBg?: Phaser.GameObjects.Image;
   private skillLeftArrow?: Phaser.GameObjects.Text;
   private skillTrack?: Phaser.GameObjects.Container;
   private skillRightArrow?: Phaser.GameObjects.Text;
   private skillButtons = new Map<SkillId, UIButton>();
+  private skillPanelBg?: Phaser.GameObjects.NineSlice;
   private skillTrackMask?: Phaser.GameObjects.Graphics;
   private skillLeftArrowZone?: Phaser.GameObjects.Zone;
   private skillRightArrowZone?: Phaser.GameObjects.Zone;
@@ -107,7 +114,20 @@ export class SkillBarView {
     this.ownedSkillIds = this.getOwnedSkillIds();
     this.layoutPanelMetrics();
 
-    this.skillPanelBg = this.scene.add.image(0, 0, SKILL_BAR_BG_KEY).setDepth(400);
+    this.skillPanelBg = this.scene.add
+      .nineslice(
+        0,
+        0,
+        SKILL_BAR_BG_KEY,
+        undefined,
+        this.skillPanelWidth,
+        this.panelPadTop + this.skillBtnSize + this.panelPadBottom,
+        SKILL_BAR_BG_SLICE.leftWidth,
+        SKILL_BAR_BG_SLICE.rightWidth,
+        SKILL_BAR_BG_SLICE.topHeight,
+        SKILL_BAR_BG_SLICE.bottomHeight
+      )
+      .setDepth(400);
     this.redrawPanel();
 
     this.skillTrackBaseX = width / 2;
@@ -202,12 +222,13 @@ export class SkillBarView {
   private redrawPanel(): void {
     if (!this.skillPanelBg) return;
     const panelHeight = this.skillBarBottom - this.skillBarTop;
+    // NineSlice keeps corner caps fixed; only the center stretches with width.
     this.skillPanelBg
       .setPosition(
         this.skillPanelLeft + this.skillPanelWidth / 2,
         this.skillBarTop + panelHeight / 2
       )
-      .setDisplaySize(this.skillPanelWidth, panelHeight);
+      .setSize(this.skillPanelWidth, panelHeight);
   }
 
   private updateTrackMask(): void {
