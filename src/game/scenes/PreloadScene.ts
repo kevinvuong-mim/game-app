@@ -71,6 +71,7 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
   { key: 'gameover-background-image', path: '/assets/images/gameover-background-image.webp' },
   { key: 'settings-button-background', path: '/assets/images/settings-button-background.png' },
+  { key: 'skill-bar-background-image', path: '/assets/images/skill-bar-background-image.png' },
 ];
 
 const FALLBACK_TEXTURES: FallbackTexture[] = [
@@ -115,6 +116,7 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'share-button-background', width: 265, height: 98, color: 0xe67e22 },
   { key: 'gameover-background-image', width: 16, height: 16, color: 0x16213e },
   { key: 'settings-button-background', width: 256, height: 78, color: 0x4a90d9 },
+  { key: 'skill-bar-background-image', width: 578, height: 210, color: 0x2f4a1c },
   { key: 'leaderboard-button-background', width: 256, height: 78, color: 0x4a90d9 },
 ];
 
