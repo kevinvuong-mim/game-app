@@ -452,7 +452,6 @@ export class CoinBar extends Phaser.GameObjects.Container {
           border: { width: 3, color: '#000000' },
         },
       },
-      sound: 'coin-drop',
       onClick,
     });
     pack.add(this.buyCoinsButton);

@@ -1,3 +1,5 @@
+import { usePlatformStore } from '@platform/core/state';
+
 export enum DeviceType {
   PHONE,
   TABLET,
@@ -21,19 +23,24 @@ export function generateId(prefix = 'id'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Compact labels from 1M: 999_999 → 999999, 1_500_000 → 1.5M, 2_000_000_000 → 2B, … */
+function getNumberLocale(): string {
+  return usePlatformStore.getState().settings.language === 'vi' ? 'vi-VN' : 'en-US';
+}
+
+/** Compact from 1M (locale-aware): 999_999 → 999.999 / 999,999; 1_500_000 → 1,5 Tr / 1.5M; … */
 export function formatNumber(value: number): string {
+  const locale = getNumberLocale();
   const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
 
-  const formatScaled = (scaled: number, suffix: string): string => {
-    const rounded = scaled >= 100 ? Math.round(scaled) : Math.round(scaled * 10) / 10;
-    const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
-    return `${sign}${text}${suffix}`;
-  };
+  if (abs >= 1e6) {
+    return new Intl.NumberFormat(locale, {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1,
+    }).format(value);
+  }
 
-  if (abs >= 1e12) return formatScaled(abs / 1e12, 'T');
-  if (abs >= 1e9) return formatScaled(abs / 1e9, 'B');
-  if (abs >= 1e6) return formatScaled(abs / 1e6, 'M');
-  return `${sign}${Math.round(abs)}`;
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: 0,
+  }).format(Math.round(value));
 }
