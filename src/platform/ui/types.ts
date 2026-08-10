@@ -2,8 +2,8 @@ import type Phaser from 'phaser';
 
 export type UIButton = Phaser.GameObjects.Container & {
   setText(content: string): void;
-  setEnabled(enabled: boolean): void;
   setLoading(loading: boolean): void;
+  setEnabled(enabled: boolean): void;
   setBadgeContent(content: string): void;
   setBadgeVisible(visible: boolean): void;
 };
@@ -25,8 +25,8 @@ export type UIButtonPosition = {
 export type UIButtonTextStyle = {
   color?: string;
   stroke?: string;
-  fontSize?: number;
   fontStyle?: string;
+  fontSize?: number;
   fontFamily?: string;
   strokeThickness?: number;
   border?: { color: string; width: number };
@@ -53,8 +53,8 @@ export interface UIButtonText {
 
 export interface ToastOptions {
   message: string;
-  duration?: number;
   type?: UIToastType;
+  duration?: number;
   offset?: ToastOffset;
   position?: ToastPosition;
 }
@@ -97,9 +97,9 @@ export interface UIButtonOptions {
   depth?: number;
   disabled?: boolean;
   icon?: UIButtonIcon;
-  scene: Phaser.Scene;
   size?: UIButtonSize;
   text?: UIButtonText;
+  scene: Phaser.Scene;
   onClick?: () => void;
   sound?: UIButtonSound;
   badge?: UIButtonBadge;

@@ -10,6 +10,7 @@ import {
 import { t } from '@platform/modules/i18n';
 import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
+import { dailyRewards } from '@platform/modules/daily-reward';
 import { ensureAndroidNotificationChannel } from './android-notification-channel';
 
 interface ReminderNotification {
@@ -23,6 +24,8 @@ interface ReminderNotification {
 
 class LocalNotificationService {
   private initialized = false;
+  /** Avoid opening exact-alarm settings on every reconcile this process. */
+  private exactAlarmPromptedThisSession = false;
   /** Serialize cancel+schedule so resume/claim/locale cannot interleave. */
   private reconcileQueue: Promise<void> = Promise.resolve();
 
@@ -83,9 +86,14 @@ class LocalNotificationService {
    *   `at` arrives as NSDate via WKWebView and builds a valid time-interval trigger.
    *
    * Calls are serialized so resume / claim / locale cannot cancel each other mid-flight.
+   * `canClaim` is read when the queued job runs (not at enqueue time) so a stale
+   * resume/locale snapshot cannot re-arm today's reminder after a claim.
    */
-  reconcileDailyRewardSchedule(canClaim: boolean): Promise<void> {
-    const run = this.reconcileQueue.then(() => this.reconcileDailyRewardScheduleUnlocked(canClaim));
+  reconcileDailyRewardSchedule(options?: { promptExactAlarm?: boolean }): Promise<void> {
+    const promptExactAlarm = options?.promptExactAlarm === true;
+    const run = this.reconcileQueue.then(() =>
+      this.reconcileDailyRewardScheduleUnlocked({ promptExactAlarm })
+    );
     this.reconcileQueue = run.then(
       () => undefined,
       () => undefined
@@ -93,7 +101,9 @@ class LocalNotificationService {
     return run;
   }
 
-  private async reconcileDailyRewardScheduleUnlocked(canClaim: boolean): Promise<void> {
+  private async reconcileDailyRewardScheduleUnlocked(options: {
+    promptExactAlarm: boolean;
+  }): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
       return;
     }
@@ -106,10 +116,12 @@ class LocalNotificationService {
       return;
     }
 
-    await this.warnIfExactAlarmsDisabled();
+    await this.ensureExactAlarmsReady(options.promptExactAlarm);
 
     await this.cancelDailyRewardReminder();
 
+    // Fresh read at execute time — never trust event-time snapshots across the queue.
+    const canClaim = dailyRewards.canClaim();
     const skipToday = shouldSkipTodayDailyRewardReminder(canClaim);
     await this.scheduleReminderHorizon({ fromTomorrow: skipToday });
   }
@@ -212,8 +224,12 @@ class LocalNotificationService {
     };
   }
 
-  /** Android 12+: exact alarms can be revoked in system settings; at-schedules then become inexact or wiped. */
-  private async warnIfExactAlarmsDisabled(): Promise<void> {
+  /**
+   * Android 12+: exact alarms can be revoked in system settings; at-schedules then
+   * become inexact or wiped. Optionally open settings once per process (resume only —
+   * never during cold-start privacy sequence).
+   */
+  private async ensureExactAlarmsReady(prompt: boolean): Promise<void> {
     if (Capacitor.getPlatform() !== 'android') {
       return;
     }
@@ -221,12 +237,21 @@ class LocalNotificationService {
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications');
       const status = await LocalNotifications.checkExactNotificationSetting();
-      if (status.exact_alarm !== 'granted') {
-        logger.warn(
-          '[LocalNotification] Exact alarms not granted — daily reward timing may drift or be cleared by the OS',
-          status
-        );
+      if (status.exact_alarm === 'granted') {
+        return;
       }
+
+      logger.warn(
+        '[LocalNotification] Exact alarms not granted — daily reward timing may drift or be cleared by the OS',
+        status
+      );
+
+      if (!prompt || this.exactAlarmPromptedThisSession) {
+        return;
+      }
+
+      this.exactAlarmPromptedThisSession = true;
+      await LocalNotifications.changeExactNotificationSetting();
     } catch {
       // Older native shells may not expose the exact-alarm API.
     }

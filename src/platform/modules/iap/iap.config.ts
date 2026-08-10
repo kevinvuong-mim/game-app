@@ -19,10 +19,18 @@ export const PRODUCTS = {
 
 export type ProductKey = keyof typeof PRODUCTS;
 
-export const REMOVE_ADS_PRICE = '$3.99';
+export const REMOVE_ADS_PRICE = '$3.98';
 export const COINS_10000_AMOUNT = 10_000;
-export const COINS_10000_PRICE = '$0.99';
+export const COINS_10000_PRICE = '$0.98';
 export const ENTITLEMENT_REMOVE_ADS = PRODUCTS.REMOVE_ADS.entitlement;
+
+/**
+ * StoreKit often formats USD as `US$0.98` (country code + `$`).
+ * Strip the `XX` prefix so UI shows `$0.98` consistently with Android.
+ */
+export function normalizeStorePriceString(price: string): string {
+  return price.replace(/^([A-Z]{2})\s*\$\s*(?=\d)/, '$');
+}
 
 /** Default purchase timeout (ms). */
 export const IAP_PURCHASE_TIMEOUT_MS = 60_000;

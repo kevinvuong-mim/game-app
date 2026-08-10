@@ -7,6 +7,7 @@ import {
   buildRewardProgress,
   type RewardProgress,
   type DailyRewardModel,
+  isCycleCompletedToday,
 } from './daily-reward.model';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
@@ -34,6 +35,7 @@ export class DailyRewardService {
   canClaim(): boolean {
     if (!this.initialized) return false;
     if (this.claimInFlight) return false;
+    this.ensureStreakConsistency();
     if (hasClaimedToday(this.model)) return false;
     return true;
   }
@@ -69,16 +71,30 @@ export class DailyRewardService {
   }
 
   getRewardProgress(): RewardProgress {
+    this.ensureStreakConsistency();
+    const canClaim = this.initialized && !this.claimInFlight && !hasClaimedToday(this.model);
     return {
       currentDay: this.model.currentDay,
-      canClaim: this.canClaim(),
-      days: buildRewardProgress(this.model.currentDay),
+      canClaim,
+      days: buildRewardProgress(this.model.currentDay, {
+        cycleCompletedToday: isCycleCompletedToday(this.model),
+      }),
     };
   }
 
   /** Re-evaluate streak gap when the app returns to foreground. */
   refreshOnResume(): void {
+    if (!this.initialized) return;
     this.model = applyStreakGapReset(this.model);
+    void this.persist();
+  }
+
+  /** Apply missed-day streak reset before reads/claims (not only on init/resume). */
+  private ensureStreakConsistency(): void {
+    if (!this.initialized) return;
+    const next = applyStreakGapReset(this.model);
+    if (next.currentDay === this.model.currentDay) return;
+    this.model = next;
     void this.persist();
   }
 

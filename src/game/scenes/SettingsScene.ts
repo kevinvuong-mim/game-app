@@ -19,6 +19,7 @@ export class SettingsScene extends BasePanelScene {
   }
 
   protected handleAppBack(): void {
+    if (this.panel?.isPurchaseInFlight()) return;
     if (this.panel?.isPurchaseModalOpen()) {
       this.panel.hidePurchaseModal();
       return;

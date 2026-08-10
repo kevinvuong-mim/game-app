@@ -163,7 +163,8 @@ export function getNextDailyRewardReminderAt(
 
 /**
  * Concrete local fire times for the rolling reminder horizon.
- * Always returns at least one future Date (falls back to tomorrow 07:00).
+ * Always returns `horizonDays` future mornings when possible (pads past
+ * `minLeadMs` drops near 07:00). Falls back to at least tomorrow 07:00.
  */
 export function planDailyRewardReminderHorizon(
   now: Date,
@@ -171,17 +172,21 @@ export function planDailyRewardReminderHorizon(
 ): Date[] {
   const horizonDays = options.horizonDays ?? DAILY_REWARD_REMINDER_HORIZON_DAYS;
   const minLeadMs = options.minLeadMs ?? DAILY_REWARD_REMINDER_MIN_LEAD_MS;
-  const startOffset = options.skipToday ? 1 : 0;
   const earliest = now.getTime() + minLeadMs;
   const times: Date[] = [];
 
-  for (let day = startOffset; day < startOffset + horizonDays; day++) {
+  // Walk forward day offsets until we collect a full horizon (today may be
+  // filtered when within minLeadMs of 07:00).
+  let day = options.skipToday ? 1 : 0;
+  const maxDay = day + horizonDays + 2;
+  while (times.length < horizonDays && day <= maxDay) {
     const dayDate = new Date(now);
     dayDate.setDate(dayDate.getDate() + day);
     const at = getDailyRewardReminderTimeOnDate(dayDate);
     if (at.getTime() > earliest) {
       times.push(at);
     }
+    day += 1;
   }
 
   if (times.length === 0) {

@@ -6,13 +6,13 @@ import type { IEventBus } from '@platform/core/events';
 import { deviceSyncService } from './device-sync.service';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { notificationService } from './notification.service';
-import { dailyRewards } from '@platform/modules/daily-reward';
 import { navigationService } from '@platform/modules/navigation/navigation.service';
 import { resolveNotificationRoute, type PushNotificationPayload } from './notification.model';
 
 class NotificationController {
   private onlineHandler?: () => void;
   private networkListener?: PluginListenerHandle;
+  private localActionListener?: PluginListenerHandle;
 
   bind(events: IEventBus): () => void {
     const config = getConfig();
@@ -29,7 +29,7 @@ class NotificationController {
 
     unsubs.push(
       events.on('app:resume', () => {
-        void notificationService.onAppResume(dailyRewards.canClaim());
+        void notificationService.onAppResume();
       })
     );
 
@@ -39,8 +39,8 @@ class NotificationController {
 
       unsubs.push(
         events.on('daily:claim', () => {
-          // Just claimed — skip today's 07:00 if still pending, keep future mornings armed.
-          void notificationService.reconcileDailyRewardSchedule(false);
+          // Re-arm from live canClaim when the queued job runs (skip today if still claimed).
+          void notificationService.reconcileDailyRewardSchedule();
         })
       );
 
@@ -63,7 +63,7 @@ class NotificationController {
     unsubs.push(
       events.on('settings:change', ({ key }) => {
         if (key === 'language') {
-          void notificationService.onLocaleChanged(dailyRewards.canClaim());
+          void notificationService.onLocaleChanged();
         }
       })
     );
@@ -77,6 +77,8 @@ class NotificationController {
       }
       void this.networkListener?.remove();
       this.networkListener = undefined;
+      void this.localActionListener?.remove();
+      this.localActionListener = undefined;
     };
   }
 
@@ -109,21 +111,26 @@ class NotificationController {
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications');
 
-      await LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
-        const payload: PushNotificationPayload = {
-          type:
-            typeof event.notification.extra?.type === 'string'
-              ? (event.notification.extra.type as PushNotificationPayload['type'])
-              : undefined,
-          route:
-            typeof event.notification.extra?.route === 'string'
-              ? (event.notification.extra.route as PushNotificationPayload['route'])
-              : undefined,
-        };
+      // Drop a previous handle if bind() is called again before teardown completes.
+      await this.localActionListener?.remove();
+      this.localActionListener = await LocalNotifications.addListener(
+        'localNotificationActionPerformed',
+        (event) => {
+          const payload: PushNotificationPayload = {
+            type:
+              typeof event.notification.extra?.type === 'string'
+                ? (event.notification.extra.type as PushNotificationPayload['type'])
+                : undefined,
+            route:
+              typeof event.notification.extra?.route === 'string'
+                ? (event.notification.extra.route as PushNotificationPayload['route'])
+                : undefined,
+          };
 
-        const scene = resolveNotificationRoute(payload.type, payload.route);
-        navigationService.navigateToScene(scene, { returnTo: 'Home' });
-      });
+          const scene = resolveNotificationRoute(payload.type, payload.route);
+          navigationService.navigateToScene(scene, { returnTo: 'Home' });
+        }
+      );
     } catch (error) {
       logger.warn('[NotificationController] Failed to bind local notification actions', error);
     }

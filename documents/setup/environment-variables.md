@@ -57,6 +57,8 @@ Hành vi khi thiếu key / dùng mock (`src/platform/bootstrap/providers.ts`):
 
 IAP service vẫn chỉ chạy khi `ENV_CONFIGS[env].iapEnabled` là `true` và provider đăng ký thành công.
 
+Product IDs trong `src/platform/modules/iap/iap.config.ts` (`remove_ads`, `coins_10000`) phải khớp App Store Connect / Play Console / RevenueCat. UI lấy giá localized qua `iap.getDisplayPrice` (store `priceString`; fallback `$0.99` / `$3.99`). Storefront Apple thường trả `US$…` cho USD — client normalize bỏ prefix `XX$`.
+
 ---
 
 ## Ads

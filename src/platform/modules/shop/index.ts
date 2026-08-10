@@ -1,1 +1,2 @@
-export { shop, type ShopItem } from './shop.service';
+export { shop, type ShopItem, type ShopPurchaseResult } from './shop.service';
+

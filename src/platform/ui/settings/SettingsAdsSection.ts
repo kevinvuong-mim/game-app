@@ -19,7 +19,7 @@ import { drawRoundedRect } from '../panel/graphics';
 import type { UIButton, ToastOptions } from '../types';
 import { t } from '@platform/modules/i18n/i18n.service';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from '../panel/panelTheme';
-import { ENTITLEMENT_REMOVE_ADS, REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
+import { PRODUCTS, ENTITLEMENT_REMOVE_ADS, REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
 
 const NO_ADS_ICON_KEY = 'no-ads-icon';
 
@@ -51,6 +51,10 @@ export class SettingsAdsSection {
 
   isPurchaseModalOpen(): boolean {
     return !!this.purchaseModal?.visible;
+  }
+
+  isPurchasing(): boolean {
+    return this.purchasingAds || this.restoringPurchases;
   }
 
   hidePurchaseModal(): void {
@@ -165,6 +169,7 @@ export class SettingsAdsSection {
 
     this.helpers.endNameEdit();
     this.helpers.closeLanguageMenu();
+    void iap.refreshProducts();
 
     const { width, height } = this.scene.cameras.main;
     const panelWidth = Math.min(340, width * 0.82);
@@ -222,16 +227,15 @@ export class SettingsAdsSection {
         .setOrigin(0.5, 0)
     );
 
-    modal.add(
-      this.scene.add
-        .text(width / 2, panelY + 148, t('settings.removeAdsPrice', { price: REMOVE_ADS_PRICE }), {
-          fontSize: '22px',
-          fontStyle: 'bold',
-          color: SECTION_TITLE_COLOR,
-          fontFamily: FREDOKA_FONT,
-        })
-        .setOrigin(0.5, 0)
-    );
+    const priceText = this.scene.add
+      .text(width / 2, panelY + 148, this.getRemoveAdsPriceLabel(), {
+        fontSize: '22px',
+        fontStyle: 'bold',
+        color: SECTION_TITLE_COLOR,
+        fontFamily: FREDOKA_FONT,
+      })
+      .setOrigin(0.5, 0);
+    modal.add(priceText);
 
     const buyWidth = Math.min(220, panelWidth * 0.7);
     const buyY = showRestore ? panelY + panelHeight - 88 : panelY + panelHeight - 52;
@@ -248,6 +252,7 @@ export class SettingsAdsSection {
           border: { width: 3, color: '#000000' },
         },
       },
+      disabled: !iap.isEnabled(),
       onClick: () => {
         void this.purchaseRemoveAds();
       },
@@ -274,21 +279,40 @@ export class SettingsAdsSection {
 
     this.purchaseModal = modal;
     this.parent.add(modal);
+
+    // Update price when store catalog arrives after modal open.
+    void iap.refreshProducts().then(() => {
+      if (this.disposed || !priceText.active) return;
+      priceText.setText(this.getRemoveAdsPriceLabel());
+    });
+  }
+
+  private getRemoveAdsPriceLabel(): string {
+    const price = iap.getDisplayPrice(PRODUCTS.REMOVE_ADS.id, REMOVE_ADS_PRICE);
+    return t('settings.removeAdsPrice', { price });
   }
 
   private async purchaseRemoveAds(): Promise<void> {
     if (this.purchasingAds || shop.isOwned(REMOVE_ADS_ITEM_ID)) return;
+
+    if (!iap.isEnabled()) {
+      toast.show({ message: t('shop.iapUnavailable'), type: 'error' });
+      return;
+    }
+
     this.purchasingAds = true;
     this.buyAdsButton?.setLoading(true);
 
     let success = false;
     try {
-      success = await shop.purchase(REMOVE_ADS_ITEM_ID);
-      if (!success) {
+      const result = await shop.purchase(REMOVE_ADS_ITEM_ID);
+      if (result.cancelled) return;
+      if (!result.success) {
         toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
         return;
       }
 
+      success = true;
       const successToast: ToastOptions = {
         type: 'success',
         message: t('shop.purchaseSuccess', { name: t('shop.items.remove_ads.name') }),

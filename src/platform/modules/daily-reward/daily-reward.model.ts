@@ -49,7 +49,23 @@ export function resolveClaimReward(day: number): ClaimResult {
   return { day: definition.day, coins: definition.coins };
 }
 
-export function buildRewardProgress(currentDay: number): RewardDayProgress[] {
+/**
+ * `currentDay` is the next claimable day (1–7).
+ * After claiming day 7 the model wraps to 1 while `hasClaimedToday` is still true —
+ * pass `cycleCompletedToday` so the UI keeps all 7 days marked claimed until tomorrow.
+ */
+export function buildRewardProgress(
+  currentDay: number,
+  options?: { cycleCompletedToday?: boolean }
+): RewardDayProgress[] {
+  if (options?.cycleCompletedToday) {
+    return REWARD_CYCLE.map((entry) => ({
+      day: entry.day,
+      coins: entry.coins,
+      status: 'claimed' as const,
+    }));
+  }
+
   return REWARD_CYCLE.map((entry) => {
     let status: RewardDayProgress['status'] = 'locked';
 
@@ -65,6 +81,11 @@ export function buildRewardProgress(currentDay: number): RewardDayProgress[] {
       coins: entry.coins,
     };
   });
+}
+
+/** True when day 7 was claimed today and the cycle has wrapped back to day 1. */
+export function isCycleCompletedToday(model: DailyRewardModel, at: number = Date.now()): boolean {
+  return model.currentDay === 1 && hasClaimedToday(model, at);
 }
 
 export function createDefaultModel(): DailyRewardModel {

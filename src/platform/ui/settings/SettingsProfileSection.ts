@@ -20,8 +20,8 @@ export class SettingsProfileSection {
   private nameEditing = false;
   private editInput?: HTMLInputElement;
   private nameCaret?: Phaser.GameObjects.Text;
-  private nameCaretTimer?: Phaser.Time.TimerEvent;
   private nameFieldText?: Phaser.GameObjects.Text;
+  private nameCaretTimer?: Phaser.Time.TimerEvent;
   private focusCheckTimer?: Phaser.Time.TimerEvent;
 
   constructor(

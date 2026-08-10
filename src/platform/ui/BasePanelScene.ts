@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { iap } from '@platform/modules/iap';
+import { shop } from '@platform/modules/shop';
 import { eventBus } from '@platform/core/events';
 import type { AdContext } from '@platform/core/advertising';
 
@@ -20,6 +22,8 @@ export interface PanelSceneOptions {
 export interface GetCoinsOverlayHost {
   hideGetCoinsModal(): void;
   isGetCoinsModalOpen(): boolean;
+  /** True while an IAP coin-pack purchase is in flight from this overlay. */
+  isPurchaseInFlight?(): boolean;
 }
 
 export abstract class BasePanelScene extends Phaser.Scene {
@@ -96,9 +100,17 @@ export abstract class BasePanelScene extends Phaser.Scene {
 
   protected onPanelShutdown(): void {}
 
+  /** Block scene changes while shop/IAP purchase is running. */
+  protected isNavigationBlockedByPurchase(): boolean {
+    if (shop.isPurchaseInFlight() || iap.isPurchasing()) return true;
+    if (this.getCoinsOverlay?.isPurchaseInFlight?.()) return true;
+    return false;
+  }
+
   /** Override to intercept hardware/system back (e.g. dismiss a modal first). */
   protected handleAppBack(): void {
     if (this.getCoinsOverlay?.isGetCoinsModalOpen()) {
+      if (this.getCoinsOverlay.isPurchaseInFlight?.()) return;
       this.getCoinsOverlay.hideGetCoinsModal();
       return;
     }
@@ -106,10 +118,12 @@ export abstract class BasePanelScene extends Phaser.Scene {
   }
 
   protected goBack(): void {
+    if (this.isNavigationBlockedByPurchase()) return;
     this.scene.start(this.returnTo, this.returnData);
   }
 
   protected openScreen(sceneKey: string, data?: Record<string, unknown>): void {
+    if (this.isNavigationBlockedByPurchase()) return;
     this.scene.start(sceneKey, { returnTo: this.sceneKey, ...data });
   }
 

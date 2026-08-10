@@ -53,6 +53,7 @@
     "buy": "Mua",
     "purchaseSuccess": "Đã mua {{name}}!",
     "purchaseFailed": "Mua thất bại",
+    "iapUnavailable": "Hiện không thể mua hàng",
     "notEnoughCoins": "Không đủ xu!",
     "ownedQuantity": "Đang có: {{quantity}}",
     "getCoins": {

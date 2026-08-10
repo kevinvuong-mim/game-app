@@ -1,8 +1,8 @@
 import type Phaser from 'phaser';
 
 export type FruitBody = Phaser.Physics.Matter.Image & {
-  fruitLevel: number;
   isMerging: boolean;
+  fruitLevel: number;
   scoreMultiplier: number;
 };
 

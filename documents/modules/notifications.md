@@ -26,17 +26,17 @@ Preset trong `src/platform/core/config/notification-env.json`, merge vào `ENV_C
 
 ## File chính
 
-| File                               | Vai trò                                                                |
-| ---------------------------------- | ---------------------------------------------------------------------- |
-| `notification.service.ts`          | Orchestrator: init, tap handler, daily reward reconcile                |
-| `push-notification.service.ts`     | Capacitor PushNotifications, đăng ký token lên API                     |
-| `local-notification.service.ts`    | Schedule/cancel daily reward reminder                                  |
-| `device-sync.service.ts`           | Offline-first token / unregister sync                                  |
-| `android-notification-channel.ts`  | Android high-importance notification channel setup                     |
-| `notification.repository.ts`       | `POST/PATCH/DELETE /devices`                                           |
-| `notification.controller.ts`       | Bind lifecycle: `guest.onReady`, `app:resume`, `daily:claim`, settings |
-| `notification.model.ts`            | Types, routes, `resolveNotificationRoute()`                            |
-| `navigation/navigation.service.ts` | In-app navigation + pending queue (cold start)                         |
+| File                               | Vai trò                                                        |
+| ---------------------------------- | -------------------------------------------------------------- |
+| `notification.service.ts`          | Orchestrator: init, tap handler, daily reward reconcile        |
+| `push-notification.service.ts`     | Capacitor PushNotifications, đăng ký token lên API             |
+| `local-notification.service.ts`    | Schedule/cancel daily reward reminder                          |
+| `device-sync.service.ts`           | Offline-first token / unregister sync                          |
+| `android-notification-channel.ts`  | Android high-importance notification channel setup             |
+| `notification.repository.ts`       | `POST/PATCH/DELETE /devices`                                   |
+| `notification.controller.ts`       | Bind lifecycle: `app:resume`, `daily:claim`, settings language |
+| `notification.model.ts`            | Types, routes, planner, `resolveNotificationRoute()`           |
+| `navigation/navigation.service.ts` | In-app navigation + pending queue (cold start)                 |
 
 ## Init flow
 
@@ -46,14 +46,14 @@ Thứ tự dialog hệ thống trên native cold start (orchestrated bởi `App.
 2. **Notifications** — `notificationService.requestInitialPermissions()` (local và/hoặc push, tùy flag).
 3. **UMP** — `ads.requestUmpConsentAndPreload()` (khi Google `REQUIRED`), rồi preload ads.
 
-Sau bước 2: reconcile local daily-reward schedule; `guest.onReady` → `initializePush()` (đăng ký FCM — đã chờ xong bước permission nên không đụng dialog ATT).
+Sau bước 2: `App` gọi `notificationService.reconcileDailyRewardSchedule()` (lần reconcile đầu). `guest.onReady` → `initializePush()` (đăng ký FCM — đã chờ xong bước permission nên không đụng dialog ATT).
 
 Chi tiết:
 
-1. `App.init()` → `notificationController.bind(events)` (listeners only; không xin quyền ngay).
-2. `runPrivacyPromptSequence()` (fire-and-forget, không block game shell).
+1. `App.init()` → `notificationController.bind(events)` — **chỉ gắn listeners** (`app:resume`, `daily:claim`, language); **không** reconcile tại `bind`.
+2. `runPrivacyPromptSequence()` (fire-and-forget, không block game shell) → permission → **cold-start reconcile**.
 3. Push sau guest ready: `PushNotifications.register()` → listener `registration` → `POST /api/devices`.
-4. Local: sau permission, arm one-shot horizon 07:00 theo `canClaim`.
+4. Local: sau permission, arm one-shot horizon 07:00 theo `dailyRewards.canClaim()` **đọc lúc job chạy** (không snapshot lúc enqueue).
 
 Chỉ xin quyền / schedule trên `Capacitor.isNativePlatform()`.
 
@@ -62,17 +62,23 @@ Chỉ xin quyền / schedule trên `Capacitor.isNativePlatform()`.
 Mục tiêu: **07:00 local mỗi sáng** (`DAILY_REWARD_REMINDER_HOUR` / `_MINUTE`) nhắc claim.
 
 Planner: `planDailyRewardReminderHorizon()` + `shouldSkipTodayDailyRewardReminder()` trong `notification.model.ts`.  
-Scheduler: luôn one-shot `schedule.at` + `allowWhileIdle: true`, arm từng id, serialize reconcile (không dùng Capacitor `on`).
+Scheduler: luôn one-shot `schedule.at` + `allowWhileIdle: true`, arm từng id, serialize reconcile (không dùng Capacitor `on`). Horizon luôn pad đủ `HORIZON_DAYS` slot tương lai (kể cả khi gần 07:00 bị lọc `minLeadMs`).
 
-| Trạng thái                                 | Schedule                                         |
-| ------------------------------------------ | ------------------------------------------------ |
-| `canClaim === true` **trước** 07:00        | 07:00 hôm nay + 6 sáng tiếp (`HORIZON_DAYS = 7`) |
-| `canClaim === true` **sau** 07:00          | Horizon từ **sáng mai** (đã lỡ cửa sổ hôm nay)   |
-| Đã claim (trước hoặc sau 07:00)            | Bỏ 07:00 hôm nay; arm 7 sáng tiếp theo           |
-| Cold start / `app:resume` / claim / locale | Cancel + re-arm (queue tuần tự)                  |
-| Permission bị tắt                          | Cancel pending; không schedule                   |
+| Trạng thái                                 | Schedule                                       |
+| ------------------------------------------ | ---------------------------------------------- |
+| `canClaim === true` **trước** 07:00        | 07:00 hôm nay + đủ horizon các sáng tiếp       |
+| `canClaim === true` **sau** 07:00          | Horizon từ **sáng mai** (đã lỡ cửa sổ hôm nay) |
+| Đã claim (trước hoặc sau 07:00)            | Bỏ 07:00 hôm nay; arm horizon từ mai           |
+| Cold start / `app:resume` / claim / locale | Cancel + re-arm (queue tuần tự)                |
+| Permission bị tắt                          | Cancel pending; không schedule                 |
+
+**`canClaim`:** mỗi lần `reconcileDailyRewardScheduleUnlocked` đọc `dailyRewards.canClaim()` tại thời điểm execute (tránh race resume snapshot `true` sau claim).
 
 Android channel id: `game_alerts`. Notification ids `1001`…`1001+N-1`.
+
+### Exact alarms (Android 12+)
+
+`checkExactNotificationSetting()` khi reconcile. Nếu chưa granted: log warn; trên **`app:resume`** có thể mở settings một lần / process (`changeExactNotificationSetting`) — không prompt trong cold-start privacy sequence.
 
 ### Vì sao không dùng Capacitor `on` (calendar cron)?
 
@@ -104,7 +110,7 @@ State local: key `notification-state-v1` (durable storage → Preferences/Indexe
 
 ## Tap notification → màn trong app
 
-**Không dùng deeplink URL.** Backend gửi FCM `data: { type, route, ...params }` (rank push gồm `rank`); local notification gắn `extra: { type, route }`.
+**Không dùng deeplink URL.** Backend gửi FCM `data: { type, route, ...params }` (rank push gồm `rank`); local notification gắn `extra: { route: 'DailyReward' }` (không có `type`).
 
 | Nguồn / payload                                 | Scene mở      |
 | ----------------------------------------------- | ------------- |
@@ -115,7 +121,7 @@ State local: key `notification-state-v1` (durable storage → Preferences/Indexe
 Luồng:
 
 1. Push: `pushNotificationActionPerformed` → `notificationService.handleNotificationTap()`.
-2. Local: `localNotificationActionPerformed` → `navigationService.navigateToScene()`.
+2. Local: `localNotificationActionPerformed` → `navigationService.navigateToScene()` (listener remove khi unbind controller).
 3. `resolveNotificationRoute(type, route)` → scene key Phaser.
 4. Navigate với `{ returnTo: 'Home' }`.
 
@@ -135,19 +141,17 @@ Khi app bị kill, tap notification có thể tới **trước** khi Phaser sẵ
 
 1. Tap sớm → lưu `pending` (không navigate).
 2. `PreloadScene.create()` emit `boot:preload-complete` → `navigationService.markBootComplete()`.
-3. `PreloadScene` đọc `getBootNavigationTarget()` và `scene.start()` tới pending scene hoặc `Home`.
-
-Khi callback tap được giao trước lúc Phaser preload xong, `navigationService` giữ destination trong bộ nhớ và defer việc chuyển scene.
+3. `PreloadScene` đọc `peekPendingNavigation()` và `scene.start()` tới pending scene hoặc `Home`.
 
 ## Events liên quan
 
-| Event                          | Handler                                                                              |
-| ------------------------------ | ------------------------------------------------------------------------------------ |
-| cold start (`bind`)            | Local: reconcile theo `canClaim`                                                     |
-| `app:resume`                   | Push: refresh token + flush pending sync; local: reconcile theo `canClaim`           |
-| `daily:claim`                  | Local: reconcile với `canClaim=false` (bỏ 07:00 hôm nay nếu còn sớm; re-arm horizon) |
-| `settings:change` (`language`) | Push: `PATCH /api/devices`; local: re-arm title/body theo locale mới                 |
-| `boot:preload-complete`        | `markBootComplete()` + clear pending (PreloadScene navigate tới target)              |
+| Event                          | Handler                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| Cold start (`App` privacy seq) | Local: reconcile sau permission (không phải lúc `bind`)                     |
+| `app:resume`                   | Push: refresh token + flush; local: reconcile + optional exact-alarm prompt |
+| `daily:claim`                  | Local: reconcile (live `canClaim` lúc execute — thường skip hôm nay)        |
+| `settings:change` (`language`) | Push: locale sync; local: re-arm title/body theo locale mới                 |
+| `boot:preload-complete`        | `markBootComplete()`; PreloadScene `peekPendingNavigation()` rồi navigate   |
 
 ## API backend
 

@@ -53,6 +53,7 @@
     "buy": "Buy",
     "purchaseSuccess": "Purchased {{name}}!",
     "purchaseFailed": "Purchase failed",
+    "iapUnavailable": "Purchases are unavailable right now",
     "notEnoughCoins": "Not enough coins!",
     "ownedQuantity": "Owned: {{quantity}}",
     "getCoins": {

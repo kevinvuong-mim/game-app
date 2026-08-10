@@ -133,7 +133,12 @@ class NotificationService {
     logger.info('[Notification] Re-bound push device token after guest recovery');
   }
 
-  async reconcileDailyRewardSchedule(canClaim: boolean): Promise<void> {
+  /**
+   * Re-arm the daily reward reminder horizon.
+   * `canClaim` is resolved when the local schedule job runs (not here), so
+   * resume/locale snapshots cannot race past a later claim.
+   */
+  async reconcileDailyRewardSchedule(options?: { promptExactAlarm?: boolean }): Promise<void> {
     const config = getConfig();
 
     if (!config.localNotificationsEnabled) {
@@ -141,10 +146,10 @@ class NotificationService {
     }
 
     await this.initializeLocal();
-    await localNotificationService.reconcileDailyRewardSchedule(canClaim);
+    await localNotificationService.reconcileDailyRewardSchedule(options);
   }
 
-  async onAppResume(canClaimDailyReward: boolean): Promise<void> {
+  async onAppResume(): Promise<void> {
     const config = getConfig();
 
     if (config.pushNotificationsEnabled) {
@@ -153,11 +158,12 @@ class NotificationService {
     }
 
     if (config.localNotificationsEnabled) {
-      await this.reconcileDailyRewardSchedule(canClaimDailyReward);
+      // Resume is the right time to heal wiped exact alarms / open settings once.
+      await this.reconcileDailyRewardSchedule({ promptExactAlarm: true });
     }
   }
 
-  async onLocaleChanged(canClaimDailyReward: boolean): Promise<void> {
+  async onLocaleChanged(): Promise<void> {
     const config = getConfig();
 
     if (config.pushNotificationsEnabled) {
@@ -167,7 +173,7 @@ class NotificationService {
 
     if (config.localNotificationsEnabled) {
       // Re-arm so pending title/body pick up the new locale.
-      await this.reconcileDailyRewardSchedule(canClaimDailyReward);
+      await this.reconcileDailyRewardSchedule();
     }
   }
 

@@ -3,6 +3,7 @@ export const IAP_EVENTS = {
   PURCHASE_FAILED: 'iap:purchase:failed',
   PURCHASE_RESTORED: 'iap:restore:success',
   PURCHASE_SUCCESS: 'iap:purchase:success',
+  PRODUCTS_UPDATED: 'iap:products:updated',
   ENTITLEMENT_CHANGED: 'iap:entitlement:changed',
 } as const;
 
@@ -25,4 +26,8 @@ export interface IapEntitlementChangedPayload {
   active: boolean;
   entitlement: string;
   entitlements: string[];
+}
+
+export interface IapProductsUpdatedPayload {
+  productIds: string[];
 }

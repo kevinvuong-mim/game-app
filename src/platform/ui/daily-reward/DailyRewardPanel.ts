@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { PanelHeader } from '../panel/PanelHeader';
 import { drawRoundedRect } from '../panel/graphics';
@@ -57,6 +58,7 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
   private statusText?: Phaser.GameObjects.Text;
   private claimButton?: Phaser.GameObjects.Container;
   private latestProgress: RewardProgress | null = null;
+  private readonly unsubscribers: Array<() => void> = [];
   private calendarContainer?: Phaser.GameObjects.Container;
   /** Claimable day coin / chest used as the fly-out origin. */
   private claimSourceObject: Phaser.GameObjects.GameObject | null = null;
@@ -74,15 +76,26 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     this.build();
     this.applyProgress(dailyRewards.getRewardProgress());
+    this.unsubscribers.push(
+      eventBus.on('app:resume', () => {
+        this.applyProgress(dailyRewards.getRewardProgress());
+      })
+    );
   }
 
   destroy(fromScene?: boolean): void {
+    for (const unsub of this.unsubscribers) unsub();
+    this.unsubscribers.length = 0;
     this.header = undefined;
     super.destroy(fromScene);
   }
 
   isGetCoinsModalOpen(): boolean {
     return !!this.header?.isGetCoinsModalOpen();
+  }
+
+  isPurchaseInFlight(): boolean {
+    return !!this.header?.isPurchaseInFlight();
   }
 
   hideGetCoinsModal(): void {
@@ -386,9 +399,11 @@ export class DailyRewardPanel extends Phaser.GameObjects.Container {
     container.add(amountText);
 
     if (isClaimed) {
+      // Anchor to the chest bounds (visual card), not day7Width — that is wider than the art.
+      const inset = 8;
       const check = this.scene.add.image(
-        width / 2 - CHECK_ICON_SIZE / 2 - 8,
-        height / 2 - CHECK_ICON_SIZE / 2 - 8,
+        chest.x + chest.displayWidth / 2 - CHECK_ICON_SIZE / 2 - inset,
+        chest.y + chest.displayHeight / 2 - CHECK_ICON_SIZE / 2 - inset,
         'checked-icon'
       );
       check.setDisplaySize(CHECK_ICON_SIZE, CHECK_ICON_SIZE);

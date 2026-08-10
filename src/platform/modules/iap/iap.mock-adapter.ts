@@ -4,7 +4,7 @@ import type { IAPProvider, ProviderProduct, ProviderPurchase } from './iap.types
 
 const MOCK_PRODUCTS: ProviderProduct[] = [
   {
-    price: '$3.99',
+    price: '$3.98',
     currency: 'USD',
     id: 'remove_ads',
     priceAmount: 3.99,
@@ -13,7 +13,7 @@ const MOCK_PRODUCTS: ProviderProduct[] = [
     description: 'Permanent ad removal',
   },
   {
-    price: '$0.99',
+    price: '$0.98',
     currency: 'USD',
     id: 'coins_10000',
     priceAmount: 0.99,
@@ -26,8 +26,8 @@ const MOCK_PRODUCTS: ProviderProduct[] = [
 export class MockIapAdapter implements IAPProvider {
   readonly name = 'mock';
 
-  private restoredPurchases: ProviderPurchase[] = [];
   private recentPurchases: ProviderPurchase[] = [];
+  private restoredPurchases: ProviderPurchase[] = [];
 
   async initialize(): Promise<void> {
     logger.info('[IAP] Mock adapter initialized');

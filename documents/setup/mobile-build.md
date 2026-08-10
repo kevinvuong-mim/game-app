@@ -99,7 +99,7 @@ Các event/lifecycle chính:
 - Native app state change → emit `app:pause` / `app:resume`.
 - `app:pause` / visibility hidden → `gameRunService.flush()` + `saveLocal` (+ analytics flush).
 - Back button native → emit `app:back`.
-- `app:resume` cũng kích hoạt game sync flush, mission reset checks, daily reward checks, và **notification token refresh/flush / local schedule reconcile** qua controllers.
+- `app:resume` cũng kích hoạt game sync flush, mission reset checks, `dailyRewards.refreshOnResume()`, và **notification token refresh/flush / local schedule reconcile** (`notificationController` / `notificationService`).
 
 ---
 

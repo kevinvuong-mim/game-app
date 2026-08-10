@@ -2,6 +2,7 @@ import type {
   IAPProvider,
   RestoreResult,
   PurchaseResult,
+  ProviderProduct,
   ProviderPurchase,
   ProductDefinition,
 } from './iap.types';
@@ -10,6 +11,7 @@ import {
   getProductById,
   IAP_PURCHASE_TIMEOUT_MS,
   IAP_TIMEOUT_RECOVERY_MS,
+  normalizeStorePriceString,
 } from './iap.config';
 import { IapError } from './iap.types';
 import { IAP_EVENTS } from './iap.events';
@@ -37,6 +39,7 @@ class IapService {
   private entitlements = new Set<string>();
   private provider: IAPProvider | null = null;
   private initPromise: Promise<void> | null = null;
+  private products = new Map<string, ProviderProduct>();
 
   constructor(deps: IapServiceDeps = {}) {
     this.storage = deps.storage ?? purchaseStorage;
@@ -53,6 +56,25 @@ class IapService {
 
   isEnabled(): boolean {
     return this.enabled && getConfig().iapEnabled;
+  }
+
+  isReady(): boolean {
+    return this.ready;
+  }
+
+  isPurchasing(): boolean {
+    return this.purchasing;
+  }
+
+  /** Localized store price string when available. */
+  getProductPrice(productId: string): string | undefined {
+    const price = this.products.get(productId)?.price;
+    return price ? normalizeStorePriceString(price) : undefined;
+  }
+
+  /** Prefer live store price; fall back to catalog/hardcoded string for offline UI. */
+  getDisplayPrice(productId: string, fallback: string): string {
+    return this.getProductPrice(productId) ?? normalizeStorePriceString(fallback);
   }
 
   /** Initialize IAP once — safe to call multiple times. */
@@ -97,6 +119,8 @@ class IapService {
         }
       }
 
+      await this.refreshProducts();
+
       this.ready = true;
       logger.info('[IAP] Ready', { provider: this.provider.name, entitlements: stored });
 
@@ -107,6 +131,22 @@ class IapService {
     } catch (error) {
       logger.error('[IAP] Initialization failed', error);
       throw error;
+    }
+  }
+
+  /** Reload localized product metadata from the store / mock catalog. */
+  async refreshProducts(): Promise<void> {
+    if (!this.provider) return;
+
+    try {
+      const list = await this.provider.getProducts();
+      this.products.clear();
+      for (const product of list) {
+        this.products.set(product.id, product);
+      }
+      this.emit(IAP_EVENTS.PRODUCTS_UPDATED, { productIds: [...this.products.keys()] });
+    } catch (error) {
+      logger.warn('[IAP] Failed to refresh products', error);
     }
   }
 
@@ -131,8 +171,10 @@ class IapService {
       return { success: false, cancelled: false, error: 'Purchase already in progress' };
     }
 
+    // Already owned locally — treat as success and re-sync ads/UI (do not show failure).
     if (product.type === 'non_consumable' && this.has(product.entitlement)) {
-      return { success: false, cancelled: false, error: 'Already owned' };
+      await this.acknowledgeOwnedEntitlement(product);
+      return { success: true, cancelled: false, entitlement: product.entitlement };
     }
 
     this.purchasing = true;
@@ -149,6 +191,12 @@ class IapService {
 
       return await this.completePurchase(product, providerPurchase);
     } catch (error) {
+      if (this.isDuplicatePurchaseError(error) && product.type === 'non_consumable') {
+        await this.acknowledgeOwnedEntitlement(product);
+        logger.info('[IAP] Already owned at store — granted locally', { productId: product.id });
+        return { success: true, cancelled: false, entitlement: product.entitlement };
+      }
+
       const result = this.normalizePurchaseError(error, product.id);
 
       // Store purchase may still complete after a client timeout — keep waiting + poll.
@@ -249,6 +297,11 @@ class IapService {
         }
 
         if (settledError) {
+          if (this.isDuplicatePurchaseError(settledError) && product.type === 'non_consumable') {
+            await this.acknowledgeOwnedEntitlement(product);
+            return true;
+          }
+
           const failed = this.normalizePurchaseError(settledError, product.id);
           if (failed.cancelled || (failed.error && !/timed out/i.test(failed.error))) {
             logger.warn('[IAP] Timeout recovery: store returned failure', failed);
@@ -362,6 +415,28 @@ class IapService {
         await this.grantEntitlement(entitlement, { emitChange: true });
       }
     }
+
+    await this.refreshProducts();
+  }
+
+  /**
+   * Persist + notify for an already-owned non-consumable (local cache or store duplicate).
+   */
+  private async acknowledgeOwnedEntitlement(product: ProductDefinition): Promise<void> {
+    await this.grantEntitlement(product.entitlement);
+    this.emitEntitlementChanged(product.entitlement, true);
+    this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+      productId: product.id,
+      entitlement: product.entitlement,
+    });
+  }
+
+  private isDuplicatePurchaseError(error: unknown): boolean {
+    if (error instanceof Error && error.name === 'IapError') {
+      return (error as IapError).code === 'duplicate';
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    return /already\s*(owned|purchased)/i.test(message);
   }
 
   private async grantEntitlement(

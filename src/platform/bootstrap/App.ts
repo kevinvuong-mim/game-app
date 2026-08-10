@@ -151,7 +151,7 @@ class App {
         await notificationService.requestInitialPermissions();
 
         if (runtime.localNotificationsEnabled) {
-          void notificationService.reconcileDailyRewardSchedule(dailyRewards.canClaim());
+          void notificationService.reconcileDailyRewardSchedule();
         }
       } else {
         notificationService.markInitialPermissionPromptComplete();

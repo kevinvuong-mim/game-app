@@ -9,6 +9,7 @@ import type {
   IapPurchaseFailedPayload,
   IapRestoreSuccessPayload,
   IapPurchaseSuccessPayload,
+  IapProductsUpdatedPayload,
   IapEntitlementChangedPayload,
 } from '@platform/modules/iap/iap.events';
 import type { AdContext, AdPlacement } from '@platform/core/advertising';
@@ -52,6 +53,7 @@ export interface PlatformEventMap {
   'daily:claim': { day: number; streak: number };
   'iap:purchase:failed': IapPurchaseFailedPayload;
   'iap:restore:success': IapRestoreSuccessPayload;
+  'iap:products:updated': IapProductsUpdatedPayload;
   'iap:purchase:success': IapPurchaseSuccessPayload;
   /** Modules emit; bootstrap binds ToastManager (avoids modules → UI imports). */
   'ui:toast': {

@@ -21,6 +21,12 @@ export interface ShopItem {
   currency: 'iap' | 'coins';
 }
 
+export interface ShopPurchaseResult {
+  error?: string;
+  success: boolean;
+  cancelled: boolean;
+}
+
 class ShopService {
   private items: ShopItem[] = catalog.items as ShopItem[];
   private purchaseInFlight = false;
@@ -67,22 +73,25 @@ class ShopService {
     return true;
   }
 
-  async purchase(itemId: string): Promise<boolean> {
+  async purchase(itemId: string): Promise<ShopPurchaseResult> {
     if (this.purchaseInFlight) {
       logger.warn(`[Shop] Purchase already in flight: ${itemId}`);
-      return false;
+      return { success: false, cancelled: false, error: 'Purchase already in progress' };
     }
 
     const item = this.getItem(itemId);
     if (!item) {
       logger.warn(`[Shop] Item not found: ${itemId}`);
-      return false;
+      return { success: false, cancelled: false, error: 'Item not found' };
     }
 
     this.purchaseInFlight = true;
     try {
       if (item.currency === 'iap' && item.productKey) {
-        if (item.type === 'entitlement' && this.isOwned(itemId)) return false;
+        // Already owned — success without a second charge / failure toast.
+        if (item.type === 'entitlement' && this.isOwned(itemId)) {
+          return { success: true, cancelled: false };
+        }
 
         const product = getProductByKey(item.productKey);
         const result = await iap.purchase(product);
@@ -90,24 +99,30 @@ class ShopService {
         if (result.success) {
           // Coin packs are fulfilled via iap:purchase:success (also covers timeout recovery).
           eventBus.emit('shop:purchase', { itemId, price: item.price });
-          return true;
+          return { success: true, cancelled: false };
         }
 
         if (!result.cancelled) {
           logger.error('[Shop] IAP purchase failed', result.error);
         }
-        return false;
+        return {
+          success: false,
+          cancelled: result.cancelled,
+          error: result.error,
+        };
       }
 
       if (item.currency === 'coins') {
-        if (!usePlatformStore.getState().spendCoins(item.price)) return false;
+        if (!usePlatformStore.getState().spendCoins(item.price)) {
+          return { success: false, cancelled: false, error: 'not_enough_coins' };
+        }
       } else {
-        return false;
+        return { success: false, cancelled: false, error: 'Unsupported currency' };
       }
 
       this.grantItem(item);
       eventBus.emit('shop:purchase', { itemId, price: item.price });
-      return true;
+      return { success: true, cancelled: false };
     } finally {
       this.purchaseInFlight = false;
     }

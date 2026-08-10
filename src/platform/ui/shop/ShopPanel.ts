@@ -65,6 +65,10 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     return !!this.header?.isGetCoinsModalOpen();
   }
 
+  isPurchaseInFlight(): boolean {
+    return this.purchaseUiLocked || shop.isPurchaseInFlight() || !!this.header?.isPurchaseInFlight();
+  }
+
   hideGetCoinsModal(): void {
     this.header?.hideGetCoinsModal();
   }
@@ -264,9 +268,16 @@ export class ShopPanel extends Phaser.GameObjects.Container {
 
     this.setPriceButtonsLocked(true);
     try {
-      const success = await shop.purchase(item.id);
-      if (!success) {
-        toast.show({ message: t('shop.purchaseFailed'), type: 'error' });
+      const result = await shop.purchase(item.id);
+      if (result.cancelled) return;
+      if (!result.success) {
+        toast.show({
+          message:
+            result.error === 'not_enough_coins'
+              ? t('shop.notEnoughCoins')
+              : t('shop.purchaseFailed'),
+          type: 'error',
+        });
         return;
       }
       if (item.currency === 'coins') {

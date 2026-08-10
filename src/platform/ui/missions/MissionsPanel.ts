@@ -78,6 +78,10 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     return !!this.header?.isGetCoinsModalOpen();
   }
 
+  isPurchaseInFlight(): boolean {
+    return !!this.header?.isPurchaseInFlight();
+  }
+
   hideGetCoinsModal(): void {
     this.header?.hideGetCoinsModal();
   }

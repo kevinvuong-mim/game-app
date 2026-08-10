@@ -17,8 +17,8 @@ export type GameRunSnapshot = {
   dropperX: number;
   elapsedMs: number;
   nextLevel: number;
-  currentLevel: number;
   fruits: SavedFruit[];
+  currentLevel: number;
   sessionStarted: boolean;
 };
 

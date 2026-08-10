@@ -7,7 +7,9 @@ import {
   PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
 import { gameConfig } from '@game/config';
+import { iap } from '@platform/modules/iap';
 import type { ToastOptions } from '../types';
+import { shop } from '@platform/modules/shop';
 import { toast } from '../toast/ToastManager';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
@@ -88,6 +90,8 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
    */
   private deferSceneAction(action: () => void): void {
     if (this.disposed) return;
+    if (this.isPurchaseInFlight()) return;
+
     const scene = this.scene;
     if (!scene?.sys?.isActive()) return;
 
@@ -148,6 +152,10 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
 
   isPurchaseModalOpen(): boolean {
     return this.adsSection?.isPurchaseModalOpen() ?? false;
+  }
+
+  isPurchaseInFlight(): boolean {
+    return !!this.adsSection?.isPurchasing() || shop.isPurchaseInFlight() || iap.isPurchasing();
   }
 
   hidePurchaseModal(): void {

@@ -56,10 +56,10 @@ native/firebase/GoogleService-Info.plist
 
 Push/local bật theo `src/platform/core/config/notification-env.json`, merge vào `ENV_CONFIGS` trong `src/platform/core/config/index.ts`:
 
-| Env            | Push\* | Local\* |
-| -------------- | ------ | ------- |
-| `development`  | on     | on      |
-| `production`   | on     | on      |
+| Env           | Push\* | Local\* |
+| ------------- | ------ | ------- |
+| `development` | on     | on      |
+| `production`  | on     | on      |
 
 \* Push chỉ thực sự bật khi native **và** đủ 5 biến Firebase sau. Local cũng bị tắt trên web vì `resolveLocalNotificationsEnabled()` yêu cầu native.
 
@@ -156,9 +156,10 @@ Kiểm tra:
 
 ### Daily Reward (Local Notification)
 
-1. Mở app (cold start) hoặc resume → arm reminder **07:00 mỗi sáng** nếu chưa claim
-2. Claim trước 07:00 → bỏ nudge hôm nay, giữ các sáng tiếp theo
-3. Tap notification → mở `DailyReward` scene
+1. Cold start: sau notification permission, `App` reconcile horizon **07:00 mỗi sáng** theo `dailyRewards.canClaim()`
+2. Resume / claim / đổi ngôn ngữ → cancel + re-arm (queue tuần tự; `canClaim` đọc lúc job chạy)
+3. Claim trước 07:00 → bỏ nudge hôm nay, giữ các sáng tiếp theo
+4. Tap notification → mở `DailyReward` scene (`extra.route: 'DailyReward'`)
 
 ### Push — scheduled rank (`rank_push`)
 
@@ -173,12 +174,12 @@ Kiểm tra:
 
 Client **không dùng deeplink URL**. Flow:
 
-| Nguồn               | Payload                      | Scene mở                               |
-| ------------------- | ---------------------------- | -------------------------------------- |
-| Push scheduled rank | `data.type` + `data.route`   | `Leaderboard`; foreground → toast i18n |
-| Local daily reward  | `extra.type` + `extra.route` | `DailyReward`                          |
+| Nguồn               | Payload                    | Scene mở                               |
+| ------------------- | -------------------------- | -------------------------------------- |
+| Push scheduled rank | `data.type` + `data.route` | `Leaderboard`; foreground → toast i18n |
+| Local daily reward  | `extra.route`              | `DailyReward`                          |
 
-**Cold start:** Nếu user tap notification khi app bị kill, `navigationService` lưu pending destination. Sau preload assets, `PreloadScene` emit `boot:preload-complete` (listener gọi `markBootComplete()`) rồi navigate tới target scene.
+**Cold start:** Nếu user tap notification khi app bị kill, `navigationService` lưu pending destination. Sau preload assets, `PreloadScene` emit `boot:preload-complete` (listener gọi `markBootComplete()`), đọc `peekPendingNavigation()`, rồi navigate tới target scene.
 
 Chi tiết module: [Notifications](../modules/notifications.md).
 

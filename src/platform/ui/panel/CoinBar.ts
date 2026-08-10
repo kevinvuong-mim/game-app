@@ -1,18 +1,21 @@
 import Phaser from 'phaser';
 
 import type { UIButton } from '../types';
+import { iap } from '@platform/modules/iap';
 import { shop } from '@platform/modules/shop';
 import { toast } from '../toast/ToastManager';
+import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '../button/UIButton';
 import { formatNumber } from '@platform/core/utils';
 import { t } from '@platform/modules/i18n/i18n.service';
 import { usePlatformStore } from '@platform/core/state';
+import { IAP_EVENTS } from '@platform/modules/iap/iap.events';
 import { drawRoundedRect, measureTextWidth } from './graphics';
 import { soundManager } from '@platform/ui/audio/SoundManager';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from './panelTheme';
 import { getWorldPosition, spawnCoinsFlyTo } from '../effects/coinFly';
-import { COINS_10000_AMOUNT, COINS_10000_PRICE } from '@platform/modules/iap/iap.config';
+import { COINS_10000_AMOUNT, COINS_10000_PRICE, PRODUCTS } from '@platform/modules/iap/iap.config';
 
 const COIN_BAR_GAP = 10;
 const COIN_BAR_PAD_X = 8;
@@ -83,6 +86,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
   private coinText?: Phaser.GameObjects.Text;
   private coinIcon?: Phaser.GameObjects.Image;
   private coinBarGfx?: Phaser.GameObjects.Graphics;
+  private eventUnsubscribers: Array<() => void> = [];
   private iapPackCoinIcon?: Phaser.GameObjects.Image;
   private getCoinsModal?: Phaser.GameObjects.Container;
 
@@ -100,11 +104,18 @@ export class CoinBar extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     this.build();
     this.bindStore();
+    this.eventUnsubscribers.push(
+      eventBus.on(IAP_EVENTS.PRODUCTS_UPDATED, () => {
+        this.refreshIapPackPrice();
+      })
+    );
   }
 
   destroy(fromScene?: boolean): void {
     this.storeUnsubscribe?.();
     this.storeUnsubscribe = undefined;
+    for (const unsub of this.eventUnsubscribers) unsub();
+    this.eventUnsubscribers = [];
     this.getCoinsModal?.destroy(true);
     this.getCoinsModal = undefined;
     this.buyCoinsButton = undefined;
@@ -114,6 +125,10 @@ export class CoinBar extends Phaser.GameObjects.Container {
 
   isGetCoinsModalOpen(): boolean {
     return !!this.getCoinsModal?.visible;
+  }
+
+  isPurchaseInFlight(): boolean {
+    return this.purchasingCoins;
   }
 
   /** World-space center of the coin icon (for fly-in VFX). */
@@ -207,8 +222,12 @@ export class CoinBar extends Phaser.GameObjects.Container {
 
     if (this.getCoinsModal) {
       this.getCoinsModal.setVisible(true);
+      this.refreshIapPackPrice();
+      void iap.refreshProducts();
       return;
     }
+
+    void iap.refreshProducts();
 
     const { width, height } = this.scene.cameras.main;
     const modal = this.scene.add.container(0, 0).setDepth(100);
@@ -425,7 +444,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
         .setOrigin(0, 0.5)
     );
 
-    const priceLabel = t('shop.getCoins.buyPrice', { price: COINS_10000_PRICE });
+    const priceLabel = this.getCoinPackPriceLabel();
     const priceTextWidth = measureTextWidth(this.scene, priceLabel, {
       fontSize: '18px',
       fontStyle: 'bold',
@@ -438,6 +457,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
       IAP_PRICE_BTN_PAD_X * 2 + priceTextWidth
     );
     const priceBtnX = halfW - IAP_PACK_PAD - priceBtnWidth / 2;
+    const iapAvailable = iap.isEnabled();
 
     this.buyCoinsButton = createUIButton({
       scene: this.scene,
@@ -452,6 +472,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
           border: { width: 3, color: '#000000' },
         },
       },
+      disabled: !iapAvailable,
       onClick,
     });
     pack.add(this.buyCoinsButton);
@@ -459,15 +480,34 @@ export class CoinBar extends Phaser.GameObjects.Container {
     return pack;
   }
 
+  private getCoinPackPriceLabel(): string {
+    const price = iap.getDisplayPrice(PRODUCTS.COINS_10000.id, COINS_10000_PRICE);
+    return t('shop.getCoins.buyPrice', { price });
+  }
+
+  private refreshIapPackPrice(): void {
+    if (!this.buyCoinsButton) return;
+    this.buyCoinsButton.setText(this.getCoinPackPriceLabel());
+    this.buyCoinsButton.setEnabled(iap.isEnabled() && !this.purchasingCoins);
+  }
+
   private async purchaseCoinPack(): Promise<void> {
     if (this.purchasingCoins) return;
+
+    if (!iap.isEnabled()) {
+      toast.show({ message: t('shop.iapUnavailable'), type: 'error' });
+      return;
+    }
+
     this.purchasingCoins = true;
     this.buyCoinsButton?.setLoading(true);
 
     let success = false;
     try {
-      success = await shop.purchase(COINS_PACK_ITEM_ID);
-      if (success) {
+      const result = await shop.purchase(COINS_PACK_ITEM_ID);
+      if (result.cancelled) return;
+      if (result.success) {
+        success = true;
         soundManager.playCoinDrop();
         this.playPurchaseCoinFly();
       } else {
@@ -476,6 +516,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
     } finally {
       this.purchasingCoins = false;
       this.buyCoinsButton?.setLoading(false);
+      this.refreshIapPackPrice();
     }
 
     if (success) {

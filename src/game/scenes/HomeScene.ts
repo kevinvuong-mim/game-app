@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 
 import { eventBus } from '@platform/core/events';
+import type { UIButton } from '@platform/ui/types';
 import { CoinBar } from '@platform/ui/panel/CoinBar';
 import { t, missions, dailyRewards } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
 
 export class HomeScene extends Phaser.Scene {
   private coinBar?: CoinBar;
+  private dailyRewardButton?: UIButton;
   private unsubscribers: Array<() => void> = [];
 
   constructor() {
@@ -123,7 +125,7 @@ export class HomeScene extends Phaser.Scene {
       onClick: () => this.openScreen('Missions'),
     });
 
-    createUIButton({
+    this.dailyRewardButton = createUIButton({
       scene: this,
       position: { x: (3 * width) / 4, y: height * 0.86 },
       size: { width: 120, height: 120 },
@@ -155,6 +157,12 @@ export class HomeScene extends Phaser.Scene {
         if (this.coinBar?.isGetCoinsModalOpen()) {
           this.coinBar.hideGetCoinsModal();
         }
+      }),
+      eventBus.on('app:resume', () => {
+        this.dailyRewardButton?.setBadgeVisible(dailyRewards.canClaim());
+      }),
+      eventBus.on('daily:claim', () => {
+        this.dailyRewardButton?.setBadgeVisible(false);
       })
     );
   }
@@ -163,6 +171,7 @@ export class HomeScene extends Phaser.Scene {
     this.cleanupEventListeners();
     this.coinBar?.destroy();
     this.coinBar = undefined;
+    this.dailyRewardButton = undefined;
   }
 
   private cleanupEventListeners(): void {

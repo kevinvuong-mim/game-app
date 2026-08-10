@@ -48,6 +48,10 @@ export class PanelHeader extends Phaser.GameObjects.Container {
     return !!this.coinBar?.isGetCoinsModalOpen();
   }
 
+  isPurchaseInFlight(): boolean {
+    return !!this.coinBar?.isPurchaseInFlight();
+  }
+
   getCoinIconWorldPosition(): { x: number; y: number } | null {
     return this.coinBar?.getCoinIconWorldPosition() ?? null;
   }
