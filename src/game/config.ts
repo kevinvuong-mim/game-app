@@ -26,7 +26,7 @@ export interface GameConfig {
 export const gameConfig: GameConfig = {
   width: 720,
   height: 1280,
-  name: 'Fruloop',
+  name: 'Memora',
   version: '1.0.0',
   id: import.meta.env.VITE_GAME_ID ?? '',
   // Suika demo uses Matter; replace or remove when cloning a non-physics game.

@@ -1,6 +1,6 @@
-# Fruloop
+# Memora
 
-Fruloop is a mobile game that allows you to play with your friends and family.
+Memora is a mobile game that allows you to play with your friends and family.
 
 ## Tech Stack
 
@@ -204,12 +204,12 @@ Copy `.env.example` to `.env` and adjust per environment.
 
 ```bash
 VITE_APP_ENV=development      # development | production
-VITE_GAME_ID=FRULOOP
+VITE_GAME_ID=MEMORA
 VITE_IAP_PROVIDER=mock        # mock | revenuecat
 VITE_ADS_PROVIDER=mock        # mock | admob (AdMob used on native when admob)
 VITE_ANALYTICS_PROVIDER=console # console | firebase
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
+VITE_ANDROID_PACKAGE_ID=com.vraxion.memora
 
 # Native AdMob (build/release)
 VITE_ADMOB_ANDROID_APP_ID=

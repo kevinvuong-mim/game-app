@@ -24,13 +24,13 @@ Hybrid offline-first: đọc all-time leaderboard từ `game-api`, cache theo pa
 
 ## Endpoint
 
-`GET /api/leaderboards?gameId=FRULOOP&page=1&limit=100&guestId=<optional>`
+`GET /api/leaderboards?gameId=MEMORA&page=1&limit=100&guestId=<optional>`
 
 ## Response (`data`)
 
 ```json
 {
-  "gameId": "FRULOOP",
+  "gameId": "MEMORA",
   "total": 150,
   "page": 1,
   "limit": 100,

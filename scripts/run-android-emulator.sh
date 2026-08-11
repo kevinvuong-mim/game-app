@@ -140,8 +140,8 @@ start_emulator() {
     log "Starting emulator: $avd"
   fi
 
-  "$EMULATOR" "${args[@]}" >/tmp/fruloop-emulator.log 2>&1 &
-  log "Emulator log: /tmp/fruloop-emulator.log"
+  "$EMULATOR" "${args[@]}" >/tmp/memora-emulator.log 2>&1 &
+  log "Emulator log: /tmp/memora-emulator.log"
 }
 
 ensure_emulator() {

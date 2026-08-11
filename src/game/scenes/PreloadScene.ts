@@ -197,11 +197,6 @@ export class PreloadScene extends Phaser.Scene {
 
     this.addBackground(width, height);
 
-    // Soft bottom wash so the bar reads on bright grass without a heavy card.
-    const wash = this.add.graphics().setDepth(1);
-    wash.fillStyle(0x1a2e10, 0.28);
-    wash.fillEllipse(centerX, height * 0.78, width * 0.92, height * 0.28);
-
     const barCenterY = height * 0.77;
     const shell = this.add.container(centerX, barCenterY).setDepth(2).setAlpha(0).setScale(0.92);
 

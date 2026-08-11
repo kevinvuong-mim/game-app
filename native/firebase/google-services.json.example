@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_ANDROID_APP_HASH",
         "android_client_info": {
-          "package_name": "com.vraxion.fruloop"
+          "package_name": "com.vraxion.memora"
         }
       },
       "oauth_client": [],

@@ -1,5 +1,5 @@
 // Package line is rewritten by scripts/apply-android-native.mjs from capacitor.config.ts appId.
-package com.vraxion.fruloop;
+package com.vraxion.memora;
 
 import android.os.Bundle;
 import androidx.core.view.WindowCompat;

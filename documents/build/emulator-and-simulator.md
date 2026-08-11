@@ -124,7 +124,7 @@ Các biến quan trọng khi chạy native với AdMob:
 
 ```env
 VITE_APP_ENV=development
-VITE_GAME_ID=FRULOOP
+VITE_GAME_ID=MEMORA
 
 VITE_ADS_PROVIDER=admob
 
@@ -264,7 +264,7 @@ Cài APK và mở app:
 
 ```bash
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.vraxion.fruloop/.MainActivity
+adb shell am start -n com.vraxion.memora/.MainActivity
 ```
 
 Hoặc dùng Gradle (cài + launch một lần):
@@ -301,10 +301,10 @@ Sau đó `adb install` / `am start` như trên.
 
 ```bash
 # Process còn sống
-adb shell pidof com.vraxion.fruloop
+adb shell pidof com.vraxion.memora
 
 # Log app (Capacitor / crash)
-adb logcat -d | grep -iE "Capacitor/Console|FATAL|AndroidRuntime|fruloop" | tail -40
+adb logcat -d | grep -iE "Capacitor/Console|FATAL|AndroidRuntime|memora" | tail -40
 ```
 
 Log healthy thường thấy:
@@ -396,7 +396,7 @@ Cài và chạy:
 
 ```bash
 xcrun simctl install booted "$APP"
-xcrun simctl launch booted com.vraxion.fruloop
+xcrun simctl launch booted com.vraxion.memora
 ```
 
 (`booted` = simulator đang mở)
@@ -443,7 +443,7 @@ adb wait-for-device
 until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do sleep 2; done
 
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.vraxion.fruloop/.MainActivity
+adb shell am start -n com.vraxion.memora/.MainActivity
 adb logcat -s Capacitor/Console
 ```
 
@@ -461,7 +461,7 @@ xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug \
 APP=$(find ~/Library/Developer/Xcode/DerivedData/App-*/Build/Products/Debug-iphonesimulator \
   -name "App.app" -maxdepth 1 | head -1)
 xcrun simctl install booted "$APP"
-xcrun simctl launch booted com.vraxion.fruloop
+xcrun simctl launch booted com.vraxion.memora
 ```
 
 ---

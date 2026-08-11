@@ -2,7 +2,7 @@
 
 ## Overview
 
-Tài liệu này mô tả các biến môi trường runtime của `fruloop`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
+Tài liệu này mô tả các biến môi trường runtime của `memora`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
 
 `src/game/config.ts` khai báo display identity: `id` từ `VITE_GAME_ID`; `name`, `width`, `height`, `version`, `physics` chỉnh trong file.
 
@@ -12,7 +12,7 @@ Tài liệu này mô tả các biến môi trường runtime của `fruloop`. V�
 
 ```env
 VITE_APP_ENV=development
-VITE_GAME_ID=FRULOOP
+VITE_GAME_ID=MEMORA
 ```
 
 | Variable       | Values                      | Default / Source             | Description                                                   |
@@ -157,10 +157,10 @@ Native config files (`google-services.json`, `GoogleService-Info.plist`): [Fireb
 
 ```env
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
+VITE_ANDROID_PACKAGE_ID=com.vraxion.memora
 ```
 
-Các ID này được gắn vào link khi share điểm số và rate fallback. Android package mặc định là `com.vraxion.fruloop`; iOS App Store ID mặc định rỗng.
+Các ID này được gắn vào link khi share điểm số và rate fallback. Android package mặc định là `com.vraxion.memora`; iOS App Store ID mặc định rỗng.
 
 ---
 
@@ -168,7 +168,7 @@ Các ID này được gắn vào link khi share điểm số và rate fallback. 
 
 ```env
 VITE_APP_ENV=development
-VITE_GAME_ID=FRULOOP
+VITE_GAME_ID=MEMORA
 
 VITE_IAP_PROVIDER=mock
 VITE_REVENUECAT_ANDROID_API_KEY=
@@ -180,7 +180,7 @@ VITE_ADMOB_ANDROID_APP_ID=
 VITE_ADMOB_IOS_APP_ID=
 
 VITE_IOS_APP_STORE_ID=
-VITE_ANDROID_PACKAGE_ID=com.vraxion.fruloop
+VITE_ANDROID_PACKAGE_ID=com.vraxion.memora
 ```
 
 Store / release builds: set `VITE_APP_ENV=production` + real RevenueCat / AdMob values (xem comments trong `.env.example`).

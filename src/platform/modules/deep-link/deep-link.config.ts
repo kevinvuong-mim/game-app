@@ -8,9 +8,9 @@ export interface DeepLinkConfig {
 
 /** Edit these when cloning a game — keep in sync with `scripts/deeplink-config.mjs`. */
 const DEEP_LINK_CONFIG = {
-  scheme: 'fruloop',
-  hostProd: 'fruloop.vraxion.com',
-  hostDev: 'dev-fruloop.vraxion.com',
+  scheme: 'memora',
+  hostProd: 'memora.vraxion.com',
+  hostDev: 'dev-memora.vraxion.com',
 };
 
 function resolveEnvironment(): Environment {

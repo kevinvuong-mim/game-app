@@ -4,8 +4,8 @@ const liveReloadUrl = process.env.CAP_SERVER_URL;
 
 const config: CapacitorConfig = {
   webDir: 'dist',
-  appName: 'Fruloop',
-  appId: 'com.vraxion.fruloop',
+  appName: 'Memora',
+  appId: 'com.vraxion.memora',
   plugins: {
     StatusBar: {
       overlaysWebView: true,

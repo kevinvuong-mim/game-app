@@ -68,7 +68,7 @@ Sau sync thành công: `nameSyncPending: false`.
 Body:
 
 ```json
-{ "gameId": "FRULOOP" }
+{ "gameId": "MEMORA" }
 ```
 
 Response (`data`):
@@ -76,7 +76,7 @@ Response (`data`):
 ```json
 {
   "guestId": "uuid",
-  "gameId": "FRULOOP",
+  "gameId": "MEMORA",
   "secretToken": "raw-token"
 }
 ```

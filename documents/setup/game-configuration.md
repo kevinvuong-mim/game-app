@@ -7,7 +7,7 @@ export const gameConfig: GameConfig = {
   width: 720,
   height: 1280,
   version: '1.0.0',
-  name: 'Fruloop',
+  name: 'Memora',
   id: import.meta.env.VITE_GAME_ID ?? '',
   // Suika demo uses Matter; replace or remove when cloning a non-physics game.
   physics: {
@@ -36,7 +36,7 @@ Gameplay nên emit `getConfig().gameId` (hoặc cùng `VITE_GAME_ID` qua `gameCo
 ## Env
 
 ```bash
-VITE_GAME_ID=FRULOOP
+VITE_GAME_ID=MEMORA
 ```
 
 Chạy `npm run game:verify-config` trước build production. `build:android` / `build:ios` tự gọi script này trước `npm run build`. Khi `VITE_APP_ENV=production` (hoặc `ENFORCE_RELEASE_MONETIZATION=true`), script còn enforce IAP/ads release gates + API probe — xem [environment-variables.md](./environment-variables.md).

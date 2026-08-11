@@ -7,7 +7,7 @@ Module quản lý **push notification** (FCM) và **local notification** (daily 
 | Loại                  | Nguồn                       | Khi nào                                                                                                                      |
 | --------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Push — Top 100 exited | Backend FCM                 | Guest #100 bị đẩy xuống rank >100 khi submitter có previous best ngoài Top-100 score band (xem API FCM jobs)                 |
-| Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (FRULOOP mặc định: 9:00 Thứ 7 VN); FCM type `rank_push`                             |
+| Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (MEMORA mặc định: 9:00 Thứ 7 VN); FCM type `rank_push`                              |
 | Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                                                        |
 | Local — Daily reward  | Client schedule             | 07:00 mỗi sáng (one-shot `at` horizon N ngày, `allowWhileIdle`); claim / past 07:00 thì bỏ hôm nay và arm các sáng tiếp theo |
 

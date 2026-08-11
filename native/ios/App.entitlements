@@ -6,8 +6,8 @@
 	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:dev-fruloop.vraxion.com</string>
-		<string>applinks:fruloop.vraxion.com</string>
+		<string>applinks:dev-memora.vraxion.com</string>
+		<string>applinks:memora.vraxion.com</string>
 	</array>
 </dict>
 </plist>

@@ -24,7 +24,7 @@ Header: `Authorization: Bearer <secretToken>`
 
 ```json
 {
-  "gameId": "FRULOOP",
+  "gameId": "MEMORA",
   "items": [
     {
       "clientResultId": "result-001",

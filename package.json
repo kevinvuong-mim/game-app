@@ -1,7 +1,7 @@
 {
-  "name": "fruloop",
+  "name": "memora",
   "version": "1.0.0",
-  "description": "Fruloop is a mobile game that allows you to play with your friends and family.",
+  "description": "Memora is a mobile game that allows you to play with your friends and family.",
   "type": "module",
   "private": true,
   "scripts": {

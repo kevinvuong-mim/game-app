@@ -2,7 +2,7 @@
 
 ## Overview
 
-`fruloop` dùng Capacitor 7 để build native Android/iOS. Thư mục `android/` và `ios/` có thể được generate lại bằng scripts, còn native templates nằm trong `native/` và được apply sau `cap sync`.
+`memora` dùng Capacitor 7 để build native Android/iOS. Thư mục `android/` và `ios/` có thể được generate lại bằng scripts, còn native templates nằm trong `native/` và được apply sau `cap sync`.
 
 ---
 
@@ -32,8 +32,8 @@ Current config:
 
 | Field                                           | Value                     |
 | ----------------------------------------------- | ------------------------- |
-| `appId`                                         | `com.vraxion.fruloop`     |
-| `appName`                                       | `Fruloop`                 |
+| `appId`                                         | `com.vraxion.memora`      |
+| `appName`                                       | `Memora`                  |
 | `webDir`                                        | `dist`                    |
 | `server.androidScheme`                          | `https`                   |
 | `SplashScreen.launchAutoHide`                   | `false`                   |
