@@ -32,7 +32,8 @@ export class CardView extends Phaser.GameObjects.Container {
     frame.setDisplaySize(cardSize, cardSize);
     const art = scene.add.image(0, 0, pairKey);
     const artSize = cardSize * 0.62;
-    art.setDisplaySize(artSize, artSize);
+    const scale = Math.min(artSize / art.width, artSize / art.height);
+    art.setDisplaySize(art.width * scale, art.height * scale);
     this.front.add([frame, art]);
     this.front.setVisible(false);
 
