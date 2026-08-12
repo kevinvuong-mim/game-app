@@ -3,7 +3,7 @@ import { getLocalDateKey } from '@platform/core/utils';
 type MissionStatus = 'active' | 'completed' | 'claimed';
 export type MissionResetPolicy = 'daily' | 'never' | 'onClaim';
 export type MissionBehaviorType =
-  'MERGE' | 'WATCH_AD' | 'PLAY_GAME' | 'REACH_SCORE' | 'DAILY_LOGIN' | 'UPDATE_NAME';
+  'MERGE' | 'WATCH_AD' | 'PLAY_GAME' | 'EARN_STARS' | 'DAILY_LOGIN' | 'UPDATE_NAME';
 
 interface MissionReward {
   type: 'coins';

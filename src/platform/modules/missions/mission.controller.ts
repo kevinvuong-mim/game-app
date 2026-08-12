@@ -19,8 +19,8 @@ class MissionController {
         void this.handleProgress('PLAY_GAME', 1);
       }),
 
-      events.on('score:update', ({ score }) => {
-        void this.handleProgress('REACH_SCORE', score, 'set');
+      events.on('stars:earned', ({ stars }) => {
+        void this.handleProgress('EARN_STARS', stars, 'set');
       }),
 
       events.on('merge', ({ count }) => {

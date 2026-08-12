@@ -1,12 +1,6 @@
 import { shop } from '@platform/ui';
 
-export const SKILL_IDS = [
-  'boost_hammer',
-  'boost_change',
-  'boost_swap',
-  'boost_size',
-  'boost_undo',
-] as const;
+export const SKILL_IDS = ['boost_reveal', 'boost_extra_time', 'boost_lucky_clover'] as const;
 
 export type SkillId = (typeof SKILL_IDS)[number];
 

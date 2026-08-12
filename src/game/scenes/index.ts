@@ -1,5 +1,6 @@
 import { BootScene } from './BootScene';
 import { HomeScene } from './HomeScene';
+import { MapScene } from './MapScene';
 import { ShopScene } from './ShopScene';
 import { LegalScene } from './LegalScene';
 import { PreloadScene } from './PreloadScene';
@@ -16,6 +17,7 @@ import { LeaderboardScene } from './LeaderboardScene';
 export const gameScenes = [
   BootScene,
   HomeScene,
+  MapScene,
   ShopScene,
   LegalScene,
   PreloadScene,

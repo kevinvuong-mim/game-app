@@ -6,11 +6,9 @@ import { createUIButton } from '@platform/ui/button/UIButton';
 import { SKILL_IDS, type SkillId, getSkillQuantity } from '@game/skills/skillInventory';
 
 const SKILL_ICONS: Record<SkillId, string> = {
-  boost_swap: 'shop-item-3',
-  boost_size: 'shop-item-4',
-  boost_undo: 'shop-item-5',
-  boost_hammer: 'shop-item-1',
-  boost_change: 'shop-item-2',
+  boost_reveal: 'shop-item-1',
+  boost_extra_time: 'shop-item-2',
+  boost_lucky_clover: 'shop-item-3',
 };
 
 /** Source texture is 626×149 — slice caps so rounded corners don't stretch with width. */
@@ -43,7 +41,6 @@ export class SkillBarView {
   private readonly maxPanelWidthRatio = 0.85;
   private readonly selectedSkillScale = 1.24;
 
-  private visible = false;
   private skillBarTop = 0;
   private skillBtnSize = 84;
   private skillBarBottom = 0;
@@ -51,14 +48,11 @@ export class SkillBarView {
   private skillPanelWidth = 0;
   private skillTrackBaseX = 0;
   private skillScrollIndex = 0;
-  private skillSwipeStartX = 0;
   private skillTrackCenterY = 0;
-  private skillDidSwipe = false;
   private layoutScreenWidth = 0;
   private layoutScreenHeight = 0;
   private skillSlotSpacing = 110;
   private skillNavConsumed = false;
-  private skillSwipeActive = false;
   private ownedSkillIds: SkillId[] = [];
   private skillHint?: Phaser.GameObjects.Text;
   private skillLeftArrow?: Phaser.GameObjects.Text;
@@ -80,14 +74,6 @@ export class SkillBarView {
     return this.skillBarBottom;
   }
 
-  get didSwipe(): boolean {
-    return this.skillDidSwipe;
-  }
-
-  get navConsumed(): boolean {
-    return this.skillNavConsumed;
-  }
-
   create(width: number, height: number): void {
     this.skillButtons.clear();
     this.skillSlots.clear();
@@ -100,10 +86,7 @@ export class SkillBarView {
     this.skillLeftArrowZone = undefined;
     this.skillRightArrowZone = undefined;
     this.skillScrollIndex = 0;
-    this.skillSwipeActive = false;
-    this.skillDidSwipe = false;
     this.skillNavConsumed = false;
-    this.visible = false;
     this.layoutScreenWidth = width;
     this.layoutScreenHeight = height;
 
@@ -300,47 +283,9 @@ export class SkillBarView {
     }
   }
 
-  onPointerDown(pointer: Phaser.Input.Pointer): void {
-    if (!this.visible || !this.isPointerOnBar(pointer)) return;
-    this.skillSwipeStartX = pointer.x;
-    this.skillSwipeActive = true;
-    this.skillDidSwipe = false;
-  }
-
-  /** Returns true if the swipe consumed the pointer (caller should skip drop). */
-  onPointerMove(pointer: Phaser.Input.Pointer): boolean {
-    if (!this.visible) return false;
-    if (this.skillSwipeActive && pointer.isDown) {
-      if (Math.abs(pointer.x - this.skillSwipeStartX) > 14) {
-        this.skillDidSwipe = true;
-      }
-      return true;
-    }
-    return false;
-  }
-
-  /** Returns true if the skill bar handled the pointer up. */
-  onPointerUp(pointer: Phaser.Input.Pointer): boolean {
-    if (!this.visible || !this.skillSwipeActive) return false;
-
-    const dx = pointer.x - this.skillSwipeStartX;
-    const didSwipe = this.skillDidSwipe && Math.abs(dx) > 40;
-    this.skillSwipeActive = false;
-
-    if (didSwipe) {
-      this.scroll(dx < 0 ? 1 : -1);
-      return true;
-    }
-
-    // Press started on the bar but released in the playfield — allow drop/skill targeting.
-    return this.isPointerOnBar(pointer);
-  }
-
   private bindNavZone(zone: Phaser.GameObjects.Zone, delta: number): void {
     zone.on('pointerdown', () => {
       this.skillNavConsumed = true;
-      this.skillSwipeActive = false;
-      this.skillDidSwipe = false;
     });
     zone.on('pointerup', () => {
       if (!this.skillNavConsumed) return;
@@ -381,15 +326,12 @@ export class SkillBarView {
 
   private updateBarVisibility(): void {
     const shouldShow = this.ownedSkillIds.length > 0;
-    this.visible = shouldShow;
 
     this.skillPanelBg?.setVisible(shouldShow);
     this.skillTrack?.setVisible(shouldShow);
     this.skillHint?.setVisible(shouldShow);
 
     if (!shouldShow) {
-      this.skillSwipeActive = false;
-      this.skillDidSwipe = false;
       this.skillNavConsumed = false;
       this.skillLeftArrow?.setVisible(false);
       this.skillRightArrow?.setVisible(false);
@@ -411,7 +353,7 @@ export class SkillBarView {
       size: { width: btnSize, height: btnSize },
       background: { key: SKILL_ICONS[id] },
       // Instant skills play their own SFX — skip the default button pop.
-      sound: id === 'boost_change' || id === 'boost_undo' ? false : 'pop',
+      sound: id === 'boost_extra_time' ? false : 'pop',
       badge: {
         content: String(qty),
         visible: true,
@@ -427,7 +369,7 @@ export class SkillBarView {
         },
       },
       onClick: () => {
-        if (this.skillDidSwipe || this.skillNavConsumed) return;
+        if (this.skillNavConsumed) return;
         this.callbacks.onSkillPressed(id);
       },
     });
@@ -436,17 +378,6 @@ export class SkillBarView {
     this.skillSlots.set(id, slot);
 
     return slot;
-  }
-
-  private isPointerOnBar(pointer: Phaser.Input.Pointer): boolean {
-    if (!this.visible) return false;
-    const { width } = this.scene.cameras.main;
-    return (
-      pointer.y >= this.skillBarTop &&
-      pointer.y <= this.skillBarBottom &&
-      pointer.x > 20 &&
-      pointer.x < width - 20
-    );
   }
 
   private slotX(index: number): number {

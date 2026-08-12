@@ -29,12 +29,4 @@ export const gameConfig: GameConfig = {
   name: 'Memora',
   version: '1.0.0',
   id: import.meta.env.VITE_GAME_ID ?? '',
-  // Suika demo uses Matter; replace or remove when cloning a non-physics game.
-  physics: {
-    default: 'matter',
-    matter: {
-      debug: false,
-      gravity: { x: 0, y: 1.4 },
-    },
-  },
 };

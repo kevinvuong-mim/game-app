@@ -7,11 +7,6 @@ export const SOUND_POP_KEY = 'pop';
 export const SOUND_COMBINE_KEY = 'combine';
 export const SOUND_COIN_DROP_KEY = 'coin-drop';
 export const SOUND_BGM_KEY = 'background-music';
-export const SOUND_BOOST_SIZE_KEY = 'boost-size';
-export const SOUND_BOOST_SWAP_KEY = 'boost-swap';
-export const SOUND_BOOST_UNDO_KEY = 'boost-undo';
-export const SOUND_BOOST_HAMMER_KEY = 'boost-hammer';
-export const SOUND_BOOST_CHANGE_KEY = 'boost-change';
 
 class SoundManager {
   private unlockBound = false;
@@ -77,26 +72,6 @@ class SoundManager {
 
   playCombine(): void {
     this.play(SOUND_COMBINE_KEY);
-  }
-
-  playBoostHammer(): void {
-    this.play(SOUND_BOOST_HAMMER_KEY);
-  }
-
-  playBoostChange(): void {
-    this.play(SOUND_BOOST_CHANGE_KEY);
-  }
-
-  playBoostSwap(): void {
-    this.play(SOUND_BOOST_SWAP_KEY);
-  }
-
-  playBoostSize(): void {
-    this.play(SOUND_BOOST_SIZE_KEY);
-  }
-
-  playBoostUndo(): void {
-    this.play(SOUND_BOOST_UNDO_KEY);
   }
 
   /** Start or stop looping BGM according to the current music setting. */

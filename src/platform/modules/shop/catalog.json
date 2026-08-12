@@ -1,49 +1,31 @@
 {
   "items": [
     {
-      "price": 1000,
+      "price": 500,
       "type": "boost",
       "currency": "coins",
-      "id": "boost_hammer",
+      "id": "boost_reveal",
       "icon": "shop-item-1",
-      "name": "Explosive Hammer",
-      "description": "Destroy the fruit you choose!"
+      "name": "Reveal One",
+      "description": "Flip 3 cards this turn."
     },
     {
       "price": 500,
       "type": "boost",
       "currency": "coins",
-      "id": "boost_change",
+      "id": "boost_extra_time",
       "icon": "shop-item-2",
-      "name": "Change Fruit",
-      "description": "Change the hanging fruit to a random one!"
+      "name": "Extra Time",
+      "description": "Add 30 seconds to the timer!"
     },
     {
-      "price": 1500,
-      "name": "Swap",
+      "price": 800,
+      "name": "Lucky Clover",
       "type": "boost",
-      "id": "boost_swap",
+      "id": "boost_lucky_clover",
       "currency": "coins",
       "icon": "shop-item-3",
-      "description": "Swap the positions of any fruits!"
-    },
-    {
-      "price": 500,
-      "type": "boost",
-      "id": "boost_size",
-      "currency": "coins",
-      "icon": "shop-item-4",
-      "name": "Size Increase",
-      "description": "Increase the size of the fruit!"
-    },
-    {
-      "price": 300,
-      "name": "Undo",
-      "type": "boost",
-      "id": "boost_undo",
-      "currency": "coins",
-      "icon": "shop-item-5",
-      "description": "Undo your last move!"
+      "description": "If your next match is correct, also clear a random extra pair."
     },
     {
       "price": 3.99,

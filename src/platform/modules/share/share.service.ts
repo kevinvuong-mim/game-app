@@ -6,15 +6,27 @@ import { t } from '@platform/modules/i18n/i18n.service';
 interface ShareScoreOptions {
   score: number;
   gameName: string;
+  stars?: number;
+  mapId?: number;
+  level?: number;
 }
 
 type ShareScoreResult = 'shared' | 'cancelled' | 'unavailable';
 
 class ShareService {
   /** Open the native share sheet with the player's score. */
-  async shareScore({ score, gameName }: ShareScoreOptions): Promise<ShareScoreResult> {
+  async shareScore({
+    score,
+    gameName,
+    stars,
+    mapId,
+    level,
+  }: ShareScoreOptions): Promise<ShareScoreResult> {
     const title = t('game.shareScoreTitle', { gameName });
-    const text = t('game.shareScoreText', { score, gameName });
+    const text =
+      stars !== undefined
+        ? t('game.shareStarsText', { stars, map: mapId ?? 1, level: level ?? 1, gameName })
+        : t('game.shareScoreText', { score, gameName });
     const dialogTitle = t('game.shareDialogTitle');
     const url = getStoreListingUrl(getConfig().storeListing) ?? undefined;
 

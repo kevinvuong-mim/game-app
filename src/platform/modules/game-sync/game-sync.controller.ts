@@ -19,7 +19,9 @@ class GameSyncController {
 
   bind(events: IEventBus): () => void {
     const unsubs = [
-      events.on('game:over', ({ score, duration, merges }) => {
+      events.on('game:over', ({ score, duration, merges, submitScore }) => {
+        if (!submitScore) return;
+
         const metadata: Record<string, number> = {
           duration: Math.round(duration / 1000),
         };

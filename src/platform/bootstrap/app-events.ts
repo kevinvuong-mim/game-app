@@ -44,12 +44,13 @@ export function bindAppEvents(): () => void {
       trackGameStart();
     }),
 
-    events.on('game:over', async ({ score, duration, merges }) => {
-      // Apply score before save — do not rely on a later score:update ordering.
-      usePlatformStore.getState().setHighScore(score);
-      // 1 point = 1 coin at end of run.
-      if (score > 0) {
-        usePlatformStore.getState().addCoins(score);
+    events.on('game:over', async ({ score, duration, merges, coins, submitScore }) => {
+      if (submitScore) {
+        usePlatformStore.getState().setHighScore(score);
+      }
+      const earned = coins ?? 0;
+      if (earned > 0) {
+        usePlatformStore.getState().addCoins(earned);
       }
       trackGameOver({ score, duration, merges });
       events.emit('ad:show:request', { placement: 'GAME_OVER' });

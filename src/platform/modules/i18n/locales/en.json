@@ -4,10 +4,11 @@
     "loading": "Loading..."
   },
   "home": {
-    "play": "Play",
+    "map": "Map",
+    "infinity": "Infinity",
+    "infinityLocked": "Complete Map 1 Level 5 to unlock Infinity Mode",
     "shop": "Shop",
     "settings": "Settings",
-    "leaderboard": "Leaderboard",
     "dailyReward": "Daily Reward",
     "missions": "Missions"
   },
@@ -16,33 +17,44 @@
     "prev": "Back",
     "next": "Next",
     "done": "Got it",
-    "step1Title": "Aim & Drop",
-    "step1Body": "Drag left or right to aim, then release to drop the fruit into the glass.",
-    "step2Title": "Merge Same Fruits",
-    "step2Body": "When two identical fruits touch, they merge into the next larger fruit and earn points.",
-    "step3Title": "Watch the Danger Line",
-    "step3Body": "Don't let settled fruits stay above the danger line — or the round ends!",
-    "step4Title": "Use Boosts",
-    "step4Body": "Buy boosts in the Shop — hammer, swap, grow, and more — to save tough stacks."
+    "step1Title": "Flip two cards",
+    "step1Body": "Tap a card to flip it, then tap a second card. Find the matching pair.",
+    "step2Title": "Match the pair",
+    "step2Body": "Same pictures disappear. Different pictures flip back — then try again.",
+    "step3Title": "Beat the clock",
+    "step3Body": "Clear every pair before time runs out. Faster clears earn more stars.",
+    "step4Title": "Use boosts",
+    "step4Body": "Buy Reveal, Extra Time, and Lucky Clover in the Shop to help on tough levels."
+  },
+  "map": {
+    "previous": "PREV",
+    "next": "NEXT",
+    "levelLocked": "Clear the previous level first",
+    "mapLocked": "Clear the previous map to play these levels"
   },
   "game": {
     "scoreLabel": "SCORE",
+    "levelLabel": "LEVEL {{level}}",
+    "levelShort": "LEVEL",
     "yourScore": "YOUR SCORE",
+    "yourStars": "STARS",
     "rank": "Rank: #{{rank}}",
     "coinsEarned": "COINS EARNED",
     "gameOver": "GAME OVER",
     "retry": "PLAY AGAIN",
+    "nextLevel": "NEXT LEVEL",
     "home": "HOME",
+    "map": "MAP",
+    "doubleReward": "X2 REWARD",
     "shareScore": "SHARE",
     "shareScoreTitle": "My score in {{gameName}}",
     "shareScoreText": "I scored {{score}} in {{gameName}}! Can you beat me?",
+    "shareStarsText": "I earned {{stars}} stars on Map {{map}} Level {{level}} in {{gameName}}!",
     "shareDialogTitle": "Share your score",
     "shareUnavailable": "Sharing is not available",
-    "skillHintHammer": "Tap a fruit to destroy it",
-    "skillHintSwap": "Tap two fruits to swap them",
-    "skillHintSwapSecond": "Tap the second fruit",
-    "skillHintSize": "Tap a fruit to grow it",
-    "skillUndoNothing": "Nothing to undo",
+    "skillHintReveal": "Tap a card — this turn you flip 3",
+    "skillHintClover": "Lucky Clover ready — match a pair!",
+    "combo": "COMBO x{{combo}}",
     "quitConfirmTitle": "Quit this run?",
     "quitConfirmMessage": "Your score will be submitted and the run will end.",
     "quitConfirm": "Quit",
@@ -67,25 +79,17 @@
       "purchaseSuccess": "Got {{coins}} coins!"
     },
     "items": {
-      "boost_hammer": {
-        "name": "Explosive Hammer",
-        "description": "Destroy the fruit you choose!"
+      "boost_reveal": {
+        "name": "Reveal One",
+        "description": "Flip 3 cards this turn."
       },
-      "boost_change": {
-        "name": "Change Fruit",
-        "description": "Change the hanging fruit to a random one!"
+      "boost_extra_time": {
+        "name": "Extra Time",
+        "description": "Add 30 seconds to the timer!"
       },
-      "boost_swap": {
-        "name": "Swap",
-        "description": "Swap the positions of any fruits!"
-      },
-      "boost_size": {
-        "name": "Size Increase",
-        "description": "Increase the size of the fruit!"
-      },
-      "boost_undo": {
-        "name": "Undo",
-        "description": "Undo your last move!"
+      "boost_lucky_clover": {
+        "name": "Lucky Clover",
+        "description": "If your next match is correct, also clear a random extra pair."
       },
       "remove_ads": {
         "name": "Remove Ads",
@@ -135,8 +139,8 @@
     "claimed": "Claimed",
     "progress": "{{current}}/{{target}}",
     "claimFailed": "Cannot claim yet",
-    "reachScore2000": "Reach 2,000 points",
-    "mergeFruit15": "Merge fruits 15 times",
+    "get3Stars": "Get 3 stars in a game",
+    "matchPairs15": "Match 15 pairs of cards",
     "watchAd": "Watch an ad video",
     "playGames3": "Play 3 matches",
     "dailyLogin": "Log in every day",

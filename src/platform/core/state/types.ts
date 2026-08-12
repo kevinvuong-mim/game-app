@@ -24,6 +24,10 @@ interface InventoryState {
 interface ProgressState {
   highScore: number;
   currentLevel: number;
+  /** Last map the player viewed on the map screen (1-based). */
+  lastMapId: number;
+  /** Best stars per map. Key is map id as string; value is stars[levelIndex] (0–3). */
+  campaignStars: Record<string, number[]>;
   /** User already submitted an in-app rating (stop further prompts). */
   hasRatedApp: boolean;
   /** Last star rating submitted in-app (1–5), if any. */
@@ -62,6 +66,8 @@ export const DEFAULT_STATE: PlatformState = {
   progress: {
     highScore: 0,
     currentLevel: 1,
+    lastMapId: 1,
+    campaignStars: {},
     totalGamesPlayed: 0,
     unlockedFeatures: [],
     hasRatedApp: false,

@@ -5,7 +5,7 @@ const RUN_KEY = 'gameplay-run';
 
 /**
  * Opaque mid-run snapshot owned by the game layer.
- * Platform only persists JSON — validation happens in `@game/gameplay/GameRunSave`.
+ * Platform only persists JSON — the game layer validates snapshots if it uses mid-run saves.
  */
 class GameRunService {
   private dirty = false;

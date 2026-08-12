@@ -4,10 +4,11 @@
     "loading": "Đang tải..."
   },
   "home": {
-    "play": "Chơi",
+    "map": "Bản đồ",
+    "infinity": "Vô hạn",
+    "infinityLocked": "Hoàn thành Map 1 Level 5 để mở Infinity Mode",
     "shop": "Cửa hàng",
     "settings": "Cài đặt",
-    "leaderboard": "Xếp hạng",
     "dailyReward": "Quà hàng ngày",
     "missions": "Nhiệm vụ"
   },
@@ -16,33 +17,44 @@
     "prev": "Trước",
     "next": "Tiếp",
     "done": "Đã hiểu",
-    "step1Title": "Ngắm & Thả",
-    "step1Body": "Kéo trái/phải để ngắm, rồi thả tay để rơi trái cây vào cốc.",
-    "step2Title": "Gộp trái giống nhau",
-    "step2Body": "Hai trái cùng loại chạm nhau sẽ gộp thành trái lớn hơn và nhận điểm.",
-    "step3Title": "Tránh vượt vạch nguy hiểm",
-    "step3Body": "Đừng để trái đã ổn định nằm trên vạch đỏ — nếu không ván chơi sẽ kết thúc!",
+    "step1Title": "Lật hai thẻ",
+    "step1Body": "Chạm một thẻ để lật, rồi chọn thẻ thứ hai. Hãy tìm cặp giống nhau.",
+    "step2Title": "Ghép cặp",
+    "step2Body": "Hai thẻ giống nhau sẽ biến mất. Khác nhau thì úp lại — rồi thử lượt tiếp.",
+    "step3Title": "Đua với thời gian",
+    "step3Body": "Tìm hết các cặp trước khi hết giờ. Còn nhiều thời gian thì được nhiều sao hơn.",
     "step4Title": "Dùng vật phẩm",
-    "step4Body": "Mua vật phẩm ở Cửa hàng — búa, đổi chỗ, tăng cấp… — để cứu những stack khó."
+    "step4Body": "Mua Reveal, Extra Time và Lucky Clover ở Cửa hàng để hỗ trợ màn khó."
+  },
+  "map": {
+    "previous": "TRƯỚC",
+    "next": "SAU",
+    "levelLocked": "Hãy vượt qua level trước đã",
+    "mapLocked": "Hoàn thành map trước để chơi các level này"
   },
   "game": {
     "scoreLabel": "ĐIỂM",
+    "levelLabel": "LEVEL {{level}}",
+    "levelShort": "LEVEL",
     "yourScore": "ĐIỂM CỦA BẠN",
+    "yourStars": "SAO",
     "rank": "Hạng: #{{rank}}",
     "coinsEarned": "XU NHẬN ĐƯỢC",
     "gameOver": "KẾT THÚC",
     "retry": "CHƠI LẠI",
+    "nextLevel": "MÀN TIẾP",
     "home": "TRANG CHỦ",
+    "map": "MAP",
+    "doubleReward": "X2 THƯỞNG",
     "shareScore": "CHIA SẺ",
     "shareScoreTitle": "Điểm của tôi trong {{gameName}}",
     "shareScoreText": "Tôi đạt {{score}} điểm trong {{gameName}}! Bạn có vượt qua được không?",
+    "shareStarsText": "Tôi đạt {{stars}} sao ở Map {{map}} Level {{level}} trong {{gameName}}!",
     "shareDialogTitle": "Chia sẻ điểm số",
     "shareUnavailable": "Không thể chia sẻ trên thiết bị này",
-    "skillHintHammer": "Chọn trái để phá hủy",
-    "skillHintSwap": "Chọn 2 trái để hoán đổi",
-    "skillHintSwapSecond": "Chọn trái thứ hai",
-    "skillHintSize": "Chọn trái để tăng cấp",
-    "skillUndoNothing": "Không có gì để hoàn tác",
+    "skillHintReveal": "Chạm một thẻ — lượt này lật 3 lá",
+    "skillHintClover": "Lucky Clover sẵn sàng — hãy match một cặp!",
+    "combo": "COMBO x{{combo}}",
     "quitConfirmTitle": "Thoát ván chơi?",
     "quitConfirmMessage": "Điểm sẽ được ghi nhận và ván chơi kết thúc.",
     "quitConfirm": "Thoát",
@@ -67,25 +79,17 @@
       "purchaseSuccess": "Nhận {{coins}} xu!"
     },
     "items": {
-      "boost_hammer": {
-        "name": "Búa Nổ",
-        "description": "Phá hủy trái cây bạn chọn!"
+      "boost_reveal": {
+        "name": "Reveal One",
+        "description": "Lượt này được lật 3 thẻ."
       },
-      "boost_change": {
-        "name": "Đổi Trái",
-        "description": "Đổi trái đang treo thành một trái ngẫu nhiên!"
+      "boost_extra_time": {
+        "name": "Extra Time",
+        "description": "Thêm 30 giây vào đồng hồ!"
       },
-      "boost_swap": {
-        "name": "Hoán Đổi",
-        "description": "Hoán đổi vị trí các trái cây bất kỳ!"
-      },
-      "boost_size": {
-        "name": "Tăng Kích Cỡ",
-        "description": "Tăng kích thước của trái cây!"
-      },
-      "boost_undo": {
-        "name": "Hoàn tác",
-        "description": "Hoàn tác nước đi gần nhất!"
+      "boost_lucky_clover": {
+        "name": "Lucky Clover",
+        "description": "Nếu lượt tiếp theo match đúng, xoá thêm một cặp ngẫu nhiên."
       },
       "remove_ads": {
         "name": "Gỡ Quảng Cáo",
@@ -135,8 +139,8 @@
     "claimed": "Đã nhận",
     "progress": "{{current}}/{{target}}",
     "claimFailed": "Chưa thể nhận thưởng",
-    "reachScore2000": "Đạt 2.000 điểm",
-    "mergeFruit15": "Hợp 15 lần trái cây",
+    "get3Stars": "Đạt 3 sao trong một ván",
+    "matchPairs15": "Ghép 15 cặp thẻ",
     "watchAd": "Xem video quảng cáo",
     "playGames3": "Chơi 3 ván bất kỳ",
     "dailyLogin": "Đăng nhập mỗi ngày",

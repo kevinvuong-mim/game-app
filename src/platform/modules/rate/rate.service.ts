@@ -6,9 +6,6 @@ import { saveService } from '@platform/modules/save';
 import { usePlatformStore } from '@platform/core/state';
 import { getStoreListingUrl } from '@platform/modules/share/share.config';
 
-/** TEMP: always show rate modal on GameOver for QA — set false before ship. */
-const FORCE_RATE_PROMPT = false;
-
 /** True when `n` is a positive Fibonacci number (1, 1, 2, 3, 5, 8, …). */
 function isFibonacci(n: number): boolean {
   if (!Number.isInteger(n) || n < 1) {
@@ -36,10 +33,6 @@ function isRatePromptGamesPlayed(gamesPlayed: number): boolean {
 
 class RateService {
   shouldPrompt(): boolean {
-    if (FORCE_RATE_PROMPT) {
-      return true;
-    }
-
     const { progress } = usePlatformStore.getState();
 
     if (progress.hasRatedApp) {

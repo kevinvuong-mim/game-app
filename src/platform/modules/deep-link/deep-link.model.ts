@@ -1,5 +1,6 @@
 const DEEP_LINK_ROUTES = {
   HOME: 'Home',
+  MAP: 'Map',
   SHOP: 'Shop',
   LEGAL: 'Legal',
   GAMEPLAY: 'Gameplay',
@@ -27,8 +28,10 @@ const PATH_TO_SCENE: Record<string, DeepLinkRoute> = {
   '/home': DEEP_LINK_ROUTES.HOME,
   '/shop': DEEP_LINK_ROUTES.SHOP,
   '/legal': DEEP_LINK_ROUTES.LEGAL,
-  '/play': DEEP_LINK_ROUTES.GAMEPLAY,
+  '/play': DEEP_LINK_ROUTES.MAP,
+  '/map': DEEP_LINK_ROUTES.MAP,
   '/gameplay': DEEP_LINK_ROUTES.GAMEPLAY,
+  '/infinity': DEEP_LINK_ROUTES.GAMEPLAY,
   '/missions': DEEP_LINK_ROUTES.MISSIONS,
   '/settings': DEEP_LINK_ROUTES.SETTINGS,
   '/how-to-play': DEEP_LINK_ROUTES.HOW_TO_PLAY,
@@ -52,7 +55,7 @@ export function normalizeDeepLinkPath(path: string): string {
 }
 
 export function buildDeepLinkSceneData(payload: DeepLinkPayload): Record<string, unknown> {
-  return {
+  const data: Record<string, unknown> = {
     returnTo: 'Home',
     deepLink: {
       url: payload.url,
@@ -61,4 +64,8 @@ export function buildDeepLinkSceneData(payload: DeepLinkPayload): Record<string,
       params: payload.params,
     },
   };
+  if (normalizeDeepLinkPath(payload.path) === '/infinity') {
+    data.mode = 'infinity';
+  }
+  return data;
 }

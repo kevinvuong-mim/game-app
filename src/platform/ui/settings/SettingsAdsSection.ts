@@ -19,7 +19,11 @@ import { drawRoundedRect } from '../panel/graphics';
 import type { UIButton, ToastOptions } from '../types';
 import { t } from '@platform/modules/i18n/i18n.service';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from '../panel/panelTheme';
-import { PRODUCTS, ENTITLEMENT_REMOVE_ADS, REMOVE_ADS_PRICE } from '@platform/modules/iap/iap.config';
+import {
+  PRODUCTS,
+  ENTITLEMENT_REMOVE_ADS,
+  REMOVE_ADS_PRICE,
+} from '@platform/modules/iap/iap.config';
 
 const NO_ADS_ICON_KEY = 'no-ads-icon';
 

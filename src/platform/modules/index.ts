@@ -1,5 +1,6 @@
 export { i18n } from './i18n';
 export { shop } from './shop';
+export { campaign } from './campaign';
 export { adsModule } from './ads';
 export { saveService } from './save';
 export { settings } from './settings';

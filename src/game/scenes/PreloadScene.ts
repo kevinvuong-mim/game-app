@@ -6,27 +6,42 @@ import {
   SOUND_BGM_KEY,
   SOUND_COMBINE_KEY,
   SOUND_COIN_DROP_KEY,
-  SOUND_BOOST_SIZE_KEY,
-  SOUND_BOOST_SWAP_KEY,
-  SOUND_BOOST_UNDO_KEY,
-  SOUND_BOOST_HAMMER_KEY,
-  SOUND_BOOST_CHANGE_KEY,
 } from '@platform/ui/audio/SoundManager';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { t, navigationService } from '@platform/ui';
-import { FRUIT_TYPES, fruitImagePath, fruitTextureKey } from '@game/fruits';
+import {
+  MAP_CARD_COUNTS,
+  cardTextureKey,
+  cardTexturePath,
+  mapBackgroundKey,
+  mapBackgroundPath,
+} from '@game/campaign/mapConfig';
 
 type ImageAsset = { key: string; path: string };
 type FallbackTexture = { key: string; width: number; height: number; color: number };
 
-const FRUIT_IMAGE_ASSETS: ImageAsset[] = FRUIT_TYPES.map((_, level) => ({
-  key: fruitTextureKey(level),
-  path: fruitImagePath(level),
-}));
+const MAP_IMAGE_ASSETS: ImageAsset[] = MAP_CARD_COUNTS.flatMap((cardCount, index) => {
+  const mapId = index + 1;
+  const assets: ImageAsset[] = [{ key: mapBackgroundKey(mapId), path: mapBackgroundPath(mapId) }];
+  for (let objectIndex = 1; objectIndex <= cardCount; objectIndex += 1) {
+    assets.push({
+      key: cardTextureKey(mapId, objectIndex),
+      path: cardTexturePath(mapId, objectIndex),
+    });
+  }
+  return assets;
+});
 
 const IMAGE_ASSETS: ImageAsset[] = [
-  ...FRUIT_IMAGE_ASSETS,
+  ...MAP_IMAGE_ASSETS,
+  { key: 'card-front', path: '/assets/images/card-front.png' },
+  { key: 'card-back', path: '/assets/images/card-back.png' },
+  { key: 'box-active', path: '/assets/images/box-active.png' },
+  { key: 'box-inactive', path: '/assets/images/box-inactive.png' },
+  { key: 'star-active', path: '/assets/images/star-active.png' },
+  { key: 'star-inactive', path: '/assets/images/star-inactive.png' },
+  { key: 'star-grey', path: '/assets/images/star-grey.png' },
   { key: 'coin-icon', path: '/assets/images/coin.png' },
   { key: 'chest-icon', path: '/assets/images/chest.png' },
   { key: 'shop-banner', path: '/assets/images/banner.png' },
@@ -42,21 +57,16 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'shop-item-1', path: '/assets/images/shop-item-1.png' },
   { key: 'shop-item-2', path: '/assets/images/shop-item-2.png' },
   { key: 'shop-item-3', path: '/assets/images/shop-item-3.png' },
-  { key: 'shop-item-4', path: '/assets/images/shop-item-4.png' },
-  { key: 'shop-item-5', path: '/assets/images/shop-item-5.png' },
   { key: 'no-ads-icon', path: '/assets/images/no-ads-icon.png' },
   { key: 'speaker-icon', path: '/assets/images/speaker-icon.png' },
   { key: 'checked-icon', path: '/assets/images/checked-icon.png' },
   { key: 'missions-icon', path: '/assets/images/missions-icon.png' },
-  { key: 'how-to-play-icon', path: '/assets/images/how-to-play.png' },
   { key: 'mission-item-1', path: '/assets/images/mission-item-1.png' },
   { key: 'mission-item-2', path: '/assets/images/mission-item-2.png' },
   { key: 'mission-item-3', path: '/assets/images/mission-item-3.png' },
   { key: 'mission-item-4', path: '/assets/images/mission-item-4.png' },
   { key: 'mission-item-5', path: '/assets/images/mission-item-5.png' },
   { key: 'mission-item-6', path: '/assets/images/mission-item-6.png' },
-  { key: 'gameover-banner', path: '/assets/images/gameover-banner.png' },
-  { key: 'glass-container', path: '/assets/images/glass-container.png' },
   { key: 'musical-note-icon', path: '/assets/images/musical-note-icon.png' },
   { key: 'golden-crown-icon', path: '/assets/images/golden-crown-icon.png' },
   { key: 'silver-crown-icon', path: '/assets/images/silver-crown-icon.png' },
@@ -66,7 +76,6 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'watermelon-character', path: '/assets/images/watermelon-character.png' },
   { key: 'play-button-background', path: '/assets/images/play-button-background.png' },
   { key: 'home-button-background', path: '/assets/images/home-button-background.png' },
-  { key: 'quit-button-background', path: '/assets/images/quit-button-background.png' },
   { key: 'share-button-background', path: '/assets/images/share-button-background.png' },
   { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
   { key: 'gameover-background-image', path: '/assets/images/gameover-background-image.webp' },
@@ -84,8 +93,6 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'shop-item-1', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-item-2', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-item-3', width: 96, height: 96, color: 0xffd700 },
-  { key: 'shop-item-4', width: 96, height: 96, color: 0xffd700 },
-  { key: 'shop-item-5', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-banner', width: 360, height: 80, color: 0xc62828 },
   { key: 'checked-icon', width: 48, height: 48, color: 0x3cb043 },
   { key: 'chest-icon', width: 256, height: 160, color: 0xc62828 },
@@ -98,20 +105,23 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'mission-item-4', width: 96, height: 96, color: 0x3cb043 },
   { key: 'mission-item-5', width: 96, height: 96, color: 0xffc107 },
   { key: 'mission-item-6', width: 96, height: 96, color: 0x9b59b6 },
-  { key: 'how-to-play-icon', width: 80, height: 80, color: 0x3cb043 },
-  { key: 'gameover-banner', width: 400, height: 313, color: 0xc62828 },
   { key: 'musical-note-icon', width: 81, height: 95, color: 0x3cb043 },
   { key: 'golden-crown-icon', width: 48, height: 48, color: 0xf5c518 },
   { key: 'silver-crown-icon', width: 48, height: 48, color: 0xc0c7d1 },
   { key: 'bronze-crown-icon', width: 48, height: 48, color: 0xd4894a },
   { key: 'daily-reward-icon', width: 80, height: 82, color: 0x4a90d9 },
-  { key: 'glass-container', width: 479, height: 592, color: 0x88aacc },
   { key: 'language-globe-icon', width: 64, height: 64, color: 0x3cb043 },
+  { key: 'card-front', width: 128, height: 128, color: 0xf5e6c8 },
+  { key: 'card-back', width: 128, height: 128, color: 0x2a5cad },
+  { key: 'box-active', width: 128, height: 128, color: 0xe8c878 },
+  { key: 'box-inactive', width: 128, height: 128, color: 0x8a8a8a },
+  { key: 'star-active', width: 48, height: 48, color: 0xffd54a },
+  { key: 'star-inactive', width: 48, height: 48, color: 0xc4a05a },
+  { key: 'star-grey', width: 48, height: 48, color: 0x9e9e9e },
   { key: 'home-background-image', width: 16, height: 16, color: 0x7cbc3a },
   { key: 'watermelon-character', width: 255, height: 168, color: 0x3cb043 },
   { key: 'play-button-background', width: 256, height: 78, color: 0x4a90d9 },
   { key: 'home-button-background', width: 265, height: 98, color: 0x8e44ad },
-  { key: 'quit-button-background', width: 265, height: 98, color: 0xe67e22 },
   { key: 'general-background-image', width: 16, height: 16, color: 0x16213e },
   { key: 'share-button-background', width: 265, height: 98, color: 0xe67e22 },
   { key: 'gameover-background-image', width: 16, height: 16, color: 0x16213e },
@@ -164,11 +174,6 @@ export class PreloadScene extends Phaser.Scene {
     this.load.audio(SOUND_COMBINE_KEY, '/assets/audio/combine.mp3');
     this.load.audio(SOUND_COIN_DROP_KEY, '/assets/audio/coin-drop.mp3');
     this.load.audio(SOUND_BGM_KEY, '/assets/audio/background-music.mp3');
-    this.load.audio(SOUND_BOOST_SIZE_KEY, '/assets/audio/boost-size.mp3');
-    this.load.audio(SOUND_BOOST_SWAP_KEY, '/assets/audio/boost-swap.mp3');
-    this.load.audio(SOUND_BOOST_UNDO_KEY, '/assets/audio/boost-undo.mp3');
-    this.load.audio(SOUND_BOOST_HAMMER_KEY, '/assets/audio/boost-hammer.mp3');
-    this.load.audio(SOUND_BOOST_CHANGE_KEY, '/assets/audio/boost-change.mp3');
   }
 
   create(): void {

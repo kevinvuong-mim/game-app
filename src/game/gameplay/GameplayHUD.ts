@@ -17,42 +17,52 @@ const TEXT_DARK = '#1a1a1a';
 const PANEL_STROKE = 0xd4b896;
 const LABEL_COLOR = '#3a372f';
 
-function formatScore(score: number): string {
-  return score.toLocaleString('en-US');
-}
+export type GameplayMode = 'campaign' | 'infinity';
 
 export interface GameplayHUDOptions {
+  mode: GameplayMode;
+  levelNumber?: number;
   onBack: () => void;
-  onQuit: () => void;
+  /** Infinity only — confirmed quit ends the run and goes to Game Over. */
+  onQuit?: () => void;
   onQuitConfirmOpen?: () => void;
   onQuitConfirmClose?: () => void;
 }
 
-/**
- * Suika gameplay HUD — back/quit buttons and score panel.
- */
 export class GameplayHUD extends Phaser.GameObjects.Container {
-  private readonly onQuit: () => void;
+  private readonly mode: GameplayMode;
+  private readonly onQuit?: () => void;
   private readonly onQuitConfirmOpen?: () => void;
   private readonly onQuitConfirmClose?: () => void;
 
   private backButton?: UIButton;
-  private quitButton?: UIButton;
+  private sideButton?: UIButton;
+  private timerValue?: Phaser.GameObjects.Text;
   private scoreValue?: Phaser.GameObjects.Text;
+  private comboText?: Phaser.GameObjects.Text;
   private quitConfirmModal?: Phaser.GameObjects.Container;
 
   constructor(scene: Phaser.Scene, options: GameplayHUDOptions) {
     super(scene, 0, 0);
     scene.add.existing(this);
-    this.setDepth(500);
-    this.setScrollFactor(0);
+    this.mode = options.mode;
     this.onQuit = options.onQuit;
     this.onQuitConfirmOpen = options.onQuitConfirmOpen;
     this.onQuitConfirmClose = options.onQuitConfirmClose;
+    this.setDepth(500);
+    this.setScrollFactor(0);
     this.build(options);
   }
 
   private build(options: GameplayHUDOptions): void {
+    if (this.mode === 'infinity') {
+      this.buildInfinityHud(options);
+      return;
+    }
+    this.buildCampaignHud(options);
+  }
+
+  private buildInfinityHud(options: GameplayHUDOptions): void {
     const { width } = this.scene.cameras.main;
     const topY = 124;
 
@@ -66,18 +76,20 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
     });
     this.add(this.backButton);
 
-    this.quitButton = createUIButton({
-      scene: this.scene,
-      position: { x: width - 140, y: topY },
-      size: { width: 72, height: 72 },
-      background: { key: 'quit-icon' },
-      depth: 501,
-      onClick: () => this.showQuitConfirm(),
-    });
-    this.add(this.quitButton);
+    if (options.onQuit) {
+      this.sideButton = createUIButton({
+        scene: this.scene,
+        position: { x: width - 140, y: topY },
+        size: { width: 72, height: 72 },
+        background: { key: 'quit-icon' },
+        depth: 501,
+        onClick: () => this.showQuitConfirm(),
+      });
+      this.add(this.sideButton);
+    }
 
-    const scorePanel = this.makePanel(width * 0.5, topY, 200, 96);
-    scorePanel.add(
+    const panel = this.makePanel(width * 0.5, topY, 200, 96);
+    panel.add(
       this.scene.add
         .text(0, -28, t('game.scoreLabel'), {
           color: TEXT_DARK,
@@ -95,8 +107,83 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
         fontFamily: FREDOKA_FONT,
       })
       .setOrigin(0.5);
-    scorePanel.add(this.scoreValue);
-    this.add(scorePanel);
+    panel.add(this.scoreValue);
+    this.add(panel);
+
+    this.timerValue = this.scene.add
+      .text(width / 2, topY + 78, '0:00', {
+        color: '#fff8dc',
+        fontSize: '26px',
+        fontStyle: 'bold',
+        fontFamily: FREDOKA_FONT,
+        stroke: '#2a4018',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5);
+    this.add(this.timerValue);
+
+    this.comboText = this.scene.add
+      .text(width / 2, topY + 108, '', {
+        color: '#ffe566',
+        fontSize: '22px',
+        fontStyle: 'bold',
+        fontFamily: FREDOKA_FONT,
+        stroke: '#5c2a0a',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setAlpha(0);
+    this.add(this.comboText);
+  }
+
+  private buildCampaignHud(options: GameplayHUDOptions): void {
+    const { width } = this.scene.cameras.main;
+    const topY = 124;
+
+    this.backButton = createUIButton({
+      scene: this.scene,
+      position: { x: 140, y: topY },
+      size: { width: 80, height: 80 },
+      background: { key: 'back-icon' },
+      depth: 501,
+      onClick: options.onBack,
+    });
+    this.add(this.backButton);
+
+    const panel = this.makePanel(width * 0.5, topY, 200, 96);
+    panel.add(
+      this.scene.add
+        .text(0, -28, t('game.levelShort'), {
+          color: TEXT_DARK,
+          fontSize: '22px',
+          fontStyle: 'bold',
+          fontFamily: FREDOKA_FONT,
+        })
+        .setOrigin(0.5)
+    );
+    panel.add(
+      this.scene.add
+        .text(0, 14, String(options.levelNumber ?? 1), {
+          color: TEXT_DARK,
+          fontSize: '36px',
+          fontStyle: 'bold',
+          fontFamily: FREDOKA_FONT,
+        })
+        .setOrigin(0.5)
+    );
+    this.add(panel);
+
+    this.timerValue = this.scene.add
+      .text(width / 2, topY + 78, '0:00', {
+        color: '#fff8dc',
+        fontSize: '26px',
+        fontStyle: 'bold',
+        fontFamily: FREDOKA_FONT,
+        stroke: '#2a4018',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5);
+    this.add(this.timerValue);
   }
 
   private makePanel(x: number, y: number, w: number, h: number): Phaser.GameObjects.Container {
@@ -110,15 +197,13 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
     return container;
   }
 
-  setScore(score: number): void {
-    this.scoreValue?.setText(formatScore(score));
-  }
-
   isQuitConfirmOpen(): boolean {
     return !!this.quitConfirmModal?.visible;
   }
 
   showQuitConfirm(): void {
+    if (!this.onQuit) return;
+
     if (this.quitConfirmModal) {
       this.quitConfirmModal.setVisible(true);
       this.onQuitConfirmOpen?.();
@@ -134,7 +219,6 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
 
     const overlay = this.scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.55);
     overlay.setInteractive();
-    // Use pointerup so the dismiss gesture never arms a gameplay drop on pointerdown.
     overlay.on('pointerup', () => this.hideQuitConfirm());
 
     const panelGfx = this.scene.add.graphics();
@@ -211,7 +295,7 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
         scene: this.scene,
         position: { x: quitX, y: buttonsY },
         size: { width: buttonWidth, height: buttonHeight },
-        background: { key: 'quit-button-background' },
+        background: { key: 'share-button-background' },
         text: {
           content: t('game.quitConfirm').toUpperCase(),
           style: {
@@ -222,7 +306,8 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
         },
         onClick: () => {
           this.quitConfirmModal?.setVisible(false);
-          this.onQuit();
+          this.onQuitConfirmClose?.();
+          this.onQuit?.();
         },
       })
     );
@@ -235,5 +320,35 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
     if (!this.quitConfirmModal?.visible) return;
     this.quitConfirmModal.setVisible(false);
     this.onQuitConfirmClose?.();
+  }
+
+  setTimer(seconds: number): void {
+    const clamped = Math.max(0, Math.ceil(seconds));
+    const mins = Math.floor(clamped / 60);
+    const secs = clamped % 60;
+    this.timerValue?.setText(`${mins}:${secs.toString().padStart(2, '0')}`);
+    this.timerValue?.setColor(clamped <= 10 ? '#ff6b6b' : '#fff8dc');
+  }
+
+  setScore(score: number): void {
+    this.scoreValue?.setText(score.toLocaleString('en-US'));
+  }
+
+  setCombo(combo: number): void {
+    if (!this.comboText) return;
+    if (combo <= 1) {
+      this.comboText.setAlpha(0);
+      return;
+    }
+    this.comboText.setText(t('game.combo', { combo }));
+    this.comboText.setAlpha(1);
+    this.scene.tweens.killTweensOf(this.comboText);
+    this.comboText.setScale(1.2);
+    this.scene.tweens.add({
+      targets: this.comboText,
+      scale: 1,
+      duration: 180,
+      ease: 'Back.Out',
+    });
   }
 }

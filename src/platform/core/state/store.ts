@@ -19,6 +19,8 @@ export interface PlatformStore extends PlatformState {
   incrementGamesPlayed: () => void;
   setHighScore: (score: number) => void;
   setCurrentLevel: (level: number) => void;
+  setLastMapId: (mapId: number) => void;
+  setCampaignStars: (campaignStars: Record<string, number[]>) => void;
   setRatePromptProgress: (
     update: Partial<
       Pick<PlatformState['progress'], 'hasRatedApp' | 'lastRatePromptGamesPlayed' | 'lastAppRating'>
@@ -104,6 +106,10 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
 
   setCurrentLevel: (level) => set((s) => ({ progress: { ...s.progress, currentLevel: level } })),
 
+  setLastMapId: (mapId) => set((s) => ({ progress: { ...s.progress, lastMapId: mapId } })),
+
+  setCampaignStars: (campaignStars) => set((s) => ({ progress: { ...s.progress, campaignStars } })),
+
   setRatePromptProgress: (update) =>
     set((s) => ({
       progress: {
@@ -130,6 +136,10 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
           ...DEFAULT_STATE.progress,
           ...s.progress,
           ...(state.progress ?? {}),
+          campaignStars: sanitizeCampaignStars(
+            state.progress?.campaignStars ?? s.progress.campaignStars
+          ),
+          lastMapId: sanitizeLastMapId(state.progress?.lastMapId ?? s.progress.lastMapId),
         },
         settings: { ...DEFAULT_STATE.settings, ...s.settings, ...(state.settings ?? {}) },
         // Drop legacy clock-lock fields from older saves (`timeManipulated`, …).
@@ -154,6 +164,26 @@ function sanitizeCurrency(
     return { coins: 0 };
   }
   return { coins: Math.floor(coins) };
+}
+
+function sanitizeLastMapId(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
+  return Math.max(1, Math.min(10, Math.floor(value)));
+}
+
+function sanitizeCampaignStars(
+  value: PlatformState['progress']['campaignStars'] | undefined
+): Record<string, number[]> {
+  if (!value || typeof value !== 'object') return {};
+  const next: Record<string, number[]> = {};
+  for (const [mapId, stars] of Object.entries(value)) {
+    if (!Array.isArray(stars)) continue;
+    next[mapId] = stars.map((star) => {
+      if (typeof star !== 'number' || !Number.isFinite(star)) return 0;
+      return Math.max(0, Math.min(3, Math.floor(star)));
+    });
+  }
+  return next;
 }
 
 function sanitizeInventory(

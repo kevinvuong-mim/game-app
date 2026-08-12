@@ -2,6 +2,7 @@ export * from './types';
 export { ShopPanel } from './shop/ShopPanel';
 export { toast } from './toast/ToastManager';
 export { shop } from '@platform/modules/shop';
+export { campaign } from '@platform/modules/campaign';
 export { LegalPanel } from './legal/LegalPanel';
 export type { LegalTab } from './legal/LegalPanel';
 export { BasePanelScene } from './BasePanelScene';

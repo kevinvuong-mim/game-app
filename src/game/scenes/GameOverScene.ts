@@ -22,10 +22,13 @@ import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import { soundManager } from '@platform/ui/audio/SoundManager';
+import { getNextLevel } from '@game/campaign/progress';
+import type { GameplayMode } from '@game/gameplay/GameplayHUD';
 
 const MERGE_GAP = 14;
 const BUTTON_WIDTH = 300;
 const BUTTON_HEIGHT = 96;
+const CAMPAIGN_BUTTON_HEIGHT = 88;
 const COINS_PILL_GAP = 8;
 const COIN_ICON_SIZE = 40;
 const MERGE_ORB_SIZE = 58;
@@ -41,20 +44,14 @@ const COINS_PILL_STROKE = 0xd4a84b;
 const GHOST_PILL_STROKE = 0xe0c078;
 const COINS_AMOUNT_COLOR = '#8a5a00';
 const GHOST_AMOUNT_COLOR = '#c4a05a';
-/** Rewarded placement — doubles coins earned this run (granted by this scene). */
 const DOUBLE_COINS_PLACEMENT = 'DOUBLE_COINS';
 
-/** Vertical layout offsets from contentTop — keep sections from overlapping. */
 const LAYOUT = {
   scoreLabel: 44,
   scoreValue: 98,
-  /** Score number → rank. */
   rankAfterScore: 42,
-  /** Label → pill/merge row center. */
   coinsPillFromLabel: 50,
-  /** Rank → coins earned label. */
   coinsLabelAfterRank: 36,
-  /** Coins section bottom → Play Again. */
   afterCoinsToPlayAgain: 78,
 } as const;
 
@@ -66,51 +63,87 @@ type CoinPillParts = {
   root: Phaser.GameObjects.Container;
 };
 
+export interface GameOverSceneData {
+  mode?: GameplayMode;
+  won?: boolean;
+  stars?: number;
+  score?: number;
+  coins?: number;
+  mapId?: number;
+  levelIndex?: number;
+  returnTo?: string;
+  /** Infinity: already claimed x2 coins this Game Over visit. */
+  doubleClaimed?: boolean;
+}
+
 export class GameOverScene extends Phaser.Scene {
-  private coinsRowY = 0;
+  private mode: GameplayMode = 'campaign';
+  private won = false;
+  private stars = 0;
+  private score = 0;
   private coinsEarned = 0;
-  private rankRequestId = 0;
+  private mapId = 1;
+  private levelIndex = 0;
   private returnTo = 'Home';
-  private coinsRowCenterX = 0;
   private doubleClaimed = false;
-  private showDoubleCoins = false;
   private doubleRequesting = false;
+  private showDoubleCoins = false;
+  private rankRequestId = 0;
+  private coinsRowY = 0;
+  private coinsRowCenterX = 0;
   private rateModal?: RateAppModal;
+  private rankText?: Phaser.GameObjects.Text;
   private leftPill?: CoinPillParts;
   private ghostPill?: CoinPillParts;
   private mergedPill?: CoinPillParts;
-  private rankText?: Phaser.GameObjects.Text;
   private mergeHit?: Phaser.GameObjects.Zone;
-  private unsubscribers: Array<() => void> = [];
-  private mergeOrbIcon?: Phaser.GameObjects.Text;
   private mergeOrb?: Phaser.GameObjects.Container;
   private mergeOrbGfx?: Phaser.GameObjects.Graphics;
+  private mergeOrbIcon?: Phaser.GameObjects.Text;
   private mergeOrbRing?: Phaser.GameObjects.Graphics;
+  private unsubscribers: Array<() => void> = [];
 
   constructor() {
     super({ key: 'GameOver' });
   }
 
-  create(data: { score?: number; returnTo?: string } = {}): void {
+  create(data: GameOverSceneData = {}): void {
     this.cleanupEventListeners();
     this.events.once('shutdown', this.shutdown, this);
 
+    this.mode = data.mode ?? 'campaign';
+    this.won = data.won ?? false;
+    this.stars = data.stars ?? 0;
+    this.score = data.score ?? 0;
+    this.coinsEarned = Math.max(0, Math.floor(data.coins ?? 0));
+    this.mapId = data.mapId ?? 1;
+    this.levelIndex = data.levelIndex ?? 0;
     this.returnTo = data.returnTo ?? 'Home';
-    this.doubleClaimed = false;
+    this.doubleClaimed = !!data.doubleClaimed;
     this.doubleRequesting = false;
+    this.showDoubleCoins =
+      this.mode === 'infinity' && this.coinsEarned > 0 && !this.doubleClaimed;
+
     eventBus.emit('ad:context:change', { context: 'GAME_OVER' });
 
-    const score = data.score ?? 0;
-    this.coinsEarned = Math.max(0, Math.floor(score));
-    this.showDoubleCoins = this.coinsEarned > 0;
+    if (this.mode === 'infinity') {
+      this.createInfinityLayout();
+    } else {
+      this.createCampaignLayout();
+    }
+
+    if (rateService.shouldPrompt()) {
+      this.rateModal = new RateAppModal(this);
+    }
+  }
+
+  private createInfinityLayout(): void {
     const { width, height } = this.cameras.main;
     const centerX = width / 2;
-
-    this.addBackgroundImage(width, height);
+    this.addBackground(width, height);
 
     const panelWidth = Math.min(width * 0.88, 420);
-    const contentTop = height * 0.4;
-
+    const contentTop = height * 0.3;
     const scoreLabelY = contentTop + LAYOUT.scoreLabel;
     const scoreValueY = contentTop + LAYOUT.scoreValue;
     const rankY = scoreValueY + LAYOUT.rankAfterScore;
@@ -118,7 +151,6 @@ export class GameOverScene extends Phaser.Scene {
     const coinsRowY = coinsLabelY + LAYOUT.coinsPillFromLabel;
     const coinsSectionBottom = coinsRowY + COINS_PILL_HEIGHT / 2;
     const buttonsStartY = coinsSectionBottom + LAYOUT.afterCoinsToPlayAgain;
-
     const lastButtonY = buttonsStartY + 2 * BUTTON_HEIGHT;
     const panelBottom = lastButtonY + BUTTON_HEIGHT / 2 + PANEL_BOTTOM_PADDING;
     const panelTop = contentTop - 40;
@@ -149,7 +181,7 @@ export class GameOverScene extends Phaser.Scene {
       .setDepth(2);
 
     this.add
-      .text(centerX, scoreValueY, formatScore(score), {
+      .text(centerX, scoreValueY, formatScore(this.score), {
         color: TEXT_COLOR,
         fontSize: '60px',
         fontStyle: 'bold',
@@ -166,14 +198,15 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(2)
-      .setVisible(false);
+      .setVisible(false)
+      .setInteractive({ useHandCursor: true });
+
+    this.rankText.on('pointerup', () => this.openLeaderboard());
 
     void this.resolveRankFromApi();
-
     this.addCoinsSection(centerX, coinsLabelY, coinsRowY);
 
     let buttonY = buttonsStartY;
-
     createUIButton({
       scene: this,
       position: { x: centerX, y: buttonY },
@@ -184,7 +217,7 @@ export class GameOverScene extends Phaser.Scene {
         content: t('game.retry'),
         style: { fontSize: 32, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
-      onClick: () => this.scene.start('Gameplay', { returnTo: this.returnTo }),
+      onClick: () => this.replay(),
     });
     buttonY += BUTTON_HEIGHT;
 
@@ -200,7 +233,7 @@ export class GameOverScene extends Phaser.Scene {
       },
       onClick: () => {
         eventBus.emit('game:destroy', undefined);
-        this.scene.start(this.returnTo);
+        this.scene.start('Home');
       },
     });
     buttonY += BUTTON_HEIGHT;
@@ -215,44 +248,112 @@ export class GameOverScene extends Phaser.Scene {
         content: t('game.shareScore'),
         style: { fontSize: 32, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
-      onClick: () => void this.handleShareScore(score),
+      onClick: () => void this.handleShare(),
     });
+  }
 
-    if (rateService.shouldPrompt()) {
-      this.rateModal = new RateAppModal(this);
+  private createCampaignLayout(): void {
+    const { width, height } = this.cameras.main;
+    const centerX = width / 2;
+    this.addBackground(width, height);
+
+    const panelWidth = Math.min(width * 0.88, 420);
+    const contentTop = height * 0.34;
+    const buttonsStartY = contentTop + 200;
+    const lastButtonY = buttonsStartY + 2 * CAMPAIGN_BUTTON_HEIGHT;
+    const panelTop = contentTop - 36;
+    const panelBottom = lastButtonY + CAMPAIGN_BUTTON_HEIGHT / 2 + 36;
+    const panelHeight = panelBottom - panelTop;
+
+    const panel = this.add.graphics().setDepth(0);
+    drawRoundedRect(
+      panel,
+      centerX - panelWidth / 2,
+      panelTop,
+      panelWidth,
+      panelHeight,
+      PANEL_CORNER_RADIUS,
+      PANEL_BG,
+      PANEL_BORDER
+    );
+
+    this.addBanner(centerX, panelTop);
+    this.addStarsBlock(centerX, contentTop + 70);
+
+    let buttonY = buttonsStartY;
+    createUIButton({
+      scene: this,
+      position: { x: centerX, y: buttonY },
+      size: { width: BUTTON_WIDTH, height: CAMPAIGN_BUTTON_HEIGHT },
+      background: { key: 'settings-button-background' },
+      depth: 3,
+      text: {
+        content: t('game.retry'),
+        style: { fontSize: 30, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+      },
+      onClick: () => this.replay(),
+    });
+    buttonY += CAMPAIGN_BUTTON_HEIGHT;
+
+    createUIButton({
+      scene: this,
+      position: { x: centerX, y: buttonY },
+      size: { width: BUTTON_WIDTH, height: CAMPAIGN_BUTTON_HEIGHT },
+      background: { key: 'play-button-background' },
+      depth: 3,
+      disabled: !this.won || getNextLevel(this.mapId, this.levelIndex) === null,
+      text: {
+        content: t('game.nextLevel'),
+        style: { fontSize: 30, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+      },
+      onClick: () => {
+        const next = getNextLevel(this.mapId, this.levelIndex);
+        if (!next) return;
+        this.scene.start('Gameplay', {
+          mode: 'campaign',
+          mapId: next.mapId,
+          levelIndex: next.levelIndex,
+          returnTo: 'Map',
+        });
+      },
+    });
+    buttonY += CAMPAIGN_BUTTON_HEIGHT;
+
+    createUIButton({
+      scene: this,
+      position: { x: centerX, y: buttonY },
+      size: { width: BUTTON_WIDTH, height: CAMPAIGN_BUTTON_HEIGHT },
+      background: { key: 'home-button-background' },
+      depth: 3,
+      text: {
+        content: t('game.map'),
+        style: { fontSize: 30, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+      },
+      onClick: () => {
+        eventBus.emit('game:destroy', undefined);
+        this.scene.start('Map', { returnTo: 'Home', mapId: this.mapId });
+      },
+    });
+  }
+
+  private addStarsBlock(centerX: number, y: number): void {
+    this.add
+      .text(centerX, y - 46, t('game.yourStars'), {
+        color: TEXT_COLOR,
+        fontSize: '22px',
+        fontStyle: 'bold',
+        fontFamily: FREDOKA_FONT,
+      })
+      .setOrigin(0.5)
+      .setDepth(2);
+
+    for (let i = 0; i < 3; i += 1) {
+      const key = i < this.stars ? 'star-active' : 'star-inactive';
+      const star = this.add.image(centerX + (i - 1) * 64, y, key).setDepth(2);
+      star.setDisplaySize(56, 56);
     }
   }
 
-  private addBackgroundImage(width: number, height: number): void {
-    const background = this.add.image(width / 2, height / 2, 'gameover-background-image');
-    const backgroundScale = Math.max(width / background.width, height / background.height);
-    background.setScale(backgroundScale).setDepth(-1);
-  }
-
-  private addBanner(centerX: number, panelTop: number): void {
-    const banner = this.add.image(centerX, panelTop - 42, 'gameover-banner').setDepth(4);
-    const bannerScale = Math.min(1.1, (this.cameras.main.width * 0.9) / banner.width);
-    banner.setScale(bannerScale);
-    banner.setOrigin(0.5, 0.72);
-
-    const ribbonY = banner.y + banner.displayHeight * 0.03;
-    this.add
-      .text(centerX, ribbonY, t('game.gameOver'), {
-        color: '#ffffff',
-        fontSize: '40px',
-        fontStyle: 'bold',
-        fontFamily: FREDOKA_FONT,
-        stroke: '#5c2a0a',
-        strokeThickness: 6,
-      })
-      .setOrigin(0.5)
-      .setDepth(5);
-  }
-
-  /**
-   * Breakthrough coins UX: two coin pills + play orb.
-   * Watching the ad merges them (same fantasy as fruit merges) into x2.
-   */
   private addCoinsSection(centerX: number, labelY: number, rowY: number): void {
     this.coinsRowCenterX = centerX;
     this.coinsRowY = rowY;
@@ -267,6 +368,13 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(2);
 
+    if (this.doubleClaimed) {
+      const doubled = this.coinsEarned * 2;
+      this.leftPill = this.createCoinPill(doubled, false);
+      this.leftPill.root.setPosition(centerX, rowY).setDepth(3);
+      return;
+    }
+
     if (!this.showDoubleCoins) {
       this.leftPill = this.createCoinPill(this.coinsEarned, false);
       this.leftPill.root.setPosition(centerX, rowY).setDepth(3);
@@ -277,7 +385,6 @@ export class GameOverScene extends Phaser.Scene {
     this.leftPill = this.createCoinPill(this.coinsEarned, false);
     this.ghostPill = this.createCoinPill(this.coinsEarned, true);
     this.addMergeOrb(rowY);
-
     this.layoutMergeOffer();
     this.animatePillPop(this.leftPill);
     this.animatePillPop(this.ghostPill, 80);
@@ -309,16 +416,13 @@ export class GameOverScene extends Phaser.Scene {
     if (ghost) amount.setAlpha(0.7);
 
     root.add([gfx, icon, amount]);
-
     const parts: CoinPillParts = { root, gfx, icon, amount, width: 0 };
     this.redrawCoinPill(parts, coins, ghost);
     return parts;
   }
 
   private redrawCoinPill(parts: CoinPillParts, coins: number, ghost: boolean): void {
-    const label = `+${formatScore(coins)}`;
-    parts.amount.setText(label);
-
+    parts.amount.setText(`+${formatScore(coins)}`);
     const amountWidth = Math.ceil(parts.amount.width);
     const width = Math.max(
       100,
@@ -340,7 +444,6 @@ export class GameOverScene extends Phaser.Scene {
     );
 
     if (ghost) {
-      // Soft “potential reward” wash over the ghost pill.
       parts.gfx.fillStyle(0xffe08a, 0.16);
       parts.gfx.fillRoundedRect(
         -width / 2 + 3,
@@ -368,19 +471,17 @@ export class GameOverScene extends Phaser.Scene {
         fontStyle: 'bold',
         fontFamily: FREDOKA_FONT,
       })
-      // ▶ reads heavy on the right — bias origin so it sits visually centered.
       .setOrigin(0.52, 0.52);
 
     const hit = this.add.zone(0, 0, MERGE_ORB_SIZE + 16, MERGE_ORB_SIZE + 16);
     hit.setInteractive({ useHandCursor: true });
-
     orb.add([ring, gfx, icon, hit]);
+
     this.mergeOrb = orb;
     this.mergeOrbGfx = gfx;
     this.mergeOrbIcon = icon;
     this.mergeOrbRing = ring;
     this.mergeHit = hit;
-
     this.drawMergeOrb(false);
 
     hit.on('pointerdown', () => {
@@ -390,8 +491,6 @@ export class GameOverScene extends Phaser.Scene {
       this.tweens.add({ targets: orb, scale: 0.9, duration: 70, ease: 'Power2' });
     });
 
-    // Fire the request immediately on pointerup — do not wait on a tween onComplete.
-    // (pointerout often kills that tween on touch and the ad never starts.)
     hit.on('pointerup', () => {
       if (this.doubleClaimed || this.doubleRequesting) return;
       this.tweens.killTweensOf(orb);
@@ -424,7 +523,6 @@ export class GameOverScene extends Phaser.Scene {
   private startMergeOrbPulse(): void {
     const orb = this.mergeOrb;
     if (!orb?.active || this.doubleClaimed || this.doubleRequesting) return;
-
     this.tweens.killTweensOf(orb);
     orb.setScale(1);
     this.tweens.add({
@@ -444,14 +542,11 @@ export class GameOverScene extends Phaser.Scene {
     const r = MERGE_ORB_SIZE / 2;
     this.mergeOrbGfx.clear();
     this.mergeOrbRing.clear();
-
-    // Orbit ticks — suggests “spin to merge”.
     this.mergeOrbRing.lineStyle(3, 0xf0c45a, 0.55);
     for (let i = 0; i < 6; i += 1) {
       const a0 = (i / 6) * Math.PI * 2;
-      const a1 = a0 + 0.35;
       this.mergeOrbRing.beginPath();
-      this.mergeOrbRing.arc(0, 0, r + 7, a0, a1);
+      this.mergeOrbRing.arc(0, 0, r + 7, a0, a0 + 0.35);
       this.mergeOrbRing.strokePath();
     }
 
@@ -463,7 +558,6 @@ export class GameOverScene extends Phaser.Scene {
     this.mergeOrbGfx.fillCircle(-6, -7, r * 0.34);
     this.mergeOrbGfx.lineStyle(3, ORB_STROKE, 1);
     this.mergeOrbGfx.strokeCircle(0, 0, r);
-
     this.mergeOrbIcon.setText(loading ? '…' : '▶');
   }
 
@@ -498,7 +592,6 @@ export class GameOverScene extends Phaser.Scene {
 
   private requestDoubleCoins(): void {
     if (this.doubleClaimed || this.doubleRequesting || this.coinsEarned <= 0) return;
-
     this.doubleRequesting = true;
     this.mergeHit?.disableInteractive();
     this.drawMergeOrb(true);
@@ -507,7 +600,6 @@ export class GameOverScene extends Phaser.Scene {
 
   private handleDoubleCoinsResult(success: boolean, message?: string): void {
     this.doubleRequesting = false;
-
     if (!this.sys.isActive()) return;
 
     if (!success) {
@@ -519,13 +611,11 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     if (this.doubleClaimed || this.coinsEarned <= 0) return;
-
     this.doubleClaimed = true;
     usePlatformStore.getState().addCoins(this.coinsEarned);
     this.playMergeDoubleAnimation();
   }
 
-  /** Slam both coin pills into the orb — fruit-merge fantasy for x2. */
   private playMergeDoubleAnimation(): void {
     const left = this.leftPill;
     const ghost = this.ghostPill;
@@ -560,7 +650,6 @@ export class GameOverScene extends Phaser.Scene {
         left.root.setVisible(false);
         ghost.root.setVisible(false);
         orb.setVisible(false);
-
         this.spawnMergeBurst(centerX, centerY);
         this.showMergedResult(centerX, centerY);
       },
@@ -572,7 +661,6 @@ export class GameOverScene extends Phaser.Scene {
     this.mergedPill = this.createCoinPill(doubled, false);
     this.mergedPill.root.setPosition(x, y).setDepth(5).setScale(0.4);
 
-    // Gold flash ring behind the merged pill.
     const flash = this.add.graphics().setDepth(4);
     flash.fillStyle(0xffe08a, 0.55);
     flash.fillCircle(x, y, 18);
@@ -625,14 +713,86 @@ export class GameOverScene extends Phaser.Scene {
     }
   }
 
-  private async handleShareScore(score: number): Promise<void> {
-    const result = await shareService.shareScore({
-      score,
-      gameName: gameConfig.name,
+  private replay(): void {
+    if (this.mode === 'infinity') {
+      this.scene.start('Gameplay', { mode: 'infinity', returnTo: 'Home' });
+      return;
+    }
+    this.scene.start('Gameplay', {
+      mode: 'campaign',
+      mapId: this.mapId,
+      levelIndex: this.levelIndex,
+      returnTo: 'Map',
     });
+  }
 
+  private async handleShare(): Promise<void> {
+    const result = await shareService.shareScore({
+      score: this.score,
+      gameName: gameConfig.name,
+      stars: this.mode === 'campaign' ? this.stars : undefined,
+      mapId: this.mapId,
+      level: this.levelIndex + 1,
+    });
     if (result === 'unavailable') {
       toast.show({ message: t('game.shareUnavailable'), type: 'warning' });
+    }
+  }
+
+  private addBackground(width: number, height: number): void {
+    const background = this.add.image(width / 2, height / 2, 'gameover-background-image');
+    const backgroundScale = Math.max(width / background.width, height / background.height);
+    background.setScale(backgroundScale).setDepth(-1);
+  }
+
+  private addBanner(centerX: number, panelTop: number): void {
+    const banner = this.add.image(centerX, panelTop - 28, 'shop-banner').setDepth(4);
+    const bannerScale = Math.min(1.05, (this.cameras.main.width * 0.86) / banner.width);
+    banner.setScale(bannerScale);
+
+    this.add
+      .text(centerX, banner.y - 12, t('game.gameOver'), {
+        color: '#ffffff',
+        fontSize: '36px',
+        fontStyle: 'bold',
+        fontFamily: FREDOKA_FONT,
+        stroke: '#5c2a0a',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(5);
+  }
+
+  private openLeaderboard(): void {
+    if (this.mode !== 'infinity' || !this.rankText?.visible) return;
+    this.scene.start('Leaderboard', {
+      returnTo: 'GameOver',
+      returnData: {
+        mode: this.mode,
+        won: this.won,
+        stars: this.stars,
+        score: this.score,
+        coins: this.coinsEarned,
+        mapId: this.mapId,
+        levelIndex: this.levelIndex,
+        returnTo: this.returnTo,
+        doubleClaimed: this.doubleClaimed,
+      } satisfies GameOverSceneData,
+    });
+  }
+
+  private async resolveRankFromApi(): Promise<void> {
+    const requestId = ++this.rankRequestId;
+    try {
+      const rank = await gameSync.flushAndGetRank();
+      if (requestId !== this.rankRequestId || !this.sys.isActive() || !this.rankText?.active) {
+        return;
+      }
+      if (rank === null) return;
+      this.rankText.setText(t('game.rank', { rank }));
+      this.rankText.setVisible(true);
+    } catch {
+      // Network / sync failure — leave rank hidden.
     }
   }
 
@@ -655,27 +815,6 @@ export class GameOverScene extends Phaser.Scene {
     this.rankRequestId += 1;
     for (const unsub of this.unsubscribers) unsub();
     this.unsubscribers = [];
-  }
-
-  private async resolveRankFromApi(): Promise<void> {
-    const requestId = ++this.rankRequestId;
-    try {
-      const rank = await gameSync.flushAndGetRank();
-      if (requestId !== this.rankRequestId) return;
-      if (rank === null) return;
-      this.showRank(rank);
-    } catch {
-      // Network / sync failure — leave rank hidden.
-    }
-  }
-
-  private showRank(rank: number): void {
-    if (!this.sys.isActive() || !this.rankText?.active) {
-      return;
-    }
-
-    this.rankText.setText(t('game.rank', { rank }));
-    this.rankText.setVisible(true);
   }
 }
 

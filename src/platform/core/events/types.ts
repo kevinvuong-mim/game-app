@@ -27,6 +27,7 @@ export interface PlatformEventMap {
   // Gameplay (game layer emits, platform consumes)
   merge: { count?: number };
   'score:update': { score: number };
+  'stars:earned': { stars: number };
 
   // Lifecycle
   'app:back': void;
@@ -35,7 +36,14 @@ export interface PlatformEventMap {
   'app:resume': void;
   'game:destroy': void;
   'game:start': { gameId: string };
-  'game:over': { score: number; merges?: number; duration: number };
+  'game:over': {
+    score: number;
+    merges?: number;
+    duration: number;
+    coins?: number;
+    /** When true, queue the score for leaderboard sync (infinity only). */
+    submitScore?: boolean;
+  };
 
   // Platform
   'shop:restore': void;

@@ -2,12 +2,11 @@ import Phaser from 'phaser';
 
 import { eventBus } from '@platform/core/events';
 import type { UIButton } from '@platform/ui/types';
-import { CoinBar } from '@platform/ui/panel/CoinBar';
-import { t, missions, dailyRewards } from '@platform/ui';
+import { t, toast, missions, dailyRewards } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
+import { isInfinityUnlocked } from '@game/campaign/progress';
 
 export class HomeScene extends Phaser.Scene {
-  private coinBar?: CoinBar;
   private dailyRewardButton?: UIButton;
   private unsubscribers: Array<() => void> = [];
 
@@ -18,6 +17,14 @@ export class HomeScene extends Phaser.Scene {
   /** Phaser reuses prior scene data when start() omits the data arg — always pass returnTo. */
   private openScreen(key: string): void {
     this.scene.start(key, { returnTo: 'Home' });
+  }
+
+  private openInfinity(): void {
+    if (!isInfinityUnlocked()) {
+      toast.show({ message: t('home.infinityLocked'), type: 'warning' });
+      return;
+    }
+    this.scene.start('Gameplay', { mode: 'infinity', returnTo: 'Home' });
   }
 
   create(): void {
@@ -31,30 +38,16 @@ export class HomeScene extends Phaser.Scene {
 
     this.addBackgroundImage(width, height);
 
-    // this.coinBar = new CoinBar(this, {
-    //   y: height * 0.08,
-    //   align: 'center',
-    //   onNavigate: (sceneKey) => this.openScreen(sceneKey),
-    // });
-
-    // createUIButton({
-    //   scene: this,
-    //   position: { x: width * 0.83, y: height * 0.04 },
-    //   size: { width: 64, height: 64 },
-    //   background: { key: 'how-to-play-icon' },
-    //   onClick: () => this.openScreen('HowToPlay'),
-    // });
-
     createUIButton({
       scene: this,
       position: { x: width / 2, y: height * 0.56 },
       size: { width: 300, height: 110 },
       background: { key: 'play-button-background' },
       text: {
-        content: t('home.play'),
+        content: t('home.map'),
         style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
-      onClick: () => this.scene.start('Gameplay', { returnTo: 'Home' }),
+      onClick: () => this.scene.start('Map', { returnTo: 'Home' }),
     });
 
     createUIButton({
@@ -63,10 +56,10 @@ export class HomeScene extends Phaser.Scene {
       size: { width: 300, height: 110 },
       background: { key: 'leaderboard-button-background' },
       text: {
-        content: t('home.leaderboard'),
-        style: { fontSize: 36, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
+        content: t('home.infinity'),
+        style: { fontSize: 32, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
-      onClick: () => this.openScreen('Leaderboard'),
+      onClick: () => this.openInfinity(),
     });
 
     createUIButton({
@@ -153,11 +146,6 @@ export class HomeScene extends Phaser.Scene {
     });
 
     this.unsubscribers.push(
-      eventBus.on('app:back', () => {
-        if (this.coinBar?.isGetCoinsModalOpen()) {
-          this.coinBar.hideGetCoinsModal();
-        }
-      }),
       eventBus.on('app:resume', () => {
         this.dailyRewardButton?.setBadgeVisible(dailyRewards.canClaim());
       }),
@@ -169,8 +157,6 @@ export class HomeScene extends Phaser.Scene {
 
   shutdown(): void {
     this.cleanupEventListeners();
-    this.coinBar?.destroy();
-    this.coinBar = undefined;
     this.dailyRewardButton = undefined;
   }
 
