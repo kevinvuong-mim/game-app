@@ -33,16 +33,16 @@ export class SkillBarView {
   private readonly arrowPad = 36;
   private readonly arrowInset = 30;
   private readonly panelPadTop = 18;
-  private readonly baseBtnSize = 84;
+  private readonly baseBtnSize = 92;
   private readonly panelPadBottom = 30;
   private readonly skillVisibleCount = 4;
-  private readonly maxPanelWidthPx = 520;
-  private readonly idealSlotSpacing = 110;
+  private readonly maxPanelWidthPx = 540;
+  private readonly idealSlotSpacing = 118;
   private readonly maxPanelWidthRatio = 0.85;
   private readonly selectedSkillScale = 1.24;
 
   private skillBarTop = 0;
-  private skillBtnSize = 84;
+  private skillBtnSize = 92;
   private skillBarBottom = 0;
   private skillPanelLeft = 0;
   private skillPanelWidth = 0;
@@ -51,7 +51,7 @@ export class SkillBarView {
   private skillTrackCenterY = 0;
   private layoutScreenWidth = 0;
   private layoutScreenHeight = 0;
-  private skillSlotSpacing = 110;
+  private skillSlotSpacing = 118;
   private skillNavConsumed = false;
   private ownedSkillIds: SkillId[] = [];
   private skillHint?: Phaser.GameObjects.Text;

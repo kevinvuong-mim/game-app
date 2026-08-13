@@ -25,7 +25,7 @@
       "id": "boost_lucky_clover",
       "currency": "coins",
       "icon": "shop-item-3",
-      "description": "If your next match is correct, also clear a random extra pair."
+      "description": "Next correct match clears an extra pair."
     },
     {
       "price": 3.99,

@@ -91,7 +91,7 @@
       },
       "boost_lucky_clover": {
         "name": "Lucky Clover",
-        "description": "If your next match is correct, also clear a random extra pair."
+        "description": "Next correct match clears an extra pair."
       },
       "remove_ads": {
         "name": "Remove Ads",

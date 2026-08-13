@@ -91,7 +91,7 @@
       },
       "boost_lucky_clover": {
         "name": "Lucky Clover",
-        "description": "Nếu lượt tiếp theo match đúng, xoá thêm một cặp ngẫu nhiên."
+        "description": "Match đúng sẽ xoá thêm một cặp."
       },
       "remove_ads": {
         "name": "Gỡ Quảng Cáo",
