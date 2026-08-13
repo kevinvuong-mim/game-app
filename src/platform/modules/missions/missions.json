@@ -1,6 +1,6 @@
 [
   {
-    "target": 3,
+    "target": 1,
     "type": "EARN_STARS",
     "goScene": "Map",
     "resetPolicy": "daily",

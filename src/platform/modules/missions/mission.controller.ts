@@ -20,7 +20,9 @@ class MissionController {
       }),
 
       events.on('stars:earned', ({ stars }) => {
-        void this.handleProgress('EARN_STARS', stars, 'set');
+        if (stars >= 3) {
+          void this.handleProgress('EARN_STARS', 1, 'set');
+        }
       }),
 
       events.on('merge', ({ count }) => {

@@ -164,10 +164,15 @@ export class MissionService {
     for (const def of this.definitions) {
       const saved = existing[def.id];
       if (saved) {
+        const targetChanged = saved.target !== def.target;
         missions[def.id] = {
           ...saved,
           type: def.type,
           target: def.target,
+          progress:
+            def.type === 'EARN_STARS' && saved.status === 'active' && targetChanged
+              ? 0
+              : Math.min(saved.progress, def.target),
         };
       } else {
         missions[def.id] = createMissionProgress(def);
