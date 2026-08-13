@@ -313,7 +313,7 @@ export class GameOverScene extends Phaser.Scene {
           mode: 'campaign',
           mapId: next.mapId,
           levelIndex: next.levelIndex,
-          returnTo: 'Map',
+          returnTo: 'LevelSelect',
         });
       },
     });
@@ -331,7 +331,7 @@ export class GameOverScene extends Phaser.Scene {
       },
       onClick: () => {
         eventBus.emit('game:destroy', undefined);
-        this.scene.start('Map', { returnTo: 'Home', mapId: this.mapId });
+        this.scene.start('Map', { returnTo: 'Home' });
       },
     });
   }
@@ -722,7 +722,7 @@ export class GameOverScene extends Phaser.Scene {
       mode: 'campaign',
       mapId: this.mapId,
       levelIndex: this.levelIndex,
-      returnTo: 'Map',
+      returnTo: 'LevelSelect',
     });
   }
 

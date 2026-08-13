@@ -93,6 +93,8 @@ export interface UIButtonOptions {
   };
   background: {
     key: string;
+    /** Default `stretch`. Use `contain` for non-square art (e.g. shop items). */
+    fit?: 'stretch' | 'contain';
   };
   depth?: number;
   disabled?: boolean;

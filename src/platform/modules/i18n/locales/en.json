@@ -27,6 +27,8 @@
     "step4Body": "Buy Reveal, Extra Time, and Lucky Clover in the Shop to help on tough levels."
   },
   "map": {
+    "selectTitle": "Maps",
+    "stars": "{{earned}}/{{max}}",
     "previous": "PREV",
     "next": "NEXT",
     "levelLocked": "Clear the previous level first",

@@ -16,6 +16,10 @@ export function getLevelStars(mapId: number, levelIndex: number): number {
   return getMapStars(mapId)[levelIndex] ?? 0;
 }
 
+export function getMapTotalStars(mapId: number): number {
+  return getMapStars(mapId).reduce((sum, stars) => sum + stars, 0);
+}
+
 function isMapCompleted(mapId: number): boolean {
   return getMapStars(mapId).every((stars) => stars >= 1);
 }

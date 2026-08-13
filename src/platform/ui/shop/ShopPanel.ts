@@ -123,7 +123,8 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     const iconKey = this.scene.textures.exists(item.icon) ? item.icon : FALLBACK_ITEM_ICON;
 
     const icon = this.scene.add.image(iconX, 0, iconKey);
-    icon.setDisplaySize(iconSize, iconSize);
+    const scale = Math.min(iconSize / icon.width, iconSize / icon.height);
+    icon.setDisplaySize(icon.width * scale, icon.height * scale);
     container.add(icon);
 
     const textX = iconX + iconSize / 2 + 12;

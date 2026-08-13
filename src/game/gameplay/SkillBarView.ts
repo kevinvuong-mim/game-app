@@ -198,7 +198,7 @@ export class SkillBarView {
     this.skillSlotSpacing = innerWidth / slotCount;
 
     const panelHeight = this.panelPadTop + this.skillBtnSize + this.panelPadBottom;
-    this.skillBarTop = this.layoutScreenHeight - panelHeight - 90;
+    this.skillBarTop = this.layoutScreenHeight - panelHeight - 50;
     this.skillBarBottom = this.skillBarTop + panelHeight;
   }
 
@@ -351,7 +351,7 @@ export class SkillBarView {
       scene: this.scene,
       position: { x: 0, y: 0 },
       size: { width: btnSize, height: btnSize },
-      background: { key: SKILL_ICONS[id] },
+      background: { key: SKILL_ICONS[id], fit: 'contain' },
       // Instant skills play their own SFX — skip the default button pop.
       sound: id === 'boost_extra_time' ? false : 'pop',
       badge: {

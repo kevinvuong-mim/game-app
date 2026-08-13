@@ -322,7 +322,12 @@ export function createUIButton(options: UIButtonOptions): UIButton {
     offsetY + height / 2,
     background.key
   );
-  backgroundImage.setDisplaySize(width, height);
+  if (background.fit === 'contain') {
+    const scale = Math.min(width / backgroundImage.width, height / backgroundImage.height);
+    backgroundImage.setDisplaySize(backgroundImage.width * scale, backgroundImage.height * scale);
+  } else {
+    backgroundImage.setDisplaySize(width, height);
+  }
   container.add(backgroundImage);
 
   const textObject = text

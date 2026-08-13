@@ -6,35 +6,27 @@ import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import { PANEL_BG, PANEL_BORDER, PANEL_CORNER_RADIUS } from '@platform/ui/panel/panelTheme';
-import {
-  MAP_COUNT,
-  getAllMaps,
-  getMapDefinition,
-  mapBackgroundKey,
-} from '@game/campaign/mapConfig';
+import { getMapDefinition, mapBackgroundKey } from '@game/campaign/mapConfig';
 import {
   getLastMapId,
-  getMapTotalStars,
+  getLevelStars,
+  isLevelPlayable,
   isMapUnlocked,
   setLastMapId,
 } from '@game/campaign/progress';
 
-const GRID_COLS = 2;
-const CARD_W = 200;
-const CARD_H = 360;
-const CARD_GAP_X = 28;
-const CARD_GAP_Y = 24;
-const ROW_STRIDE = CARD_H + CARD_GAP_Y;
-const PANEL_PAD = 32;
-const VISIBLE_ROWS = 2;
+const GRID_COLS = 3;
+const BOX_SIZE = 124;
+const BOX_GAP_X = 22;
+const BOX_GAP_Y = 16;
+const ROW_STRIDE = BOX_SIZE + BOX_GAP_Y + 6;
+const PANEL_PAD = 24;
+const VISIBLE_ROWS = 5;
 const DRAG_THRESHOLD = 8;
-const THUMB_W = CARD_W - 16;
-const THUMB_H = 248;
-const CARD_INNER_PAD = 14;
-const SECTION_GAP = 14;
 
-export class MapScene extends Phaser.Scene {
-  private returnTo = 'Home';
+export class LevelSelectScene extends Phaser.Scene {
+  private mapId = 1;
+  private returnTo = 'Map';
   private scrollY = 0;
   private maxScroll = 0;
   private dragStartY = 0;
@@ -48,11 +40,12 @@ export class MapScene extends Phaser.Scene {
   private unsubscribers: Array<() => void> = [];
 
   constructor() {
-    super({ key: 'Map' });
+    super({ key: 'LevelSelect' });
   }
 
-  init(data: { returnTo?: string } = {}): void {
-    this.returnTo = data.returnTo ?? 'Home';
+  init(data: { mapId?: number; returnTo?: string } = {}): void {
+    this.returnTo = data.returnTo ?? 'Map';
+    this.mapId = data.mapId ?? getLastMapId();
   }
 
   create(): void {
@@ -61,11 +54,11 @@ export class MapScene extends Phaser.Scene {
     this.events.once('shutdown', this.shutdown, this);
 
     eventBus.emit('ad:context:change', { context: 'HOME' });
-    this.renderMaps();
+    this.renderLevels();
 
     this.unsubscribers.push(
       eventBus.on('app:back', () => {
-        this.scene.start(this.returnTo);
+        this.scene.start(this.returnTo, { returnTo: 'Home' });
       })
     );
   }
@@ -75,12 +68,16 @@ export class MapScene extends Phaser.Scene {
     this.cleanupEventListeners();
   }
 
-  private renderMaps(): void {
+  private renderLevels(): void {
     this.cleanupScroll();
     this.children.removeAll(true);
+    setLastMapId(this.mapId);
     this.scrollY = 0;
 
     const { width, height } = this.cameras.main;
+    const map = getMapDefinition(this.mapId);
+    const unlocked = isMapUnlocked(this.mapId);
+
     this.addBackground(width, height);
 
     createUIButton({
@@ -88,45 +85,44 @@ export class MapScene extends Phaser.Scene {
       position: { x: width * 0.17, y: height * 0.08 },
       size: { width: 80, height: 80 },
       background: { key: 'back-icon' },
-      onClick: () => this.scene.start(this.returnTo),
+      onClick: () => this.scene.start(this.returnTo, { returnTo: 'Home' }),
     });
 
-    this.addBanner(width, height, t('map.selectTitle'));
+    this.addBanner(width, height, map.bannerName);
 
-    const maps = getAllMaps();
-    const rows = Math.ceil(maps.length / GRID_COLS);
-    const gridW = GRID_COLS * CARD_W + (GRID_COLS - 1) * CARD_GAP_X;
-    const contentH = (rows - 1) * ROW_STRIDE + CARD_H;
-    const viewportH = Math.min(contentH, (VISIBLE_ROWS - 1) * ROW_STRIDE + CARD_H);
+    const rows = Math.ceil(map.levelCount / GRID_COLS);
+    const gridW = GRID_COLS * BOX_SIZE + (GRID_COLS - 1) * BOX_GAP_X;
+    const contentH = (rows - 1) * ROW_STRIDE + BOX_SIZE;
+    const maxViewportH = (VISIBLE_ROWS - 1) * ROW_STRIDE + BOX_SIZE;
+    const viewportH = Math.min(contentH, maxViewportH);
     const gridX = width / 2 - gridW / 2;
-    const gridY = height * 0.26;
-    this.gridOriginX = gridX + CARD_W / 2;
-    this.gridOriginY = gridY + CARD_H / 2;
+    const gridY = height * 0.28;
+    this.gridOriginX = gridX + BOX_SIZE / 2;
+    this.gridOriginY = gridY + BOX_SIZE / 2;
     this.viewport = { x: gridX, y: gridY, width: gridW, height: viewportH };
     this.maxScroll = Math.max(0, contentH - viewportH);
 
     this.drawGridPanel(gridX, gridY, gridW, viewportH);
 
-    // Clip to the inner content area so panel padding stays empty while scrolling.
     this.contentMaskShape = this.make.graphics({ x: 0, y: 0 }, false);
     this.contentMaskShape.fillStyle(0xffffff);
     this.contentMaskShape.fillRoundedRect(
-      gridX,
-      gridY,
-      gridW,
-      viewportH,
-      Math.max(8, PANEL_CORNER_RADIUS - PANEL_PAD)
+      gridX - PANEL_PAD,
+      gridY - PANEL_PAD,
+      gridW + PANEL_PAD * 2,
+      viewportH + PANEL_PAD * 2,
+      PANEL_CORNER_RADIUS
     );
 
     this.listContainer = this.add.container(0, 0).setDepth(1);
     this.listContainer.setMask(this.contentMaskShape.createGeometryMask());
 
-    for (let i = 0; i < maps.length; i += 1) {
+    for (let i = 0; i < map.levelCount; i += 1) {
       const col = i % GRID_COLS;
       const row = Math.floor(i / GRID_COLS);
-      const x = this.gridOriginX + col * (CARD_W + CARD_GAP_X);
+      const x = this.gridOriginX + col * (BOX_SIZE + BOX_GAP_X);
       const y = this.gridOriginY + row * ROW_STRIDE;
-      this.addMapCard(this.listContainer, x, y, maps[i].id);
+      this.addLevelBox(this.listContainer, x, y, i, unlocked);
     }
 
     this.bindGridScroll();
@@ -186,123 +182,75 @@ export class MapScene extends Phaser.Scene {
   }
 
   private handleGridTap(pointerX: number, pointerY: number): void {
+    const map = getMapDefinition(this.mapId);
+    const unlocked = isMapUnlocked(this.mapId);
     const contentY = pointerY + this.scrollY;
 
-    for (let i = 0; i < MAP_COUNT; i += 1) {
+    for (let i = 0; i < map.levelCount; i += 1) {
       const col = i % GRID_COLS;
       const row = Math.floor(i / GRID_COLS);
-      const x = this.gridOriginX + col * (CARD_W + CARD_GAP_X);
+      const x = this.gridOriginX + col * (BOX_SIZE + BOX_GAP_X);
       const y = this.gridOriginY + row * ROW_STRIDE;
-      if (Math.abs(pointerX - x) <= CARD_W / 2 && Math.abs(contentY - y) <= CARD_H / 2) {
-        this.onMapTap(i + 1);
+      if (Math.abs(pointerX - x) <= BOX_SIZE / 2 && Math.abs(contentY - y) <= BOX_SIZE / 2) {
+        this.onLevelTap(i, unlocked, unlocked && isLevelPlayable(this.mapId, i));
         return;
       }
     }
   }
 
-  private addMapCard(
+  private addLevelBox(
     container: Phaser.GameObjects.Container,
     x: number,
     y: number,
-    mapId: number
+    levelIndex: number,
+    mapUnlocked: boolean
   ): void {
-    const unlocked = isMapUnlocked(mapId);
-    const map = getMapDefinition(mapId);
-    const totalStars = getMapTotalStars(mapId);
-    const maxStars = map.levelCount * 3;
-    const lastMapId = getLastMapId();
+    const stars = getLevelStars(this.mapId, levelIndex);
+    const played = stars > 0;
+    const playable = mapUnlocked && isLevelPlayable(this.mapId, levelIndex);
+    const box = this.add.image(x, y, played ? 'box-active' : 'box-inactive');
+    box.setDisplaySize(BOX_SIZE, BOX_SIZE);
+    if (!playable) box.setAlpha(0.72);
 
-    const cardBg = this.add.graphics();
-    drawRoundedRect(
-      cardBg,
-      x - CARD_W / 2,
-      y - CARD_H / 2,
-      CARD_W,
-      CARD_H,
-      16,
-      PANEL_BG,
-      lastMapId === mapId ? 0xe8a838 : PANEL_BORDER
-    );
-
-    const top = y - CARD_H / 2;
-    const titleY = top + CARD_INNER_PAD + 14;
-    const thumbTop = top + CARD_INNER_PAD + 28 + SECTION_GAP;
-    const thumbY = thumbTop + THUMB_H / 2;
-    const starsY = thumbTop + THUMB_H + SECTION_GAP + 11;
-    const thumb = this.add.image(x, thumbY, mapBackgroundKey(mapId));
-    this.fitThumbCover(thumb);
-
-    const title = this.add
-      .text(x, titleY, map.bannerName, {
+    const label = this.add
+      .text(x, y - 12, String(levelIndex + 1), {
         fontFamily: FREDOKA_FONT,
-        fontSize: '26px',
+        fontSize: '40px',
         fontStyle: 'bold',
-        color: unlocked ? '#3a2a10' : '#6a6a6a',
-        stroke: '#fff3d0',
+        color: played ? '#3a2a10' : '#6a6a6a',
+        stroke: played ? '#fff3d0' : '#2a2a2a',
         strokeThickness: 3,
       })
       .setOrigin(0.5);
 
-    if (!unlocked) {
-      thumb.setTint(0x555555);
-      const lockOverlay = this.add.rectangle(x, thumbY, THUMB_W, THUMB_H, 0x000000, 0.25);
-      const lockIcon = this.makeLockIcon(x, thumbY);
-      container.add([cardBg, title, thumb, lockOverlay, lockIcon]);
-    } else {
-      container.add([cardBg, title, thumb]);
-    }
+    const starY = y + 28;
+    const starKeys = played
+      ? [0, 1, 2].map((i) => (i < stars ? 'star-active' : 'star-inactive'))
+      : ['star-grey', 'star-grey', 'star-grey'];
+    const starImages = starKeys.map((key, i) => {
+      const star = this.add.image(x + (i - 1) * 28, starY, key);
+      star.setDisplaySize(22, 22);
+      return star;
+    });
 
-    const starIcon = this.add.image(x - 28, starsY, unlocked ? 'star-active' : 'star-grey');
-    starIcon.setDisplaySize(22, 22);
-
-    const starsLabel = this.add
-      .text(x + 4, starsY, t('map.stars', { earned: totalStars, max: maxStars }), {
-        fontFamily: FREDOKA_FONT,
-        fontSize: '18px',
-        fontStyle: 'bold',
-        color: unlocked ? '#3a2a10' : '#6a6a6a',
-        stroke: '#fff3d0',
-        strokeThickness: 2,
-      })
-      .setOrigin(0, 0.5);
-
-    if (!unlocked) {
-      cardBg.setAlpha(0.85);
-      title.setAlpha(0.85);
-      starIcon.setAlpha(0.7);
-      starsLabel.setAlpha(0.7);
-    }
-
-    container.add([starIcon, starsLabel]);
+    container.add([box, label, ...starImages]);
   }
 
-  private fitThumbCover(thumb: Phaser.GameObjects.Image): void {
-    const scale = Math.max(THUMB_W / thumb.width, THUMB_H / thumb.height);
-    const cropW = THUMB_W / scale;
-    const cropH = THUMB_H / scale;
-    thumb.setCrop((thumb.width - cropW) / 2, (thumb.height - cropH) / 2, cropW, cropH);
-    thumb.setScale(scale);
-  }
-
-  private makeLockIcon(x: number, y: number): Phaser.GameObjects.Graphics {
-    const g = this.add.graphics();
-    g.lineStyle(5, 0xffffff, 0.95);
-    g.strokeRoundedRect(x - 14, y - 4, 28, 22, 4);
-    g.beginPath();
-    g.arc(x, y - 4, 12, Math.PI, 0, false);
-    g.strokePath();
-    g.fillStyle(0xffffff, 0.95);
-    g.fillCircle(x, y + 6, 3);
-    return g;
-  }
-
-  private onMapTap(mapId: number): void {
-    if (!isMapUnlocked(mapId)) {
+  private onLevelTap(levelIndex: number, mapUnlocked: boolean, playable: boolean): void {
+    if (!mapUnlocked) {
       toast.show({ message: t('map.mapLocked'), type: 'warning' });
       return;
     }
-    setLastMapId(mapId);
-    this.scene.start('LevelSelect', { mapId, returnTo: 'Map' });
+    if (!playable) {
+      toast.show({ message: t('map.levelLocked'), type: 'warning' });
+      return;
+    }
+    this.scene.start('Gameplay', {
+      mode: 'campaign',
+      mapId: this.mapId,
+      levelIndex,
+      returnTo: 'LevelSelect',
+    });
   }
 
   private drawGridPanel(x: number, y: number, gridW: number, gridH: number): void {
@@ -320,7 +268,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   private addBanner(width: number, height: number, title: string): void {
-    const bannerY = height * 0.16;
+    const bannerY = height * 0.18;
     const banner = this.add.image(width / 2, bannerY, 'shop-banner');
     const targetWidth = Math.min(width * 0.72, 360);
     const targetHeight = banner.height * (targetWidth / banner.width);
@@ -329,7 +277,7 @@ export class MapScene extends Phaser.Scene {
     this.add
       .text(width / 2, bannerY - 16, title, {
         fontFamily: FREDOKA_FONT,
-        fontSize: '36px',
+        fontSize: '40px',
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#000000',
@@ -339,10 +287,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   private addBackground(width: number, height: number): void {
-    const bgKey = this.textures.exists('general-background-image')
-      ? 'general-background-image'
-      : mapBackgroundKey(getLastMapId());
-    const bg = this.add.image(width / 2, height / 2, bgKey);
+    const bg = this.add.image(width / 2, height / 2, mapBackgroundKey(this.mapId));
     const scale = Math.max(width / bg.width, height / bg.height);
     bg.setScale(scale).setDepth(-1);
   }

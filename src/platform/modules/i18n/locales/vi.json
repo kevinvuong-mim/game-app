@@ -27,6 +27,8 @@
     "step4Body": "Mua Reveal, Extra Time và Lucky Clover ở Cửa hàng để hỗ trợ màn khó."
   },
   "map": {
+    "selectTitle": "Bản đồ",
+    "stars": "{{earned}}/{{max}}",
     "previous": "TRƯỚC",
     "next": "SAU",
     "levelLocked": "Hãy vượt qua level trước đã",

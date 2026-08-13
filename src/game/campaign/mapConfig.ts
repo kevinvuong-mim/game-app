@@ -9,7 +9,7 @@ export const MAP_COUNT = MAP_CARD_COUNTS.length;
  * (`levelIndex + 1`), so a level never needs duplicate pair types.
  */
 export const LEVEL_CELL_COUNTS = [
-  2, 4, 6, 8, 8, 12, 12, 16, 16, 16, 16, 20, 20, 20, 20, 20, 20, 20,
+  2, 4, 6, 8, 8, 12, 12, 16, 16, 16, 16, 18, 18, 18, 18, 18, 18, 18,
 ] as const;
 
 /** Base timer (seconds) by level index, before map difficulty offset. */
@@ -121,7 +121,6 @@ const GRID_BY_CELLS: Record<number, GridSize> = {
   12: { cols: 3, rows: 4 },
   16: { cols: 3, rows: 6 },
   18: { cols: 3, rows: 6 },
-  20: { cols: 3, rows: 7 },
   24: { cols: 3, rows: 8 },
 };
 

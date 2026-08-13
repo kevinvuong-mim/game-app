@@ -95,7 +95,7 @@ export class GameplayScene extends Phaser.Scene {
     this.mode = data.mode ?? 'campaign';
     this.mapId = data.mapId ?? 1;
     this.levelIndex = data.levelIndex ?? 0;
-    this.returnTo = data.returnTo ?? (this.mode === 'campaign' ? 'Map' : 'Home');
+    this.returnTo = data.returnTo ?? (this.mode === 'campaign' ? 'LevelSelect' : 'Home');
   }
 
   create(): void {
@@ -558,6 +558,12 @@ export class GameplayScene extends Phaser.Scene {
     this.resolving = false;
     this.selected = [];
     this.pendingCampaignWin = false;
+
+    if (sceneKey === 'LevelSelect') {
+      this.scene.start('LevelSelect', { mapId: this.mapId, returnTo: 'Map' });
+      return;
+    }
+
     this.scene.start(sceneKey, { returnTo: 'Home' });
   }
 
