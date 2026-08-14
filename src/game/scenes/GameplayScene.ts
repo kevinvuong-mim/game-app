@@ -22,8 +22,8 @@ import {
 import {
   EXTRA_TIME_SECONDS,
   FLIP_BACK_DELAY_MS,
+  BOARD_PAD_X,
   INFINITY_BOARD_SIZE,
-  INFINITY_GRID,
   INFINITY_COINS_PER_MATCH,
   INFINITY_FAST_MATCH_BONUS,
   INFINITY_FAST_MATCH_MS,
@@ -201,21 +201,16 @@ export class GameplayScene extends Phaser.Scene {
   }
 
   private buildBoard(width: number, height: number, restored?: GameRunSnapshot | null): void {
-    const top = this.mode === 'infinity' ? 220 : 250;
+    const top = 220;
     const bottom = Math.min(this.skillBar.barBottom - 24, height - 220);
     const cellCount =
       this.mode === 'infinity' ? INFINITY_BOARD_SIZE : getLevelCellCount(this.levelIndex);
-    const padX = this.mode === 'infinity' ? 64 : 24;
-    this.layout = layoutMatchingBoard(
-      cellCount,
-      {
-        x: padX,
-        y: top,
-        width: width - padX * 2,
-        height: Math.max(280, bottom - top),
-      },
-      this.mode === 'infinity' ? INFINITY_GRID : undefined
-    );
+    this.layout = layoutMatchingBoard(cellCount, {
+      x: BOARD_PAD_X,
+      y: top,
+      width: width - BOARD_PAD_X * 2,
+      height: Math.max(280, bottom - top),
+    });
 
     this.drawBoardPanel(this.layout.bounds);
 
@@ -412,7 +407,8 @@ export class GameplayScene extends Phaser.Scene {
         this,
         slot.x,
         slot.y,
-        this.layout.cardSize,
+        this.layout.cardWidth,
+        this.layout.cardHeight,
         deck[slot.index],
         slot.index
       );
@@ -660,7 +656,8 @@ export class GameplayScene extends Phaser.Scene {
         this,
         slot.x,
         slot.y,
-        this.layout.cardSize,
+        this.layout.cardWidth,
+        this.layout.cardHeight,
         saved.pairKey,
         saved.slotIndex
       );

@@ -16,7 +16,8 @@ export class CardView extends Phaser.GameObjects.Container {
     scene: Phaser.Scene,
     x: number,
     y: number,
-    cardSize: number,
+    cardWidth: number,
+    cardHeight: number,
     pairKey: string,
     slotIndex: number
   ) {
@@ -25,20 +26,21 @@ export class CardView extends Phaser.GameObjects.Container {
     this.slotIndex = slotIndex;
 
     this.back = scene.add.image(0, 0, 'card-back');
-    this.back.setDisplaySize(cardSize, cardSize);
+    this.back.setDisplaySize(cardWidth, cardHeight);
 
     this.front = scene.add.container(0, 0);
     const frame = scene.add.image(0, 0, 'card-front');
-    frame.setDisplaySize(cardSize, cardSize);
+    frame.setDisplaySize(cardWidth, cardHeight);
     const art = scene.add.image(0, 0, pairKey);
-    const artSize = cardSize * 0.62;
-    const scale = Math.min(artSize / art.width, artSize / art.height);
+    const artMaxW = cardWidth * 0.62;
+    const artMaxH = cardHeight * 0.62;
+    const scale = Math.min(artMaxW / art.width, artMaxH / art.height);
     art.setDisplaySize(art.width * scale, art.height * scale);
     this.front.add([frame, art]);
     this.front.setVisible(false);
 
     this.add([this.back, this.front]);
-    this.setSize(cardSize, cardSize);
+    this.setSize(cardWidth, cardHeight);
     this.setInteractive({ useHandCursor: true });
     scene.add.existing(this);
   }

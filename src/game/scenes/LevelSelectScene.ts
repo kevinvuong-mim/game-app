@@ -4,6 +4,7 @@ import { t, toast } from '@platform/ui';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '@platform/ui/button/UIButton';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import { PANEL_BG, PANEL_BORDER, PANEL_CORNER_RADIUS } from '@platform/ui/panel/panelTheme';
 import { getMapDefinition, mapBackgroundKey } from '@game/campaign/mapConfig';
@@ -237,6 +238,7 @@ export class LevelSelectScene extends Phaser.Scene {
   }
 
   private onLevelTap(levelIndex: number, mapUnlocked: boolean, playable: boolean): void {
+    soundManager.playPop();
     if (!mapUnlocked) {
       toast.show({ message: t('map.mapLocked'), type: 'warning' });
       return;

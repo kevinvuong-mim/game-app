@@ -33,6 +33,11 @@ export class SkillBarView {
   private readonly panelPadBottom = 30;
   /** Nudge skill icons/arrows down inside the bar. */
   private readonly itemNudgeY = 6;
+  /** Outer skills: item 1 left, item 3 right. */
+  private readonly itemNudgeX: Partial<Record<SkillId, number>> = {
+    boost_reveal: -12,
+    boost_lucky_clover: 12,
+  };
   private readonly skillVisibleCount = 4;
   private readonly maxPanelWidthPx = 540;
   private readonly idealSlotSpacing = 118;
@@ -389,7 +394,9 @@ export class SkillBarView {
     const alignCount =
       owned <= this.skillVisibleCount ? Math.max(owned, 1) : this.skillVisibleCount;
     const leftmost = alignCount <= 1 ? 0 : -((alignCount - 1) * this.skillSlotSpacing) / 2;
-    return leftmost + index * this.skillSlotSpacing;
+    const id = this.ownedSkillIds[index];
+    const nudge = id ? (this.itemNudgeX[id] ?? 0) : 0;
+    return leftmost + index * this.skillSlotSpacing + nudge;
   }
 
   private maxScrollIndex(): number {

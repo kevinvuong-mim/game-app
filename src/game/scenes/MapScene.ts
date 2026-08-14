@@ -4,6 +4,7 @@ import { t, toast } from '@platform/ui';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { createUIButton } from '@platform/ui/button/UIButton';
+import { soundManager } from '@platform/ui/audio/SoundManager';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
 import { PANEL_BG, PANEL_BORDER, PANEL_CORNER_RADIUS } from '@platform/ui/panel/panelTheme';
 import {
@@ -297,6 +298,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   private onMapTap(mapId: number): void {
+    soundManager.playPop();
     if (!isMapUnlocked(mapId)) {
       toast.show({ message: t('map.mapLocked'), type: 'warning' });
       return;

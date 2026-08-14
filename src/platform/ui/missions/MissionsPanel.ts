@@ -339,7 +339,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
       scene: this.scene,
       position: { x, y: 0 },
       size: { width: ACTION_BTN_WIDTH, height: ACTION_BTN_HEIGHT },
-      background: { key: 'settings-button-background' },
+      background: { key: 'blue-button-background' },
       text: {
         content: t('missions.go'),
         style: {

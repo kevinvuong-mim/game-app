@@ -1,7 +1,13 @@
 import Phaser from 'phaser';
 
 import { CardView } from './CardView';
-import { gridForCellCount, type GridSize } from '@game/campaign/mapConfig';
+import {
+  BOARD_CARD_FILL,
+  BOARD_CARD_HEIGHT_FILL,
+  BOARD_SIZE_ROWS,
+  gridForCellCount,
+  type GridSize,
+} from '@game/campaign/mapConfig';
 
 interface BoardSlot {
   index: number;
@@ -10,7 +16,8 @@ interface BoardSlot {
 }
 
 export interface MatchingBoardLayout {
-  cardSize: number;
+  cardWidth: number;
+  cardHeight: number;
   slots: BoardSlot[];
   bounds: { x: number; y: number; width: number; height: number };
 }
@@ -18,32 +25,44 @@ export interface MatchingBoardLayout {
 export function layoutMatchingBoard(
   cellCount: number,
   area: { x: number; y: number; width: number; height: number },
-  grid?: GridSize
+  grid?: GridSize,
+  options?: { fill?: number; heightFill?: number; sizeRows?: number }
 ): MatchingBoardLayout {
   const { cols, rows } = grid ?? gridForCellCount(cellCount);
+  const fill = options?.fill ?? BOARD_CARD_FILL;
+  const heightFill = options?.heightFill ?? BOARD_CARD_HEIGHT_FILL;
+  const sizeRows = options?.sizeRows ?? BOARD_SIZE_ROWS;
   const gap = 16;
   const maxW = (area.width - gap * (cols + 1)) / cols;
-  const maxH = (area.height - gap * (rows + 1)) / rows;
-  const cardSize = Math.max(64, Math.round(Math.min(146, maxW, maxH) * 0.94));
-  const gridW = cols * cardSize + (cols - 1) * gap;
-  const gridH = rows * cardSize + (rows - 1) * gap;
+  const maxH = (area.height - gap * (sizeRows + 1)) / sizeRows;
+  const cardWidth = Math.max(64, Math.round(Math.min(146, maxW) * fill));
+  const cardHeight = Math.max(cardWidth, Math.round(maxH * heightFill));
+  const gridW = cols * cardWidth + (cols - 1) * gap;
+  const gridH = rows * cardHeight + (rows - 1) * gap;
   const gridX = area.x + (area.width - gridW) / 2;
   const gridY = area.y + (area.height - gridH) / 2;
-  const originX = gridX + cardSize / 2;
-  const originY = gridY + cardSize / 2;
+  const originX = gridX + cardWidth / 2;
+  const originY = gridY + cardHeight / 2;
 
   const slots: BoardSlot[] = [];
   for (let i = 0; i < cellCount; i += 1) {
     const col = i % cols;
     const row = Math.floor(i / cols);
+    const cardsInRow = Math.min(cols, cellCount - row * cols);
+    const rowOffset = ((cols - cardsInRow) * (cardWidth + gap)) / 2;
     slots.push({
       index: i,
-      x: originX + col * (cardSize + gap),
-      y: originY + row * (cardSize + gap),
+      x: originX + col * (cardWidth + gap) + rowOffset,
+      y: originY + row * (cardHeight + gap),
     });
   }
 
-  return { cardSize, slots, bounds: { x: gridX, y: gridY, width: gridW, height: gridH } };
+  return {
+    cardWidth,
+    cardHeight,
+    slots,
+    bounds: { x: gridX, y: gridY, width: gridW, height: gridH },
+  };
 }
 
 function shuffleInPlace<T>(items: T[]): T[] {
@@ -75,7 +94,15 @@ export function createCards(
   deck: string[]
 ): CardView[] {
   return layout.slots.map((slot, index) => {
-    const card = new CardView(scene, slot.x, slot.y, layout.cardSize, deck[index], slot.index);
+    const card = new CardView(
+      scene,
+      slot.x,
+      slot.y,
+      layout.cardWidth,
+      layout.cardHeight,
+      deck[index],
+      slot.index
+    );
     card.setDepth(10);
     return card;
   });

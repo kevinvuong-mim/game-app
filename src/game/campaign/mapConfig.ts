@@ -28,8 +28,8 @@ export const STAR_THRESHOLDS = {
 export const INFINITY_INITIAL_TIME = 60;
 export const INFINITY_MATCH_BONUS_START = 5;
 export const INFINITY_MATCH_BONUS_MIN = 3;
-/** 3×4 = 12 cards / 6 pairs. */
-export const INFINITY_BOARD_SIZE = 12;
+/** 4×5 = 20 cards / 10 pairs. */
+export const INFINITY_BOARD_SIZE = 20;
 export const INFINITY_WAVE_MATCHES = 8;
 export const INFINITY_COINS_PER_MATCH = 10;
 export const INFINITY_BASE_PAIR_SCORE = 100;
@@ -111,21 +111,17 @@ export interface GridSize {
   rows: number;
 }
 
-export const INFINITY_GRID: GridSize = { cols: 3, rows: 4 };
+/** Shared gameplay board: 4 columns; card size is computed as if the board were 5 rows. */
+export const BOARD_COLS = 4;
+export const BOARD_SIZE_ROWS = 5;
+export const BOARD_PAD_X = 64;
+export const BOARD_CARD_FILL = 0.78;
+export const BOARD_CARD_HEIGHT_FILL = 0.9;
 
-const GRID_BY_CELLS: Record<number, GridSize> = {
-  2: { cols: 2, rows: 1 },
-  4: { cols: 2, rows: 2 },
-  6: { cols: 3, rows: 2 },
-  8: { cols: 3, rows: 3 },
-  12: { cols: 3, rows: 4 },
-  16: { cols: 3, rows: 6 },
-  18: { cols: 3, rows: 6 },
-  24: { cols: 3, rows: 8 },
-};
+export const INFINITY_GRID: GridSize = { cols: BOARD_COLS, rows: BOARD_SIZE_ROWS };
 
 export function gridForCellCount(cellCount: number): GridSize {
-  return GRID_BY_CELLS[cellCount] ?? { cols: 3, rows: Math.ceil(cellCount / 3) };
+  return { cols: BOARD_COLS, rows: Math.max(1, Math.ceil(cellCount / BOARD_COLS)) };
 }
 
 /** Newest card is always included; fill the rest from newer → older. */

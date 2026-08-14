@@ -121,8 +121,7 @@ export class GameOverScene extends Phaser.Scene {
     this.returnTo = data.returnTo ?? 'Home';
     this.doubleClaimed = !!data.doubleClaimed;
     this.doubleRequesting = false;
-    this.showDoubleCoins =
-      this.mode === 'infinity' && this.coinsEarned > 0 && !this.doubleClaimed;
+    this.showDoubleCoins = this.mode === 'infinity' && this.coinsEarned > 0 && !this.doubleClaimed;
 
     eventBus.emit('ad:context:change', { context: 'GAME_OVER' });
 
@@ -211,7 +210,7 @@ export class GameOverScene extends Phaser.Scene {
       scene: this,
       position: { x: centerX, y: buttonY },
       size: { width: BUTTON_WIDTH, height: BUTTON_HEIGHT },
-      background: { key: 'settings-button-background' },
+      background: { key: 'blue-button-background' },
       depth: 3,
       text: {
         content: t('game.retry'),
@@ -285,7 +284,7 @@ export class GameOverScene extends Phaser.Scene {
       scene: this,
       position: { x: centerX, y: buttonY },
       size: { width: BUTTON_WIDTH, height: CAMPAIGN_BUTTON_HEIGHT },
-      background: { key: 'settings-button-background' },
+      background: { key: 'blue-button-background' },
       depth: 3,
       text: {
         content: t('game.retry'),
@@ -338,7 +337,7 @@ export class GameOverScene extends Phaser.Scene {
 
   private addStarsBlock(centerX: number, y: number): void {
     this.add
-      .text(centerX, y - 46, t('game.yourStars'), {
+      .text(centerX, y - 58, t('game.yourStars'), {
         color: TEXT_COLOR,
         fontSize: '22px',
         fontStyle: 'bold',
@@ -349,8 +348,8 @@ export class GameOverScene extends Phaser.Scene {
 
     for (let i = 0; i < 3; i += 1) {
       const key = i < this.stars ? 'star-active' : 'star-inactive';
-      const star = this.add.image(centerX + (i - 1) * 64, y, key).setDepth(2);
-      star.setDisplaySize(56, 56);
+      const star = this.add.image(centerX + (i - 1) * 92, y, key).setDepth(2);
+      star.setDisplaySize(80, 80);
     }
   }
 

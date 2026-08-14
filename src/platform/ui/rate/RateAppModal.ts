@@ -132,7 +132,7 @@ export class RateAppModal {
         scene: this.scene,
         position: { x: centerX, y: laterY },
         size: { width: buttonWidth, height: buttonHeight },
-        background: { key: 'settings-button-background' },
+        background: { key: 'blue-button-background' },
         text: {
           content: t('rateApp.later'),
           style: {
