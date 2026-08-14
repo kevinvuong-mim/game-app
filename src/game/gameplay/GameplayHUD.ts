@@ -15,6 +15,7 @@ export interface GameplayHUDOptions {
   mode: GameplayMode;
   levelNumber?: number;
   onBack: () => void;
+  onLeaderboard?: () => void;
 }
 
 export class GameplayHUD extends Phaser.GameObjects.Container {
@@ -55,6 +56,18 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
       onClick: options.onBack,
     });
     this.add(this.backButton);
+
+    if (options.onLeaderboard) {
+      const trophyButton = createUIButton({
+        scene: this.scene,
+        position: { x: width - 140, y: topY },
+        size: { width: 72, height: 72 },
+        background: { key: 'trophy-icon', fit: 'contain' },
+        depth: 501,
+        onClick: options.onLeaderboard,
+      });
+      this.add(trophyButton);
+    }
 
     const panel = this.makePanel(width * 0.5, topY, 200, 96);
     panel.add(

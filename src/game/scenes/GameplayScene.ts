@@ -131,6 +131,7 @@ export class GameplayScene extends Phaser.Scene {
       mode: this.mode,
       levelNumber: this.levelIndex + 1,
       onBack: () => this.leaveWithoutFinishing(this.returnTo),
+      onLeaderboard: this.mode === 'infinity' ? () => this.openLeaderboard() : undefined,
     });
 
     this.buildBoard(width, height, restored);
@@ -550,7 +551,22 @@ export class GameplayScene extends Phaser.Scene {
     });
   }
 
-  private leaveWithoutFinishing(sceneKey: string): void {
+  private openLeaderboard(): void {
+    this.leaveWithoutFinishing('Leaderboard', {
+      returnTo: 'Gameplay',
+      returnData: {
+        mode: this.mode,
+        mapId: this.mapId,
+        levelIndex: this.levelIndex,
+        returnTo: this.returnTo,
+      } satisfies GameplaySceneData,
+    });
+  }
+
+  private leaveWithoutFinishing(
+    sceneKey: string,
+    data: Record<string, unknown> = {}
+  ): void {
     if (this.sessionEnded) return;
 
     // Last campaign pair already confirmed — don't discard the win on Back.
@@ -575,11 +591,11 @@ export class GameplayScene extends Phaser.Scene {
     this.pendingCampaignWin = false;
 
     if (sceneKey === 'LevelSelect') {
-      this.scene.start('LevelSelect', { mapId: this.mapId, returnTo: 'Map' });
+      this.scene.start('LevelSelect', { mapId: this.mapId, returnTo: 'Map', ...data });
       return;
     }
 
-    this.scene.start(sceneKey, { returnTo: 'Home' });
+    this.scene.start(sceneKey, { returnTo: 'Home', ...data });
   }
 
   private isRunLive(runId: number): boolean {

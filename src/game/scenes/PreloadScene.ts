@@ -46,6 +46,7 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'chest-icon', path: '/assets/images/chest.png' },
   { key: 'shop-banner', path: '/assets/images/banner.png' },
   { key: 'back-icon', path: '/assets/images/back-icon.png' },
+  { key: 'trophy-icon', path: '/assets/images/trophy-icon.png' },
   { key: 'quit-icon', path: '/assets/images/quit-icon.png' },
   { key: 'shop-icon', path: '/assets/images/shop-icon.png' },
   {
@@ -89,6 +90,7 @@ const IMAGE_ASSETS: ImageAsset[] = [
 
 const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'back-icon', width: 72, height: 72, color: 0x3cb043 },
+  { key: 'trophy-icon', width: 72, height: 72, color: 0xf5c518 },
   { key: 'quit-icon', width: 72, height: 72, color: 0xc62828 },
   { key: 'coin-icon', width: 48, height: 48, color: 0xffd700 },
   { key: 'plus-icon', width: 48, height: 48, color: 0x3cb043 },

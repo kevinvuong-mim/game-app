@@ -197,10 +197,7 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(2)
-      .setVisible(false)
-      .setInteractive({ useHandCursor: true });
-
-    this.rankText.on('pointerup', () => this.openLeaderboard());
+      .setVisible(false);
 
     void this.resolveRankFromApi();
     this.addCoinsSection(centerX, coinsLabelY, coinsRowY);
@@ -760,24 +757,6 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(5);
-  }
-
-  private openLeaderboard(): void {
-    if (this.mode !== 'infinity' || !this.rankText?.visible) return;
-    this.scene.start('Leaderboard', {
-      returnTo: 'GameOver',
-      returnData: {
-        mode: this.mode,
-        won: this.won,
-        stars: this.stars,
-        score: this.score,
-        coins: this.coinsEarned,
-        mapId: this.mapId,
-        levelIndex: this.levelIndex,
-        returnTo: this.returnTo,
-        doubleClaimed: this.doubleClaimed,
-      } satisfies GameOverSceneData,
-    });
   }
 
   private async resolveRankFromApi(): Promise<void> {
