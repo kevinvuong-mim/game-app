@@ -42,6 +42,8 @@ export interface UIButtonIcon {
   size?: UIButtonSize;
   /** Center position relative to the button's top-left corner. Defaults to the button center. */
   offset?: UIButtonPosition;
+  /** Default `contain`. Use `stretch` only when the icon must fill the box. */
+  fit?: 'contain' | 'stretch';
 }
 
 export interface UIButtonText {

@@ -148,7 +148,15 @@ function addButtonIcon(
   const iconObject = scene.add.image(x, y, icon.key);
 
   if (icon.size) {
-    iconObject.setDisplaySize(icon.size.width, icon.size.height);
+    if (icon.fit === 'stretch') {
+      iconObject.setDisplaySize(icon.size.width, icon.size.height);
+    } else {
+      const scale = Math.min(
+        icon.size.width / iconObject.width,
+        icon.size.height / iconObject.height
+      );
+      iconObject.setDisplaySize(iconObject.width * scale, iconObject.height * scale);
+    }
   }
 
   iconObject.setOrigin(0.5);
