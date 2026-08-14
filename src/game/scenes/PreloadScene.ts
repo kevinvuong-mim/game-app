@@ -48,6 +48,10 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'back-icon', path: '/assets/images/back-icon.png' },
   { key: 'quit-icon', path: '/assets/images/quit-icon.png' },
   { key: 'shop-icon', path: '/assets/images/shop-icon.png' },
+  {
+    key: 'circle-button-background',
+    path: '/assets/images/circle-button-background.png',
+  },
   { key: 'plus-icon', path: '/assets/images/plus-icon.png' },
   {
     key: 'leaderboard-button-background',
@@ -80,7 +84,6 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'general-background-image', path: '/assets/images/general-background-image.webp' },
   { key: 'gameover-background-image', path: '/assets/images/gameover-background-image.webp' },
   { key: 'settings-button-background', path: '/assets/images/settings-button-background.png' },
-  { key: 'skill-bar-background-image', path: '/assets/images/skill-bar-background-image.png' },
 ];
 
 const FALLBACK_TEXTURES: FallbackTexture[] = [
@@ -89,6 +92,7 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'coin-icon', width: 48, height: 48, color: 0xffd700 },
   { key: 'plus-icon', width: 48, height: 48, color: 0x3cb043 },
   { key: 'shop-icon', width: 80, height: 82, color: 0x4a90d9 },
+  { key: 'circle-button-background', width: 128, height: 128, color: 0xf5c518 },
   { key: 'close-icon', width: 72, height: 72, color: 0x3cb043 },
   { key: 'shop-item-1', width: 96, height: 96, color: 0xffd700 },
   { key: 'shop-item-2', width: 96, height: 96, color: 0xffd700 },
@@ -126,30 +130,22 @@ const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'share-button-background', width: 265, height: 98, color: 0xe67e22 },
   { key: 'gameover-background-image', width: 16, height: 16, color: 0x16213e },
   { key: 'settings-button-background', width: 256, height: 78, color: 0x4a90d9 },
-  { key: 'skill-bar-background-image', width: 578, height: 210, color: 0x2f4a1c },
   { key: 'leaderboard-button-background', width: 256, height: 78, color: 0x4a90d9 },
 ];
 
-const TRACK_PAD = 5;
-const BAR_WIDTH = 420;
-const BAR_HEIGHT = 28;
-const BAR_RADIUS = 14;
-const FILL_COLORS = {
-  rim: 0xfff6d8,
-  track: 0x2f4a1c,
-  shine: 0xffffff,
-  rimEdge: 0xc9a227,
-  fillHot: 0xffe566,
-  fillWarm: 0xffb020,
-  trackInner: 0x1a2e10,
-};
+const CARD_COUNT = 8;
+const CARD_W = 44;
+const CARD_H = 60;
+const CARD_GAP = 8;
+const CARD_RADIUS = 8;
+const PRELOAD_CARD_BACK = 'preload-card-back';
+const PRELOAD_CARD_FRONT = 'preload-card-front';
 const PRELOAD_DELAY_MS = 0;
 
 export class PreloadScene extends Phaser.Scene {
   private progress = 0;
+  private cards: Phaser.GameObjects.Image[] = [];
   private statusText!: Phaser.GameObjects.Text;
-  private shine!: Phaser.GameObjects.Rectangle;
-  private fillGfx!: Phaser.GameObjects.Graphics;
   private percentText!: Phaser.GameObjects.Text;
 
   constructor() {
@@ -201,84 +197,49 @@ export class PreloadScene extends Phaser.Scene {
     const centerX = width / 2;
 
     this.addBackground(width, height);
+    this.createCardTextures();
 
-    const barCenterY = height * 0.77;
-    const shell = this.add.container(centerX, barCenterY).setDepth(2).setAlpha(0).setScale(0.92);
-
-    const rim = this.add.graphics();
-    rim.fillStyle(FILL_COLORS.rimEdge, 1);
-    rim.fillRoundedRect(
-      -BAR_WIDTH / 2 - TRACK_PAD - 2,
-      -BAR_HEIGHT / 2 - TRACK_PAD - 2,
-      BAR_WIDTH + (TRACK_PAD + 2) * 2,
-      BAR_HEIGHT + (TRACK_PAD + 2) * 2,
-      BAR_RADIUS + TRACK_PAD + 2
-    );
-    rim.fillStyle(FILL_COLORS.rim, 1);
-    rim.fillRoundedRect(
-      -BAR_WIDTH / 2 - TRACK_PAD,
-      -BAR_HEIGHT / 2 - TRACK_PAD,
-      BAR_WIDTH + TRACK_PAD * 2,
-      BAR_HEIGHT + TRACK_PAD * 2,
-      BAR_RADIUS + TRACK_PAD
-    );
-
-    const track = this.add.graphics();
-    track.fillStyle(FILL_COLORS.track, 1);
-    track.fillRoundedRect(-BAR_WIDTH / 2, -BAR_HEIGHT / 2, BAR_WIDTH, BAR_HEIGHT, BAR_RADIUS);
-    track.fillStyle(FILL_COLORS.trackInner, 0.55);
-    track.fillRoundedRect(
-      -BAR_WIDTH / 2 + 3,
-      -BAR_HEIGHT / 2 + 3,
-      BAR_WIDTH - 6,
-      BAR_HEIGHT - 6,
-      BAR_RADIUS - 3
-    );
-
-    this.fillGfx = this.add.graphics();
-    this.shine = this.add
-      .rectangle(-BAR_WIDTH / 2, 0, 36, BAR_HEIGHT - 8, FILL_COLORS.shine, 0.35)
-      .setOrigin(0, 0.5)
-      .setVisible(false);
+    const rowY = height * 0.77;
+    const shell = this.add.container(centerX, rowY).setDepth(2).setAlpha(0).setScale(0.92);
+    const rowWidth = CARD_COUNT * CARD_W + (CARD_COUNT - 1) * CARD_GAP;
 
     this.statusText = this.add
-      .text(0, -52, t('common.loading'), {
+      .text(0, -CARD_H / 2 - 36, t('common.loading'), {
         fontFamily: FREDOKA_FONT,
         fontSize: '28px',
         fontStyle: 'bold',
         color: '#fffdf5',
-        stroke: '#2a4018',
+        stroke: '#1a2a4a',
         strokeThickness: 6,
       })
       .setOrigin(0.5);
 
+    this.cards = [];
+    for (let i = 0; i < CARD_COUNT; i += 1) {
+      const x = -rowWidth / 2 + CARD_W / 2 + i * (CARD_W + CARD_GAP);
+      const card = this.add.image(x, 0, PRELOAD_CARD_BACK).setData('flipped', false);
+      this.cards.push(card);
+    }
+
     this.percentText = this.add
-      .text(0, 44, '0%', {
+      .text(0, CARD_H / 2 + 36, '0%', {
         fontFamily: FREDOKA_FONT,
-        fontSize: '34px',
+        fontSize: '32px',
         fontStyle: 'bold',
         color: '#fff8dc',
-        stroke: '#2a4018',
-        strokeThickness: 7,
+        stroke: '#1a2a4a',
+        strokeThickness: 6,
       })
       .setOrigin(0.5);
 
-    shell.add([this.statusText, rim, track, this.fillGfx, this.shine, this.percentText]);
+    shell.add([this.statusText, ...this.cards, this.percentText]);
 
     this.tweens.add({
       targets: shell,
       alpha: 1,
       scale: 1,
-      duration: 420,
+      duration: 360,
       ease: 'Back.Out',
-    });
-    this.tweens.add({
-      targets: shell,
-      y: barCenterY - 5,
-      duration: 1700,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.InOut',
     });
 
     this.setProgress(0);
@@ -297,40 +258,68 @@ export class PreloadScene extends Phaser.Scene {
 
   private setProgress(value: number): void {
     this.progress = Phaser.Math.Clamp(value, 0, 1);
-    this.drawFill(this.progress);
+    this.revealCards(this.progress >= 1 ? CARD_COUNT : Math.floor(this.progress * CARD_COUNT));
 
     if (this.percentText) {
       this.percentText.setText(`${Math.round(this.progress * 100)}%`);
     }
   }
 
-  private drawFill(progress: number): void {
-    if (!this.fillGfx) return;
-
-    this.fillGfx.clear();
-    const innerW = BAR_WIDTH - 6;
-    const innerH = BAR_HEIGHT - 6;
-    const fillW = innerW * progress;
-    if (fillW <= 0.5) {
-      this.shine?.setVisible(false);
-      return;
+  private revealCards(count: number): void {
+    let delay = 0;
+    for (let i = 0; i < count; i += 1) {
+      const card = this.cards[i];
+      if (!card || card.getData('flipped')) continue;
+      this.flipCard(card, delay);
+      delay += 50;
     }
+  }
 
-    const x = -BAR_WIDTH / 2 + 3;
-    const y = -BAR_HEIGHT / 2 + 3;
-    const radius = Math.min(BAR_RADIUS - 3, fillW / 2);
+  private flipCard(card: Phaser.GameObjects.Image, delay: number): void {
+    card.setData('flipped', true);
+    this.tweens.add({
+      targets: card,
+      scaleX: 0,
+      duration: 80,
+      delay,
+      ease: 'Sine.In',
+      onComplete: () => {
+        if (!card.active) return;
+        card.setTexture(PRELOAD_CARD_FRONT);
+        this.tweens.add({
+          targets: card,
+          scaleX: 1,
+          duration: 80,
+          ease: 'Sine.Out',
+        });
+      },
+    });
+  }
 
-    this.fillGfx.fillStyle(FILL_COLORS.fillWarm, 1);
-    this.fillGfx.fillRoundedRect(x, y, fillW, innerH, radius);
+  private createCardTextures(): void {
+    if (!this.textures.exists(PRELOAD_CARD_BACK)) {
+      this.drawCardTexture(PRELOAD_CARD_BACK, 0x163a7a, 0x2a5cad, 0x7eb3ff);
+    }
+    if (!this.textures.exists(PRELOAD_CARD_FRONT)) {
+      this.drawCardTexture(PRELOAD_CARD_FRONT, 0xc9a227, 0xf5e6c8, 0xc62828);
+    }
+  }
 
-    // Top highlight stripe for a candy-like fill.
-    this.fillGfx.fillStyle(FILL_COLORS.fillHot, 0.55);
-    this.fillGfx.fillRoundedRect(x + 2, y + 2, Math.max(0, fillW - 4), innerH * 0.38, radius * 0.6);
+  private drawCardTexture(key: string, border: number, fill: number, mark: number): void {
+    const gfx = this.add.graphics();
+    gfx.fillStyle(border, 1);
+    gfx.fillRoundedRect(0, 0, CARD_W, CARD_H, CARD_RADIUS);
+    gfx.fillStyle(fill, 1);
+    gfx.fillRoundedRect(3, 3, CARD_W - 6, CARD_H - 6, CARD_RADIUS - 2);
 
-    this.shine.setVisible(true);
-    const shineX = x + Math.max(0, fillW - 40);
-    this.shine.setPosition(shineX, 0);
-    this.shine.width = Math.min(36, fillW * 0.35);
+    const cx = CARD_W / 2;
+    const cy = CARD_H / 2;
+    gfx.fillStyle(mark, 1);
+    gfx.fillTriangle(cx, cy - 11, cx + 9, cy, cx, cy + 11);
+    gfx.fillTriangle(cx, cy - 11, cx - 9, cy, cx, cy + 11);
+
+    gfx.generateTexture(key, CARD_W, CARD_H);
+    gfx.destroy();
   }
 
   private ensureFallbackTexture(key: string, width: number, height: number, color: number): void {

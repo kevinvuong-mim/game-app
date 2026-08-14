@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import type { UIButton } from '@platform/ui/types';
 import { createUIButton } from '@platform/ui/button/UIButton';
+import { drawRoundedRect } from '@platform/ui/panel/graphics';
+import { PANEL_BG, PANEL_BORDER } from '@platform/ui/panel/panelTheme';
 import { SKILL_IDS, type SkillId, getSkillQuantity } from '@game/skills/skillInventory';
 
 const SKILL_ICONS: Record<SkillId, string> = {
@@ -11,14 +13,8 @@ const SKILL_ICONS: Record<SkillId, string> = {
   boost_lucky_clover: 'shop-item-3',
 };
 
-/** Source texture is 626×149 — slice caps so rounded corners don't stretch with width. */
-const SKILL_BAR_BG_SLICE = {
-  leftWidth: 74,
-  topHeight: 36,
-  rightWidth: 74,
-  bottomHeight: 36,
-} as const;
-const SKILL_BAR_BG_KEY = 'skill-bar-background-image';
+const SKILL_BAR_RADIUS = 28;
+const SKILL_BAR_STROKE = 4;
 
 export type SkillBarViewCallbacks = {
   onSkillPressed: (id: SkillId) => void;
@@ -59,7 +55,7 @@ export class SkillBarView {
   private skillTrack?: Phaser.GameObjects.Container;
   private skillRightArrow?: Phaser.GameObjects.Text;
   private skillButtons = new Map<SkillId, UIButton>();
-  private skillPanelBg?: Phaser.GameObjects.NineSlice;
+  private skillPanelBg?: Phaser.GameObjects.Graphics;
   private skillTrackMask?: Phaser.GameObjects.Graphics;
   private skillLeftArrowZone?: Phaser.GameObjects.Zone;
   private skillRightArrowZone?: Phaser.GameObjects.Zone;
@@ -97,20 +93,7 @@ export class SkillBarView {
     this.ownedSkillIds = this.getOwnedSkillIds();
     this.layoutPanelMetrics();
 
-    this.skillPanelBg = this.scene.add
-      .nineslice(
-        0,
-        0,
-        SKILL_BAR_BG_KEY,
-        undefined,
-        this.skillPanelWidth,
-        this.panelPadTop + this.skillBtnSize + this.panelPadBottom,
-        SKILL_BAR_BG_SLICE.leftWidth,
-        SKILL_BAR_BG_SLICE.rightWidth,
-        SKILL_BAR_BG_SLICE.topHeight,
-        SKILL_BAR_BG_SLICE.bottomHeight
-      )
-      .setDepth(400);
+    this.skillPanelBg = this.scene.add.graphics().setDepth(400);
     this.redrawPanel();
 
     this.skillTrackBaseX = width / 2;
@@ -205,13 +188,18 @@ export class SkillBarView {
   private redrawPanel(): void {
     if (!this.skillPanelBg) return;
     const panelHeight = this.skillBarBottom - this.skillBarTop;
-    // NineSlice keeps corner caps fixed; only the center stretches with width.
-    this.skillPanelBg
-      .setPosition(
-        this.skillPanelLeft + this.skillPanelWidth / 2,
-        this.skillBarTop + panelHeight / 2
-      )
-      .setSize(this.skillPanelWidth, panelHeight);
+    this.skillPanelBg.clear();
+    drawRoundedRect(
+      this.skillPanelBg,
+      this.skillPanelLeft,
+      this.skillBarTop,
+      this.skillPanelWidth,
+      panelHeight,
+      SKILL_BAR_RADIUS,
+      PANEL_BG,
+      PANEL_BORDER,
+      SKILL_BAR_STROKE
+    );
   }
 
   private updateTrackMask(): void {

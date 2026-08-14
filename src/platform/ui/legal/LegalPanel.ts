@@ -20,11 +20,10 @@ const TAB_HEIGHT = 52;
 const TAB_RADIUS = 18;
 /** How far tabs sit down onto the panel so the active tab clearly overlays it. */
 const TAB_OVERLAP = 22;
-const TAB_INACTIVE = 0x1f6b32;
+const TAB_INACTIVE = 0x62cd06;
 const CONTENT_TEXT = '#1c1b18';
 /** Extra space between the overlapping tabs and the scrollable content. */
 const CONTENT_TOP_PADDING = 28;
-const TAB_INACTIVE_BORDER = 0x145024;
 
 /**
  * Terms & Privacy tabbed content — Shop/Settings beige panel matching the legal mock.
@@ -109,7 +108,7 @@ export class LegalPanel extends Phaser.GameObjects.Container {
     this.add(
       createUIButton({
         scene: this.scene,
-        size: { width: 80, height: 80 },
+        size: { width: 72, height: 72 },
         background: { key: 'back-icon' },
         onClick: this.onBack,
         position: { x: width * 0.17, y: height * 0.08 },
@@ -313,7 +312,7 @@ export class LegalPanel extends Phaser.GameObjects.Container {
   ): void {
     graphics.clear();
     const fill = active ? PANEL_BG : TAB_INACTIVE;
-    const stroke = active ? PANEL_BORDER : TAB_INACTIVE_BORDER;
+    const stroke = PANEL_BORDER;
     const radius = { tl: TAB_RADIUS, tr: TAB_RADIUS, bl: 0, br: 0 };
 
     graphics.fillStyle(fill, 1);

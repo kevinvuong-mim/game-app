@@ -86,7 +86,7 @@ export class MapScene extends Phaser.Scene {
     createUIButton({
       scene: this,
       position: { x: width * 0.17, y: height * 0.08 },
-      size: { width: 80, height: 80 },
+      size: { width: 72, height: 72 },
       background: { key: 'back-icon' },
       onClick: () => this.scene.start(this.returnTo),
     });

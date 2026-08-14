@@ -74,11 +74,15 @@ export class HomeScene extends Phaser.Scene {
       onClick: () => this.openScreen('Settings'),
     });
 
+    const circleBtnSize = { width: 120, height: 120 };
+    const circleIconSize = { width: 72, height: 72 };
+
     createUIButton({
       scene: this,
       position: { x: width / 4, y: height * 0.86 },
-      size: { width: 120, height: 120 },
-      background: { key: 'shop-icon' },
+      size: circleBtnSize,
+      background: { key: 'circle-button-background' },
+      icon: { key: 'shop-icon', size: circleIconSize },
       text: {
         content: t('home.shop'),
         offset: { x: 60, y: 110 },
@@ -94,8 +98,9 @@ export class HomeScene extends Phaser.Scene {
     createUIButton({
       scene: this,
       position: { x: width / 2, y: height * 0.86 },
-      size: { width: 120, height: 120 },
-      background: { key: 'missions-icon' },
+      size: circleBtnSize,
+      background: { key: 'circle-button-background' },
+      icon: { key: 'missions-icon', size: circleIconSize },
       text: {
         offset: { x: 60, y: 110 },
         content: t('home.missions'),
@@ -121,8 +126,9 @@ export class HomeScene extends Phaser.Scene {
     this.dailyRewardButton = createUIButton({
       scene: this,
       position: { x: (3 * width) / 4, y: height * 0.86 },
-      size: { width: 120, height: 120 },
-      background: { key: 'daily-reward-icon' },
+      size: circleBtnSize,
+      background: { key: 'circle-button-background' },
+      icon: { key: 'daily-reward-icon', size: circleIconSize },
       text: {
         offset: { x: 60, y: 110 },
         content: t('home.dailyReward'),

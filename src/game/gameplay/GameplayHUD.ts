@@ -69,7 +69,7 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
     this.backButton = createUIButton({
       scene: this.scene,
       position: { x: 140, y: topY },
-      size: { width: 80, height: 80 },
+      size: { width: 72, height: 72 },
       background: { key: 'back-icon' },
       depth: 501,
       onClick: options.onBack,
@@ -143,7 +143,7 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
     this.backButton = createUIButton({
       scene: this.scene,
       position: { x: 140, y: topY },
-      size: { width: 80, height: 80 },
+      size: { width: 72, height: 72 },
       background: { key: 'back-icon' },
       depth: 501,
       onClick: options.onBack,

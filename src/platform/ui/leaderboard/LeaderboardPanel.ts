@@ -119,7 +119,7 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
     this.add(
       createUIButton({
         scene: this.scene,
-        size: { width: 80, height: 80 },
+        size: { width: 72, height: 72 },
         background: { key: 'back-icon' },
         onClick: this.onBack,
         position: { x: width * 0.17, y: height * 0.08 },

@@ -193,12 +193,13 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
     const iconKey =
       def?.icon && this.scene.textures.exists(def.icon) ? def.icon : FALLBACK_MISSION_ICON;
     const icon = this.scene.add.image(iconX, 0, iconKey);
-    icon.setDisplaySize(iconSize, iconSize);
+    const scale = Math.min(iconSize / icon.width, iconSize / icon.height);
+    icon.setDisplaySize(icon.width * scale, icon.height * scale);
     container.add(icon);
 
     const actionX = rowHalf - ACTION_BTN_WIDTH / 2 - 4;
     const rewardX = actionX - ACTION_BTN_WIDTH / 2 - 28;
-    const contentLeft = iconX + iconSize / 2 + 10;
+    const contentLeft = iconX + iconSize / 2 + 22;
     const barWidth = Math.max(90, rewardX - contentLeft - 48);
     const titleTop = -28;
     const titleToBarGap = 5;
