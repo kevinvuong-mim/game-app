@@ -305,6 +305,13 @@ export class GameplayScene extends Phaser.Scene {
     }
 
     this.clearTurnBoosts();
+
+    if (this.mode === 'infinity' && this.liveCards().length === 0) {
+      await this.wait(INFINITY_RESPAWN_DELAY_MS, runId);
+      if (!this.isRunLive(runId)) return;
+      this.refillInfinityBoard();
+    }
+
     this.resolving = false;
 
     if (await this.finishIfTimedOut(runId)) return;
@@ -331,12 +338,6 @@ export class GameplayScene extends Phaser.Scene {
 
     soundManager.playCombine();
     this.onMatchSuccess(fromClover);
-
-    if (this.mode === 'infinity') {
-      await this.wait(INFINITY_RESPAWN_DELAY_MS, runId);
-      if (!this.isRunLive(runId)) return;
-      this.spawnInfinityPair([a.slotIndex, b.slotIndex]);
-    }
   }
 
   private async applyLuckyClover(
@@ -391,12 +392,19 @@ export class GameplayScene extends Phaser.Scene {
     }
   }
 
-  private spawnInfinityPair(slotIndexes: number[]): void {
-    const key = this.pickInfinitySpawnKey();
-    for (const index of slotIndexes) {
-      const slot = this.layout.slots[index];
-      if (!slot) continue;
-      const card = new CardView(this, slot.x, slot.y, this.layout.cardSize, key, index);
+  private refillInfinityBoard(): void {
+    const pairKeys = this.pickInfinityPairs(this.layout.slots.length / 2);
+    const deck = buildPairDeck(pairKeys);
+    this.cards = [];
+    for (const slot of this.layout.slots) {
+      const card = new CardView(
+        this,
+        slot.x,
+        slot.y,
+        this.layout.cardSize,
+        deck[slot.index],
+        slot.index
+      );
       card.setDepth(10);
       card.setScale(0);
       this.bindCard(card);
@@ -417,17 +425,6 @@ export class GameplayScene extends Phaser.Scene {
       keys.push(pool[i % pool.length]);
     }
     return keys;
-  }
-
-  private pickInfinitySpawnKey(): string {
-    const pool = this.activeInfinityPool();
-    const counts = new Map<string, number>();
-    for (const card of this.liveCards()) {
-      counts.set(card.pairKey, (counts.get(card.pairKey) ?? 0) + 1);
-    }
-    const fresh = pool.filter((key) => (counts.get(key) ?? 0) === 0);
-    const source = fresh.length > 0 ? fresh : pool;
-    return source[Math.floor(Math.random() * source.length)];
   }
 
   private activeInfinityPool(): string[] {
