@@ -56,11 +56,7 @@
     "shareUnavailable": "Không thể chia sẻ trên thiết bị này",
     "skillHintReveal": "Chạm một thẻ — lượt này lật 3 lá",
     "skillHintClover": "Lucky Clover sẵn sàng — hãy match một cặp!",
-    "combo": "COMBO x{{combo}}",
-    "quitConfirmTitle": "Thoát ván chơi?",
-    "quitConfirmMessage": "Điểm sẽ được ghi nhận và ván chơi kết thúc.",
-    "quitConfirm": "Thoát",
-    "quitCancel": "Hủy"
+    "combo": "COMBO x{{combo}}"
   },
   "shop": {
     "title": "Cửa hàng",

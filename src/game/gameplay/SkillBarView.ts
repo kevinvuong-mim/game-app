@@ -31,6 +31,8 @@ export class SkillBarView {
   private readonly panelPadTop = 18;
   private readonly baseBtnSize = 92;
   private readonly panelPadBottom = 30;
+  /** Nudge skill icons/arrows down inside the bar. */
+  private readonly itemNudgeY = 6;
   private readonly skillVisibleCount = 4;
   private readonly maxPanelWidthPx = 540;
   private readonly idealSlotSpacing = 118;
@@ -97,7 +99,7 @@ export class SkillBarView {
     this.redrawPanel();
 
     this.skillTrackBaseX = width / 2;
-    this.skillTrackCenterY = this.skillBarTop + this.panelPadTop + slotHeight / 2;
+    this.skillTrackCenterY = this.skillBarTop + this.panelPadTop + slotHeight / 2 + this.itemNudgeY;
     this.skillTrack = this.scene.add
       .container(this.skillTrackBaseX, this.skillTrackCenterY)
       .setDepth(403);

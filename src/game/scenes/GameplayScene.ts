@@ -43,6 +43,13 @@ import {
   starsFromTimeRatio,
 } from '@game/campaign/mapConfig';
 import { getUnlockedCardKeys, isInfinityUnlocked, recordLevelStars } from '@game/campaign/progress';
+import {
+  clearGameRun,
+  GAME_RUN_VERSION,
+  loadGameRun,
+  saveGameRun,
+  type GameRunSnapshot,
+} from '@game/gameplay/GameRunSave';
 
 export interface GameplaySceneData {
   mode?: GameplayMode;
@@ -80,7 +87,6 @@ export class GameplayScene extends Phaser.Scene {
   private resolving = false;
   private revealArmed = false;
   private cloverArmed = false;
-  private quitConfirmOpen = false;
   /** Set as soon as the last campaign pair is confirmed (before clear anim). */
   private pendingCampaignWin = false;
 
@@ -110,6 +116,7 @@ export class GameplayScene extends Phaser.Scene {
     }
 
     this.resetRunState();
+    const restored = loadGameRun(this.mode, this.mapId, this.levelIndex);
 
     const { width, height } = this.cameras.main;
     this.addBackground(width, height);
@@ -124,16 +131,10 @@ export class GameplayScene extends Phaser.Scene {
       mode: this.mode,
       levelNumber: this.levelIndex + 1,
       onBack: () => this.leaveWithoutFinishing(this.returnTo),
-      onQuit: this.mode === 'infinity' ? () => void this.finishRun(false) : undefined,
-      onQuitConfirmOpen: () => {
-        this.quitConfirmOpen = true;
-      },
-      onQuitConfirmClose: () => {
-        this.quitConfirmOpen = false;
-      },
     });
 
-    this.buildBoard(width, height);
+    this.buildBoard(width, height, restored);
+    this.applyRestoredSkills();
     this.refreshHud();
 
     eventBus.emit('ad:context:change', { context: 'GAMEPLAY' });
@@ -141,12 +142,9 @@ export class GameplayScene extends Phaser.Scene {
     this.unsubscribers.push(
       eventBus.on('app:back', () => {
         if (!this.canAcceptInput()) return;
-        if (this.hud.isQuitConfirmOpen()) {
-          this.hud.hideQuitConfirm();
-          return;
-        }
         this.leaveWithoutFinishing(this.returnTo);
-      })
+      }),
+      eventBus.on('app:pause', () => this.persistRun())
     );
   }
 
@@ -164,6 +162,9 @@ export class GameplayScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    if (this.gameActive && !this.sessionEnded) {
+      this.persistRun();
+    }
     this.runId += 1;
     this.gameActive = false;
     this.cleanupEventListeners();
@@ -185,7 +186,6 @@ export class GameplayScene extends Phaser.Scene {
     this.resolving = false;
     this.revealArmed = false;
     this.cloverArmed = false;
-    this.quitConfirmOpen = false;
     this.pendingCampaignWin = false;
     this.lastMatchAt = 0;
     this.startTime = Date.now();
@@ -200,7 +200,7 @@ export class GameplayScene extends Phaser.Scene {
     this.remainingMs = this.totalMs;
   }
 
-  private buildBoard(width: number, height: number): void {
+  private buildBoard(width: number, height: number, restored?: GameRunSnapshot | null): void {
     const top = this.mode === 'infinity' ? 220 : 250;
     const bottom = Math.min(this.skillBar.barBottom - 24, height - 220);
     const cellCount =
@@ -217,12 +217,21 @@ export class GameplayScene extends Phaser.Scene {
       this.mode === 'infinity' ? INFINITY_GRID : undefined
     );
 
+    this.drawBoardPanel(this.layout.bounds);
+
+    if (restored && this.spawnSavedCards(restored)) {
+      this.applyGameRun(restored);
+      if (this.mode === 'infinity' && this.liveCards().length === 0) {
+        this.refillInfinityBoard();
+      }
+      return;
+    }
+
     const pairKeys =
       this.mode === 'infinity'
         ? this.pickInfinityPairs(cellCount / 2)
         : pickCampaignCardKeys(this.mapId, this.levelIndex, getLevelPairCount(this.levelIndex));
 
-    this.drawBoardPanel(this.layout.bounds);
     this.cards = createCards(this, this.layout, buildPairDeck(pairKeys));
     for (const card of this.cards) {
       this.bindCard(card);
@@ -278,6 +287,7 @@ export class GameplayScene extends Phaser.Scene {
       this.onMismatch();
       this.resolving = false;
       this.clearTurnBoosts();
+      this.persistRun();
       await this.finishIfTimedOut(runId);
       return;
     }
@@ -313,6 +323,7 @@ export class GameplayScene extends Phaser.Scene {
     }
 
     this.resolving = false;
+    this.persistRun();
 
     if (await this.finishIfTimedOut(runId)) return;
 
@@ -446,6 +457,7 @@ export class GameplayScene extends Phaser.Scene {
       this.skillBar.refreshInventory(id);
       this.skillBar.setHint('');
       soundManager.playCoinDrop();
+      this.persistRun();
       return;
     }
 
@@ -456,6 +468,7 @@ export class GameplayScene extends Phaser.Scene {
       this.skillBar.refreshInventory(id);
       this.skillBar.setHint(t('game.skillHintReveal'));
       this.skillBar.updateSelectionVisual();
+      this.persistRun();
       return;
     }
 
@@ -466,6 +479,7 @@ export class GameplayScene extends Phaser.Scene {
       this.skillBar.refreshInventory(id);
       this.skillBar.setHint(t('game.skillHintClover'));
       this.skillBar.updateSelectionVisual();
+      this.persistRun();
     }
   }
 
@@ -504,6 +518,7 @@ export class GameplayScene extends Phaser.Scene {
     this.gameActive = false;
     this.resolving = false;
     this.pendingCampaignWin = false;
+    clearGameRun(this.mode);
 
     const duration = Date.now() - this.startTime;
     const stars =
@@ -549,6 +564,13 @@ export class GameplayScene extends Phaser.Scene {
       return;
     }
 
+    if (this.remainingMs <= 0) {
+      void this.finishRun(false);
+      return;
+    }
+
+    this.persistRun();
+
     this.runId += 1;
     this.sessionEnded = true;
     this.gameActive = false;
@@ -569,13 +591,14 @@ export class GameplayScene extends Phaser.Scene {
   }
 
   private canAcceptInput(): boolean {
-    return this.gameActive && !this.sessionEnded && !this.quitConfirmOpen;
+    return this.gameActive && !this.sessionEnded;
   }
 
   private refreshHud(): void {
     this.hud.setTimer(this.remainingMs / 1000);
     if (this.mode === 'infinity') {
       this.hud.setScore(this.score);
+      this.hud.setCombo(this.combo);
     }
   }
 
@@ -600,6 +623,76 @@ export class GameplayScene extends Phaser.Scene {
     const bg = this.add.image(width / 2, height / 2, key);
     const scale = Math.max(width / bg.width, height / bg.height);
     bg.setScale(scale).setDepth(-1);
+  }
+
+  private applyGameRun(snapshot: GameRunSnapshot): void {
+    this.remainingMs = snapshot.remainingMs;
+    this.totalMs = snapshot.totalMs;
+    this.score = snapshot.score;
+    this.coinsEarned = snapshot.coinsEarned;
+    this.matches = snapshot.matches;
+    this.combo = snapshot.combo;
+    this.sessionStarted = snapshot.sessionStarted;
+    this.infinityPool = [...snapshot.infinityPool];
+    this.revealArmed = snapshot.revealArmed;
+    this.cloverArmed = snapshot.cloverArmed;
+    this.startTime = Date.now() - snapshot.elapsedMs;
+    this.lastMatchAt = 0;
+  }
+
+  private applyRestoredSkills(): void {
+    if (this.revealArmed) this.skillBar.setHint(t('game.skillHintReveal'));
+    else if (this.cloverArmed) this.skillBar.setHint(t('game.skillHintClover'));
+    this.skillBar.updateSelectionVisual(false);
+  }
+
+  private spawnSavedCards(snapshot: GameRunSnapshot): boolean {
+    const spawned: CardView[] = [];
+    for (const saved of snapshot.cards) {
+      const slot = this.layout.slots[saved.slotIndex];
+      if (!slot || !this.textures.exists(saved.pairKey)) {
+        for (const card of spawned) card.destroy();
+        return false;
+      }
+      const card = new CardView(
+        this,
+        slot.x,
+        slot.y,
+        this.layout.cardSize,
+        saved.pairKey,
+        saved.slotIndex
+      );
+      card.setDepth(10);
+      this.bindCard(card);
+      spawned.push(card);
+    }
+    this.cards = spawned;
+    return true;
+  }
+
+  private persistRun(): void {
+    if (!this.gameActive || this.sessionEnded || this.remainingMs <= 0) return;
+    saveGameRun({
+      version: GAME_RUN_VERSION,
+      mode: this.mode,
+      mapId: this.mapId,
+      levelIndex: this.levelIndex,
+      remainingMs: this.remainingMs,
+      totalMs: this.totalMs,
+      score: this.score,
+      coinsEarned: this.coinsEarned,
+      matches: this.matches,
+      combo: this.combo,
+      elapsedMs: Math.max(0, Date.now() - this.startTime),
+      sessionStarted: this.sessionStarted,
+      infinityPool: [...this.infinityPool],
+      cards: this.liveCards().map((card) => ({
+        slotIndex: card.slotIndex,
+        pairKey: card.pairKey,
+      })),
+      revealArmed: this.revealArmed,
+      cloverArmed: this.cloverArmed,
+    });
   }
 
   private liveCards(): CardView[] {

@@ -56,11 +56,7 @@
     "shareUnavailable": "Sharing is not available",
     "skillHintReveal": "Tap a card — this turn you flip 3",
     "skillHintClover": "Lucky Clover ready — match a pair!",
-    "combo": "COMBO x{{combo}}",
-    "quitConfirmTitle": "Quit this run?",
-    "quitConfirmMessage": "Your score will be submitted and the run will end.",
-    "quitConfirm": "Quit",
-    "quitCancel": "Cancel"
+    "combo": "COMBO x{{combo}}"
   },
   "shop": {
     "title": "Shop",
