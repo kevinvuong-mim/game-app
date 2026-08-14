@@ -347,10 +347,7 @@ export class GameplayScene extends Phaser.Scene {
     this.onMatchSuccess(fromClover);
   }
 
-  private async applyLuckyClover(
-    justMatched: [CardView, CardView],
-    runId: number
-  ): Promise<void> {
+  private async applyLuckyClover(justMatched: [CardView, CardView], runId: number): Promise<void> {
     const extra = pickRandomRemainingPair(
       this.liveCards().filter((card) => card !== justMatched[0] && card !== justMatched[1])
     );
@@ -547,7 +544,6 @@ export class GameplayScene extends Phaser.Scene {
       coins: this.coinsEarned,
       mapId: this.mapId,
       levelIndex: this.levelIndex,
-      returnTo: this.returnTo,
     });
   }
 
@@ -563,10 +559,7 @@ export class GameplayScene extends Phaser.Scene {
     });
   }
 
-  private leaveWithoutFinishing(
-    sceneKey: string,
-    data: Record<string, unknown> = {}
-  ): void {
+  private leaveWithoutFinishing(sceneKey: string, data: Record<string, unknown> = {}): void {
     if (this.sessionEnded) return;
 
     // Last campaign pair already confirmed — don't discard the win on Back.

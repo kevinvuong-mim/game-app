@@ -71,7 +71,6 @@ export interface GameOverSceneData {
   coins?: number;
   mapId?: number;
   levelIndex?: number;
-  returnTo?: string;
   /** Infinity: already claimed x2 coins this Game Over visit. */
   doubleClaimed?: boolean;
 }
@@ -84,7 +83,6 @@ export class GameOverScene extends Phaser.Scene {
   private coinsEarned = 0;
   private mapId = 1;
   private levelIndex = 0;
-  private returnTo = 'Home';
   private doubleClaimed = false;
   private doubleRequesting = false;
   private showDoubleCoins = false;
@@ -118,7 +116,6 @@ export class GameOverScene extends Phaser.Scene {
     this.coinsEarned = Math.max(0, Math.floor(data.coins ?? 0));
     this.mapId = data.mapId ?? 1;
     this.levelIndex = data.levelIndex ?? 0;
-    this.returnTo = data.returnTo ?? 'Home';
     this.doubleClaimed = !!data.doubleClaimed;
     this.doubleRequesting = false;
     this.showDoubleCoins = this.mode === 'infinity' && this.coinsEarned > 0 && !this.doubleClaimed;
