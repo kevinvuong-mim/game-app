@@ -23,7 +23,7 @@ export type SkillBarViewCallbacks = {
 
 /**
  * Scrollable skill inventory bar at the bottom of gameplay.
- * Panel width grows with owned skills (up to a max), then scrolls.
+ * Width matches the card-board panel above once gameplay layout is known.
  */
 export class SkillBarView {
   private readonly arrowPad = 36;
@@ -37,6 +37,8 @@ export class SkillBarView {
   private readonly maxPanelWidthPx = 540;
   private readonly idealSlotSpacing = 118;
   private readonly maxPanelWidthRatio = 0.85;
+  /** When set, the bar uses this width so it lines up with the board panel. */
+  private alignedWidth: number | null = null;
   private readonly selectedSkillScale = 1.24;
 
   private skillBarTop = 0;
@@ -85,6 +87,7 @@ export class SkillBarView {
     this.skillRightArrowZone = undefined;
     this.skillScrollIndex = 0;
     this.skillNavConsumed = false;
+    this.alignedWidth = null;
     this.layoutScreenWidth = width;
     this.layoutScreenHeight = height;
 
@@ -173,10 +176,21 @@ export class SkillBarView {
     return Math.min(this.layoutScreenWidth * this.maxPanelWidthRatio, this.maxPanelWidthPx);
   }
 
+  /** Match the skill bar width to another panel (the card-board frame). */
+  alignToWidth(width: number): void {
+    this.alignedWidth = Math.round(width);
+    if (!this.layoutScreenWidth) return;
+    this.relayoutForContent();
+    this.ownedSkillIds.forEach((id, index) => {
+      this.skillSlots.get(id)?.setPosition(this.slotX(index), 0);
+    });
+    this.applyScroll(false);
+  }
+
   private layoutPanelMetrics(): void {
     const slotCount = this.displayedSlotCount();
     const idealWidth = slotCount * this.idealSlotSpacing + this.arrowPad * 2;
-    this.skillPanelWidth = Math.min(idealWidth, this.maxPanelWidth());
+    this.skillPanelWidth = this.alignedWidth ?? Math.min(idealWidth, this.maxPanelWidth());
     this.skillPanelLeft = this.layoutScreenWidth / 2 - this.skillPanelWidth / 2;
 
     const innerWidth = this.skillPanelWidth - this.arrowPad * 2;

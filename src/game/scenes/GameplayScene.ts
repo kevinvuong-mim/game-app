@@ -604,17 +604,19 @@ export class GameplayScene extends Phaser.Scene {
 
   private drawBoardPanel(bounds: { x: number; y: number; width: number; height: number }): void {
     const pad = 24;
+    const panelWidth = bounds.width + pad * 2;
     const panel = this.add.graphics().setDepth(0);
     drawRoundedRect(
       panel,
       bounds.x - pad,
       bounds.y - pad,
-      bounds.width + pad * 2,
+      panelWidth,
       bounds.height + pad * 2,
       PANEL_CORNER_RADIUS,
       PANEL_BG,
       PANEL_BORDER
     );
+    this.skillBar.alignToWidth(panelWidth);
   }
 
   private addBackground(width: number, height: number): void {
