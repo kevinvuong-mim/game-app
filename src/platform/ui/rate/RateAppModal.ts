@@ -79,7 +79,7 @@ export class RateAppModal {
     );
 
     const character = this.scene.add
-      .image(centerX, panelY + padTop + 150, 'watermelon-character')
+      .image(centerX, panelY + padTop + 150, 'card-character')
       .setOrigin(0.5);
     const characterMaxW = contentWidth * 0.9;
     const characterMaxH = 170;
