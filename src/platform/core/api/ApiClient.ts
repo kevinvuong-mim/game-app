@@ -8,6 +8,7 @@ const DEFAULT_RETRYABLE_STATUSES = [429, 500, 502, 503, 504];
 
 class ApiClient implements IApiClient {
   private baseUrl: string;
+  private apiKey: string | null = null;
   private authToken: string | null = null;
   private authRecoveryHandler: AuthRecoveryHandler | null = null;
 
@@ -17,6 +18,11 @@ class ApiClient implements IApiClient {
 
   setBaseUrl(url: string): void {
     this.baseUrl = url;
+  }
+
+  setApiKey(key: string | null): void {
+    const trimmed = key?.trim() ?? '';
+    this.apiKey = trimmed.length > 0 ? trimmed : null;
   }
 
   setAuthToken(token: string | null): void {
@@ -88,6 +94,10 @@ class ApiClient implements IApiClient {
       'Content-Type': 'application/json',
       ...config.headers,
     };
+
+    if (this.apiKey) {
+      headers['X-Api-Key'] = this.apiKey;
+    }
 
     if (config.auth !== false && this.authToken) {
       headers['Authorization'] = `Bearer ${this.authToken}`;

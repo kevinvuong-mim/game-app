@@ -37,13 +37,15 @@ function assertNotGoogleTestAdId(name, value) {
   }
 }
 
-async function verifyApiGame(apiUrl, gameId) {
+async function verifyApiGame(apiUrl, gameId, apiKey) {
   const url = new URL('leaderboards', apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`);
   url.searchParams.set('gameId', gameId);
   url.searchParams.set('page', '1');
   url.searchParams.set('limit', '1');
 
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: { 'X-Api-Key': apiKey },
+  });
   if (response.status === 404) {
     throw new Error(`Backend does not support gameId "${gameId}".`);
   }
@@ -131,6 +133,10 @@ async function main() {
 
   assertReleaseMonetizationSafe();
 
+  if ((process.env.VITE_APP_ENV ?? 'development') === 'production') {
+    requireNonEmpty('VITE_API_KEY');
+  }
+
   if (process.env.SKIP_API_CHECK === 'true') {
     console.log('Skipped backend check because SKIP_API_CHECK=true.');
     return;
@@ -142,7 +148,7 @@ async function main() {
     return;
   }
 
-  await verifyApiGame(API_URL, gameId);
+  await verifyApiGame(API_URL, gameId, requireNonEmpty('VITE_API_KEY'));
   console.log(`Backend accepts gameId "${gameId}" at ${API_URL}.`);
 }
 

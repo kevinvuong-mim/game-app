@@ -25,4 +25,5 @@ export function refreshServicesFromConfig(): void {
   analytics.setEnabled(config.analyticsEnabled);
   ads.setEnabled(config.adsEnabled);
   apiClient.setBaseUrl(config.apiUrl);
+  apiClient.setApiKey(config.apiKey || null);
 }
