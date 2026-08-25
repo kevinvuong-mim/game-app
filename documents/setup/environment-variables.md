@@ -13,12 +13,14 @@ Tài liệu này mô tả các biến môi trường runtime của `fruloop`. V�
 ```env
 VITE_APP_ENV=development
 VITE_GAME_ID=FRULOOP
+VITE_API_KEY=change-me
 ```
 
 | Variable       | Values                      | Default / Source             | Description                                                   |
 | -------------- | --------------------------- | ---------------------------- | ------------------------------------------------------------- |
 | `VITE_APP_ENV` | `development`, `production` | `development` khi chạy local | Chọn preset runtime trong `src/platform/core/config/index.ts` |
 | `VITE_GAME_ID` | string                      | Bắt buộc                     | Game id dùng ở frontend và backend                            |
+| `VITE_API_KEY` | string                      | Bắt buộc (khớp `API_KEY`)    | Header `X-Api-Key`; nằm trong bundle, extract được            |
 
 Preset API URL trong code (`src/platform/core/config/index.ts`):
 
@@ -107,11 +109,13 @@ VITE_ADMOB_IOS_REWARDED_ID=
 - `VITE_IAP_PROVIDER=revenuecat` + đủ cả hai RevenueCat keys
 - `VITE_ADS_PROVIDER=admob` + đủ AdMob app id + 8 unit ids (banner / interstitial / rewarded × iOS / Android)
 - Từ chối Google sample AdMob ids
+- `VITE_APP_ENV=production` yêu cầu `VITE_API_KEY` (kể cả khi `SKIP_API_CHECK=true`)
 
 API probe (chỉ khi `VITE_APP_ENV=production`, trừ khi `SKIP_API_CHECK=true`):
 
 ```
 GET {apiUrl}/leaderboards?gameId={VITE_GAME_ID}&page=1&limit=1
+Header: X-Api-Key: {VITE_API_KEY}
 ```
 
 404 = `gameId` chưa có trên backend.
@@ -169,6 +173,7 @@ Các ID này được gắn vào link khi share điểm số và rate fallback. 
 ```env
 VITE_APP_ENV=development
 VITE_GAME_ID=FRULOOP
+VITE_API_KEY=change-me
 
 VITE_IAP_PROVIDER=mock
 VITE_REVENUECAT_ANDROID_API_KEY=

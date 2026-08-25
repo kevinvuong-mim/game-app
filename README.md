@@ -205,6 +205,7 @@ Copy `.env.example` to `.env` and adjust per environment.
 ```bash
 VITE_APP_ENV=development      # development | production
 VITE_GAME_ID=FRULOOP
+VITE_API_KEY=change-me        # must match game-api API_KEY
 VITE_IAP_PROVIDER=mock        # mock | revenuecat
 VITE_ADS_PROVIDER=mock        # mock | admob (AdMob used on native when admob)
 VITE_ANALYTICS_PROVIDER=console # console | firebase
@@ -233,6 +234,7 @@ Push/local toggles per env: `src/platform/core/config/notification-env.json`. Na
 | --------------------------------------------------- | ----------------------------------------------------- |
 | `VITE_APP_ENV`                                      | Runtime environment (`development`, `production`)     |
 | `VITE_GAME_ID`                                      | Game id used by the frontend and backend              |
+| `VITE_API_KEY`                                      | Shared app secret (`X-Api-Key`); extractable from JS  |
 | `VITE_IAP_PROVIDER`                                 | `mock` or `revenuecat`                                |
 | `VITE_ADS_PROVIDER`                                 | `mock` or `admob`                                     |
 | `VITE_ANALYTICS_PROVIDER`                           | `console` or `firebase`                               |

@@ -66,7 +66,9 @@ export class ShopPanel extends Phaser.GameObjects.Container {
   }
 
   isPurchaseInFlight(): boolean {
-    return this.purchaseUiLocked || shop.isPurchaseInFlight() || !!this.header?.isPurchaseInFlight();
+    return (
+      this.purchaseUiLocked || shop.isPurchaseInFlight() || !!this.header?.isPurchaseInFlight()
+    );
   }
 
   hideGetCoinsModal(): void {

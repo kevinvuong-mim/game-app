@@ -25,6 +25,7 @@ interface FirebaseConfig {
 export interface RuntimeConfig {
   ads: AdsConfig;
   iap: IapConfig;
+  apiKey: string;
   apiUrl: string;
   debug: boolean;
   gameId: string;
@@ -133,6 +134,10 @@ function resolveGameId(): string {
   return import.meta.env.VITE_GAME_ID ?? '';
 }
 
+function resolveApiKey(): string {
+  return import.meta.env.VITE_API_KEY ?? '';
+}
+
 function resolveAdMobAppId(): string {
   const platform = Capacitor.getPlatform();
   if (platform === 'ios') return import.meta.env.VITE_ADMOB_IOS_APP_ID ?? '';
@@ -235,6 +240,7 @@ export function createConfig(overrides?: Partial<RuntimeConfig>): RuntimeConfig 
     iap,
     firebase,
     analyticsProvider,
+    apiKey: resolveApiKey(),
     gameId: resolveGameId(),
     apiUrl: base.apiUrl ?? '',
     debug: base.debug ?? false,

@@ -33,6 +33,7 @@ export class ApiError extends Error {
 }
 
 export interface IApiClient {
+  setApiKey(key: string | null): void;
   setAuthToken(token: string | null): void;
   get<T>(path: string, config?: RequestConfig): Promise<T>;
   delete<T>(path: string, config?: RequestConfig): Promise<T>;
