@@ -9,6 +9,11 @@ import {
   type SettingsToggle,
   createSettingsToggle,
 } from './settingsShared';
+import {
+  PRODUCTS,
+  REMOVE_ADS_PRICE,
+  ENTITLEMENT_REMOVE_ADS,
+} from '@platform/modules/iap/iap.config';
 import { iap } from '@platform/modules/iap';
 import { shop } from '@platform/modules/shop';
 import { toast } from '../toast/ToastManager';
@@ -19,11 +24,6 @@ import { drawRoundedRect } from '../panel/graphics';
 import type { UIButton, ToastOptions } from '../types';
 import { t } from '@platform/modules/i18n/i18n.service';
 import { PANEL_BG, TEXT_COLOR, PANEL_BORDER } from '../panel/panelTheme';
-import {
-  PRODUCTS,
-  ENTITLEMENT_REMOVE_ADS,
-  REMOVE_ADS_PRICE,
-} from '@platform/modules/iap/iap.config';
 
 const NO_ADS_ICON_KEY = 'no-ads-icon';
 

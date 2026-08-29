@@ -7,6 +7,7 @@ import {
 import missionsData from './missions.json';
 import { logger } from '@platform/core/error';
 import { guest } from '@platform/modules/guest';
+import { ads } from '@platform/core/advertising';
 import { eventBus } from '@platform/core/events';
 import { saveService } from '@platform/modules/save';
 import { getLocalDateKey } from '@platform/core/utils';
@@ -99,6 +100,20 @@ export class MissionService {
     return updated;
   }
 
+  /** Rolls back increment-only progress (e.g. MERGE after Undo). Does not un-claim rewards. */
+  revertProgressByType(type: string, amount: number): boolean {
+    if (amount <= 0) return false;
+    let updated = false;
+
+    for (const def of this.getDefinitionsByType(type)) {
+      if (this.revertProgress(def.id, amount)) {
+        updated = true;
+      }
+    }
+
+    return updated;
+  }
+
   claimMission(id: string): boolean {
     const store = usePlatformStore.getState();
     const mission = store.missions.missions[id];
@@ -149,6 +164,13 @@ export class MissionService {
     retainClaimedIds?: ReadonlySet<string>
   ): boolean {
     const def = this.getDefinition(mission.id);
+    if (def?.type === 'WATCH_AD') {
+      if (mission.status === 'completed') return true;
+      if (mission.status === 'claimed') {
+        return retainClaimedIds?.has(mission.id) ?? false;
+      }
+      return !ads.isAdsRemoved();
+    }
     if (def?.type !== 'UPDATE_NAME') return true;
     if (mission.status === 'claimed') {
       return retainClaimedIds?.has(mission.id) ?? false;
@@ -224,6 +246,32 @@ export class MissionService {
 
     this.writeMissionProgress(missionId, mission.progress + amount);
     this.checkCompletion(missionId);
+    return true;
+  }
+
+  private revertProgress(missionId: string, amount: number): boolean {
+    const store = usePlatformStore.getState();
+    const mission = store.missions.missions[missionId];
+    if (!mission || amount <= 0) return false;
+    if (mission.status === 'claimed') return false;
+    if (mission.status !== 'active' && mission.status !== 'completed') return false;
+
+    const next = Math.max(0, mission.progress - amount);
+    if (next === mission.progress) return false;
+
+    const stillComplete = next >= mission.target;
+    const stored = stillComplete ? mission.target : next;
+    store.setMissions({
+      ...store.missions.missions,
+      [missionId]: {
+        ...mission,
+        progress: stored,
+        status: stillComplete ? 'completed' : 'active',
+        completedAt: stillComplete ? mission.completedAt : undefined,
+      },
+    });
+
+    eventBus.emit('mission:update', { missionId, progress: stored });
     return true;
   }
 

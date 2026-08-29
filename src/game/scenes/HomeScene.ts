@@ -2,12 +2,10 @@ import Phaser from 'phaser';
 
 import { eventBus } from '@platform/core/events';
 import type { UIButton } from '@platform/ui/types';
-import { CoinBar } from '@platform/ui/panel/CoinBar';
 import { t, missions, dailyRewards } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
 
 export class HomeScene extends Phaser.Scene {
-  private coinBar?: CoinBar;
   private dailyRewardButton?: UIButton;
   private unsubscribers: Array<() => void> = [];
 
@@ -30,20 +28,6 @@ export class HomeScene extends Phaser.Scene {
     const { width, height } = this.cameras.main;
 
     this.addBackgroundImage(width, height);
-
-    // this.coinBar = new CoinBar(this, {
-    //   y: height * 0.08,
-    //   align: 'center',
-    //   onNavigate: (sceneKey) => this.openScreen(sceneKey),
-    // });
-
-    // createUIButton({
-    //   scene: this,
-    //   position: { x: width * 0.83, y: height * 0.04 },
-    //   size: { width: 64, height: 64 },
-    //   background: { key: 'how-to-play-icon' },
-    //   onClick: () => this.openScreen('HowToPlay'),
-    // });
 
     createUIButton({
       scene: this,
@@ -153,11 +137,6 @@ export class HomeScene extends Phaser.Scene {
     });
 
     this.unsubscribers.push(
-      eventBus.on('app:back', () => {
-        if (this.coinBar?.isGetCoinsModalOpen()) {
-          this.coinBar.hideGetCoinsModal();
-        }
-      }),
       eventBus.on('app:resume', () => {
         this.dailyRewardButton?.setBadgeVisible(dailyRewards.canClaim());
       }),
@@ -169,8 +148,6 @@ export class HomeScene extends Phaser.Scene {
 
   shutdown(): void {
     this.cleanupEventListeners();
-    this.coinBar?.destroy();
-    this.coinBar = undefined;
     this.dailyRewardButton = undefined;
   }
 

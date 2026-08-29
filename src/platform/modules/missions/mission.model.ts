@@ -20,7 +20,7 @@ export interface MissionDefinition {
   titleKey: string;
   reward: MissionReward;
   resetPolicy?: MissionResetPolicy;
-  type: MissionBehaviorType | string;
+  type: string | MissionBehaviorType;
 }
 
 export interface MissionProgress {
@@ -33,7 +33,7 @@ export interface MissionProgress {
   completedAt?: number;
   status: MissionStatus;
   /** Local calendar day key (`YYYY-MM-DD`) of the last reset. */
-  lastResetDayKey?: string | null;
+  lastResetDayKey?: null | string;
 }
 
 export function createMissionProgress(def: MissionDefinition): MissionProgress {

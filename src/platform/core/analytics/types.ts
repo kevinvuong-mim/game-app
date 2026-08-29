@@ -2,13 +2,10 @@ export const AnalyticsEvents = {
   PURCHASE: 'purchase',
   AD_REWARD: 'ad_reward',
   GAME_OVER: 'game_over',
-  SHOP_OPEN: 'shop_open',
   GAME_START: 'game_start',
   DAILY_CLAIM: 'daily_claim',
-  LEVEL_START: 'level_start',
   SESSION_END: 'session_end',
   SESSION_START: 'session_start',
-  LEVEL_COMPLETE: 'level_complete',
   MISSION_COMPLETE: 'mission_complete',
 } as const;
 

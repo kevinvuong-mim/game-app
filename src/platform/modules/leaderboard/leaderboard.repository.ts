@@ -39,12 +39,22 @@ export class LeaderboardRepository {
     return this.normalize(unwrapSuccessEnvelope(envelope), page, limit);
   }
 
-  async loadCache(gameId: string, page: number): Promise<LeaderboardCache | null> {
-    return storage.load<LeaderboardCache>(this.cacheKey(gameId, page));
+  async loadCache(
+    gameId: string,
+    page: number,
+    guestId?: string | null
+  ): Promise<LeaderboardCache | null> {
+    return storage.load<LeaderboardCache>(this.cacheKey(gameId, page, guestId));
   }
 
-  async saveCache(cache: LeaderboardCache, gameId: string): Promise<void> {
-    await storage.save(this.cacheKey(gameId, cache.page), cache);
+  async saveCache(
+    cache: LeaderboardCache,
+    gameId: string,
+    guestId?: string | null
+  ): Promise<void> {
+    await storage.save(this.cacheKey(gameId, cache.page, guestId), cache);
+    // Drop the unscoped pre-guestId key so a stale `self` cannot be served.
+    await storage.remove(this.legacyCacheKey(gameId, cache.page));
   }
 
   private normalize(
@@ -78,7 +88,12 @@ export class LeaderboardRepository {
     };
   }
 
-  private cacheKey(gameId: string, page: number): string {
+  private cacheKey(gameId: string, page: number, guestId?: string | null): string {
+    const scope = guestId && guestId.length > 0 ? guestId : 'anon';
+    return `${LEADERBOARD_CACHE_PREFIX}${gameId}:${scope}:p${page}`;
+  }
+
+  private legacyCacheKey(gameId: string, page: number): string {
     return `${LEADERBOARD_CACHE_PREFIX}${gameId}:p${page}`;
   }
 }

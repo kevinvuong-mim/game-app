@@ -16,17 +16,17 @@ Trên native Preferences, key được lưu với prefix `gsk:` (vật lý: `gsk
 
 Khớp `SubmitResultDto` / `@IsValidMetadata` trên game-api:
 
-| Constant / rule           | Value                          |
-| ------------------------- | ------------------------------ |
-| `MAX_BATCH_SIZE`          | 50                             |
-| `MAX_SYNC_ATTEMPTS`       | 10                             |
-| `MAX_PENDING_RESULTS`     | 500                            |
-| Score                     | Integer 0 … `2147483647`       |
-| `clientResultId`          | Non-empty, max 128 chars       |
-| Metadata                  | Flat object, ≤10 keys          |
-| Metadata key              | 1–64 chars                     |
-| Metadata string value     | Max 256 chars                  |
-| Metadata JSON             | `JSON.stringify` ≤ 2048 chars  |
+| Constant / rule       | Value                         |
+| --------------------- | ----------------------------- |
+| `MAX_BATCH_SIZE`      | 50                            |
+| `MAX_SYNC_ATTEMPTS`   | 10                            |
+| `MAX_PENDING_RESULTS` | 500                           |
+| Score                 | Integer 0 … `2147483647`      |
+| `clientResultId`      | Non-empty, max 128 chars      |
+| Metadata              | Flat object, ≤10 keys         |
+| Metadata key          | 1–64 chars                    |
+| Metadata string value | Max 256 chars                 |
+| Metadata JSON         | `JSON.stringify` ≤ 2048 chars |
 
 Client clamp/sanitize trước khi gửi để tránh 400 (4xx cứng bị drop sau đủ attempt).
 
@@ -69,7 +69,7 @@ Backend trả REST envelope; client unwrap `.data` bằng `unwrapSuccessEnvelope
 }
 ```
 
-Khi sync thành công, `game-sync.service` emit `game:sync:completed` với `rank`/`bestScore` và cập nhật leaderboard cache.
+Khi sync thành công, `game-sync.service` cập nhật leaderboard cache (`updateSelfRank` — memory + disk `self`, key theo `guestId`).
 
 Lỗi mạng thoáng qua (`status` 0 / 408 / 429 / 5xx, hoặc `network`) **không** bị drop sau `MAX_SYNC_ATTEMPTS` — queue được bảo toàn và retry với backoff. Chỉ lỗi client/server “cứng” (4xx khác) mới bị drop sau đủ attempt.
 
@@ -79,7 +79,7 @@ Client chỉ gửi flat primitives (`string` / finite `number` / `boolean` / `nu
 
 ## Flow
 
-1. `game:over` → queue local (`gameSyncController`). Metadata `duration` là **giây** (`Math.round(durationMs / 1000)`), kèm optional `merges`.
+1. `game:over` → queue local (`gameSyncController`). Event mang `duration` **milliseconds**; metadata gửi API là **giây** (`Math.round(duration / 1000)`), kèm optional `merges`.
 2. Rời gameplay giữa chừng **không** emit `game:over` — `GameplayScene` gọi `abortSession()` → mid-run persist (`GameRunSave` / `game-run`). Chỉ `completeSession()` (game over thật) clear mid-run save và emit `game:over`.
 3. `flush()` khi online / `app:resume` / guest ready / controller bind / native network reconnect.
 4. Batch tối đa 50 items, `X-Api-Key` + Bearer. Orphan queue items thuộc guest khác bị drop khi guest ready.

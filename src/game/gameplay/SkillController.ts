@@ -19,6 +19,7 @@ export type SkillControllerCallbacks = {
   refreshDropper: () => void;
   getCurrentLevel: () => number;
   pushUndoCheckpoint: () => void;
+  armDangerGrace: (ms: number) => void;
   setLevels: (current: number, next: number) => void;
 };
 
@@ -126,6 +127,7 @@ export class SkillController {
       if (!consumeSkill(skillId)) return;
       this.callbacks.pushUndoCheckpoint();
       this.factory.burst(fruit);
+      this.callbacks.armDangerGrace(1000);
       this.skillBar.refreshInventory(skillId);
       this.clear();
       soundManager.playBoostHammer();
@@ -137,10 +139,14 @@ export class SkillController {
       if (!consumeSkill(skillId)) return;
       this.callbacks.pushUndoCheckpoint();
       const next = fruit.fruitLevel + 1;
+      const oldRadius = FRUIT_TYPES[fruit.fruitLevel].radius;
+      const newRadius = FRUIT_TYPES[next].radius;
       const { x, y } = fruit;
-      const multiplier = fruit.scoreMultiplier;
       this.factory.destroy(fruit);
-      this.factory.spawn(x, y, next, multiplier);
+      // Keep the top of the fruit in place so growing near the danger line
+      // expands downward instead of instantly crossing it.
+      this.factory.spawn(x, y + (newRadius - oldRadius), next);
+      this.callbacks.armDangerGrace(1000);
       this.skillBar.refreshInventory(skillId);
       this.clear();
       soundManager.playBoostSize();
@@ -192,6 +198,7 @@ export class SkillController {
     fruit.setPosition(ax, ay);
     a.setVelocity(0, 0);
     fruit.setVelocity(0, 0);
+    this.callbacks.armDangerGrace(1000);
 
     this.skillBar.refreshInventory(skillId);
     this.clear();

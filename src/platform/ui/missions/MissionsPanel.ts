@@ -8,6 +8,7 @@ import {
   PANEL_CORNER_RADIUS,
 } from '../panel/panelTheme';
 import { toast } from '../toast/ToastManager';
+import { ads } from '@platform/core/advertising';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import { PanelHeader } from '../panel/PanelHeader';
@@ -353,6 +354,7 @@ export class MissionsPanel extends Phaser.GameObjects.Container {
 
   private handleGo(type: string | undefined, goScene: string | undefined): void {
     if (type === 'WATCH_AD') {
+      if (ads.isAdsRemoved()) return;
       eventBus.emit('ad:reward:request', { placement: MISSION_AD_PLACEMENT });
       return;
     }

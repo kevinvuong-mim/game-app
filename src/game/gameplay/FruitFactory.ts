@@ -46,7 +46,7 @@ export class FruitFactory {
     }
   }
 
-  spawn(x: number, y: number, level: number, scoreMultiplier = 1): FruitBody {
+  spawn(x: number, y: number, level: number): FruitBody {
     const def = FRUIT_TYPES[level];
     if (!def) {
       throw new Error(`Invalid fruit level: ${level}`);
@@ -67,8 +67,6 @@ export class FruitFactory {
     image.setName(`fruit_${this.fruitSeq++}`);
     image.fruitLevel = level;
     image.isMerging = false;
-    image.scoreMultiplier = scoreMultiplier;
-    image.setInteractive({ useHandCursor: true });
     this.fruits.add(image);
     return image;
   }

@@ -60,8 +60,8 @@ export interface AdsRemoteConfig {
     interstitial: number;
   };
   interstitialEnabled: boolean;
-  rewards: Partial<Record<AdPlacement, AdReward>>;
   placements: Record<AdPlacement, AdFormat>;
+  rewards: Partial<Record<AdPlacement, AdReward>>;
 }
 
 export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
@@ -78,7 +78,8 @@ export const DEFAULT_REMOTE_CONFIG: AdsRemoteConfig = {
     LEADERBOARD: 'banner',
     /**
      * Game Over opt-in: doubles run coins.
-     * Amount is applied by GameOverScene (equals coins earned that run).
+     * Amount is sent on `ad:reward:request` and granted by the ads module
+     * so the payout survives Game Over teardown.
      */
     DOUBLE_COINS: 'rewarded',
     /** Completes WATCH_AD mission progress only — no immediate coin grant. */

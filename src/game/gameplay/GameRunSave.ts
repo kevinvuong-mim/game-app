@@ -6,7 +6,6 @@ export type SavedFruit = {
   vx: number;
   vy: number;
   level: number;
-  scoreMultiplier: number;
   angularVelocity: number;
 };
 

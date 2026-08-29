@@ -12,7 +12,7 @@ export interface LeaderboardEntry {
   rank: number;
   guestId: string;
   bestScore: number;
-  name: string | null;
+  name: null | string;
 }
 
 interface LeaderboardSelf {
@@ -26,7 +26,7 @@ export interface LeaderboardData {
   total: number;
   gameId: string;
   items: LeaderboardEntry[];
-  self: LeaderboardSelf | null;
+  self: null | LeaderboardSelf;
 }
 
 export interface LeaderboardCache {
@@ -39,18 +39,18 @@ export interface LeaderboardView {
   isEmpty: boolean;
   isStale: boolean;
   fromCache: boolean;
-  error: string | null;
+  error: null | string;
   pagination: {
     page: number;
     limit: number;
     total: number;
     totalPages: number;
   };
-  myRank: number | null;
-  myGuestId: string | null;
+  myRank: null | number;
+  myGuestId: null | string;
   status: LeaderboardStatus;
-  myBestScore: number | null;
-  lastUpdated: number | null;
+  myBestScore: null | number;
+  lastUpdated: null | number;
   entries: LeaderboardEntry[];
 }
 

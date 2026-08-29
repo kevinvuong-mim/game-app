@@ -57,6 +57,7 @@ Capacitor config hoặc native code; thay đổi TypeScript/CSS/assets chỉ c�
 | `SKIP_GRADLE=1`        | Bỏ qua `./gradlew assembleDebug`                             |
 | `BOOT_TIMEOUT_SEC=300` | Timeout chờ emulator boot                                    |
 | `SHOW_LOGS=1`          | Tail `adb logcat` Capacitor sau khi launch                   |
+| `JAVA_HOME`            | JDK 21+ (nếu trống, script dùng Android Studio JBR nếu có)   |
 
 **iOS** (`run:ios`):
 
@@ -90,13 +91,13 @@ npm run build && SKIP_BUILD=1 npm run run:android
 | Node.js         | ≥ 20                               | ≥ 20                          |
 | IDE / SDK       | Android Studio + Android SDK       | **Xcode** (kèm iOS Simulator) |
 | Biến môi trường | `ANDROID_HOME` trỏ tới Android SDK | Không bắt buộc thêm           |
-| Java            | JDK 17 (Gradle Android)            | —                             |
+| Java            | JDK 21+ (Capacitor 7 / Android Gradle) | —                    |
 
 Kiểm tra nhanh:
 
 ```bash
 node -v          # >= 20
-java -version    # 17.x
+java -version    # 21.x (hoặc Android Studio JBR — script `run:android` tự detect)
 echo $ANDROID_HOME
 xcodebuild -version
 ```

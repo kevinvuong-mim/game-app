@@ -10,7 +10,6 @@ import {
 } from './game-sync.model';
 import { ApiError } from '@platform/core/api';
 import { logger } from '@platform/core/error';
-import { eventBus } from '@platform/core/events';
 import { generateId } from '@platform/core/utils';
 import { getConfig } from '@platform/core/config';
 import { leaderboard } from '@platform/modules/leaderboard';
@@ -50,6 +49,14 @@ export class GameSyncService {
   /** Clears stale rank before a new finished match is queued. */
   clearLastApiRank(): void {
     this.lastApiRank = null;
+  }
+
+  /** Drop the offline queue under the same lock as record/flush (guest 401 recovery). */
+  async clearQueue(): Promise<void> {
+    this.lastApiRank = null;
+    await this.withQueueLock(async () => {
+      await this.repository.clear();
+    });
   }
 
   /**
@@ -270,7 +277,6 @@ export class GameSyncService {
     const bestScore = toOptionalFiniteNumber(response.bestScore);
     if (bestScore !== null) {
       leaderboard.updateSelfRank(rank, bestScore);
-      eventBus.emit('game:sync:completed', { rank, bestScore });
     }
   }
 
@@ -300,10 +306,6 @@ export class GameSyncService {
 
       // Never drop scores that failed due to transient network / server blips.
       if (item.syncAttempts >= MAX_SYNC_ATTEMPTS && !isTransientSyncErrorCode(item.lastErrorCode)) {
-        eventBus.emit('game:sync:dropped', {
-          clientResultId: item.clientResultId,
-          attempts: item.syncAttempts,
-        });
         continue;
       }
 

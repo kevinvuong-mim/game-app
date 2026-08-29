@@ -21,17 +21,6 @@ export class DailyRewardRepository {
     return storage.getDurableProviderType();
   }
 
-  async hasPersistedModel(): Promise<boolean> {
-    const stored = await storage.load<DailyRewardModel>(
-      DAILY_REWARD_STORAGE_KEY,
-      this.durableProvider()
-    );
-    if (stored) return true;
-
-    const legacy = await this.readLegacyPreferencesModel();
-    return legacy !== null;
-  }
-
   async load(): Promise<DailyRewardModel> {
     const durable = this.durableProvider();
     const stored = await storage.load<DailyRewardModel>(DAILY_REWARD_STORAGE_KEY, durable);

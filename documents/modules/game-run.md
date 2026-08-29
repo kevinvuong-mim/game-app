@@ -32,7 +32,7 @@ Trên native Preferences, key vật lý có prefix `gsk:`. IndexedDB dùng logic
   nextLevel: number,
   currentLevel: number,
   fruits: Array<{
-    x, y, vx, vy, level, scoreMultiplier, angularVelocity
+    x, y, vx, vy, level, angularVelocity
   }>,
   sessionStarted: boolean
 }
@@ -41,6 +41,8 @@ Trên native Preferences, key vật lý có prefix `gsk:`. IndexedDB dùng logic
 Corrupt / schema-drifted payloads are cleared so Play starts fresh.
 
 `isMeaningfulRun` is true when `sessionStarted`, `score > 0`, or there is at least one fruit — otherwise leave does not persist.
+
+Undo (boost) restores the last checkpoint in the same scene: `sessionStarted` is snapshotted **after** `game:start` so the next drop cannot double-count `PLAY_GAME` / `gamesPlayed`. Platform score (`score:update` → highScore / REACH_SCORE) commits on abort/complete, not per merge. MERGE progress from the undone segment is reverted (`merge` with negative `count`).
 
 ## Lifecycle
 

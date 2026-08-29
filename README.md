@@ -109,45 +109,45 @@ Platform Core     → src/platform/core — events, state, storage, api, Runtime
 Bootstrap         → src/platform/bootstrap — App, GameEngine, provider wiring
 ```
 
-Games talk to the platform primarily via the **Event Bus**. `@platform/ui` exports Phaser UI (panels, toast, i18n `t`, `BasePanelScene`) — not module services like game-sync/share/rate. ESLint blocks `@platform/modules/*` from most of `src/game`.
+Games talk to the platform primarily via the **Event Bus**. `@platform/ui` exports Phaser UI (panels, toast, i18n `t`, `BasePanelScene`) and re-exports the module services the game layer needs (`gameSync`, `shareService`, `rateService`, `gameRunService`, `shop`, `ads`, `missions`, `dailyRewards`, `navigationService`). ESLint blocks `@platform/modules/*` and several `@platform/core/*` imports from `src/game`.
 
 ```typescript
+import { gameConfig } from '@game/config';
 import { eventBus, AnalyticsEvents } from '@platform/core/events';
-import { getConfig } from '@platform/core/config';
 
-eventBus.emit('game:start', { gameId: getConfig().gameId });
+eventBus.emit('game:start', { gameId: gameConfig.id });
 eventBus.emit('score:update', { score: 100 });
 eventBus.emit('game:over', { score: 100, duration: 30000 });
 eventBus.emit('analytics', { event: AnalyticsEvents.SESSION_START });
 ```
 
-**i18n / toast:** import from `@platform/ui`. Share / rate / game-sync: import from `@platform/modules/*`.
+**i18n / toast / share / rate / game-sync:** import from `@platform/ui` in the game layer.
 
 ## Platform Modules
 
-| Module        | Backend? | Description                                                                                                                |
-| ------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, `X-Api-Key`; storage key `guest`)                                     |
-| game-sync     | **API**  | Offline queue → batch upload (`POST /results`, `X-Api-Key` + Bearer) on `game:over`                                        |
-| game-run      | Local    | Mid-run board snapshot (`gameplay-run`); schema in `@game/gameplay/GameRunSave`                                            |
-| leaderboard   | **API**  | Offline cache, TTL, Top 100 REST (`LEADERBOARD_LIMIT` = 100/page)                                                          |
-| notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)                                                            |
-| i18n          | Local    | Runtime language switch (`en` / `vi`), lazy-loaded locale JSON                                                             |
-| shop          | Local    | Catalog boosts / remove-ads IAP / coin packs; UI gọi `shop.purchase` trực tiếp                                             |
-| missions      | Local    | Daily missions; claim qua `missions.claimMission`; WATCH_AD via `MISSION_WATCH` placement                                  |
-| daily-reward  | Local    | 7-day cycle in Preferences (`daily-reward`); UI gọi `dailyRewards.claim` trực tiếp                                         |
-| save          | Local    | Single `game-save` key — hydrates Zustand (excludes daily-reward prefs)                                                    |
-| settings      | Local    | Language, sound, music — part of store state                                                                               |
-| deep-link     | Local    | Custom scheme, Universal Links / App Links, deferred cold-start navigation                                                 |
-| navigation    | Local    | Scene navigation + pending queue (notification / deeplink cold start)                                                      |
-| share         | Local    | Native share sheet helper (used from Game Over)                                                                            |
-| rate          | Local    | In-app review + store URL fallback                                                                                         |
-| ads (module)  | Local    | Placement config (`HOME` / `SHOP` / `LEADERBOARD` banner, `MISSION_WATCH` rewarded, `GAME_OVER` interstitial), reward flow |
-| IAP (module)  | Local\*  | Purchase, restore, entitlements; store `priceString` via RevenueCat; `logIn` on `guest.onReady`                            |
-| analytics     | Local    | Provider interface — Console + Firebase (core)                                                                             |
-| advertising   | Local    | AdMob / mock providers, placement state machines (core)                                                                    |
+| Module        | Backend? | Description                                                                                                                                                   |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, `X-Api-Key`; storage key `guest`)                                                                        |
+| game-sync     | **API**  | Offline queue → batch upload (`POST /results`, `X-Api-Key` + Bearer) on `game:over`                                                                           |
+| game-run      | Local    | Mid-run board snapshot (`gameplay-run`); schema in `@game/gameplay/GameRunSave`                                                                               |
+| leaderboard   | **API**  | Offline cache, TTL, Top 100 REST (`LEADERBOARD_LIMIT` = 100/page)                                                                                             |
+| notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)                                                                                               |
+| i18n          | Local    | Runtime language switch (`en` / `vi`), lazy-loaded locale JSON                                                                                                |
+| shop          | Local    | Catalog boosts / remove-ads IAP / coin packs; UI gọi `shop.purchase` trực tiếp                                                                                |
+| missions      | Local    | Daily missions; claim qua `missions.claimMission`; WATCH_AD via `MISSION_WATCH` placement                                                                     |
+| daily-reward  | Local    | 7-day cycle in Preferences (`daily-reward`); UI gọi `dailyRewards.claim` trực tiếp                                                                            |
+| save          | Local    | Single `game-save` key — hydrates Zustand (excludes daily-reward prefs)                                                                                       |
+| settings      | Local    | Language, sound, music — part of store state                                                                                                                  |
+| deep-link     | Local    | Custom scheme, Universal Links / App Links, deferred cold-start navigation                                                                                    |
+| navigation    | Local    | Scene navigation + pending queue (notification / deeplink cold start)                                                                                         |
+| share         | Local    | Native share sheet helper (used from Game Over)                                                                                                               |
+| rate          | Local    | In-app review + store URL fallback                                                                                                                            |
+| ads (module)  | Local    | Placement config (`HOME` / `SHOP` / `LEADERBOARD` banner, `MISSION_WATCH` + `DOUBLE_COINS` rewarded, `GAME_OVER` interstitial); `adsRemoved` chặn cả rewarded |
+| IAP (module)  | Local\*  | Purchase, restore, entitlements; store `priceString` via RevenueCat; `logIn` on `guest.onReady`                                                               |
+| analytics     | Local    | Provider interface — Console + Firebase (core)                                                                                                                |
+| advertising   | Local    | AdMob / mock providers, placement state machines (core)                                                                                                       |
 
-\* IAP is client-authoritative in this starter kit (no game-api receipt validation). On native production / missing RevenueCat key, IAP is **disabled** (web still falls back to mock). Product IDs in `iap.config.ts` (`remove_ads`, `coins_10000`) must match App Store / Play / RevenueCat. UI prices use store `priceString` with hardcoded `$0.99` / `$3.99` fallback. Local feature details: [documents/modules/local-features.md](./documents/modules/local-features.md). Mid-run save: [documents/modules/game-run.md](./documents/modules/game-run.md).
+\* IAP is client-authoritative in this starter kit (no game-api receipt validation). On native production / missing RevenueCat key, IAP is **disabled** (web still falls back to mock). Product IDs in `iap.config.ts` (`remove_ads`, `coins_10000`) must match App Store / Play / RevenueCat. UI prices use store `priceString` with hardcoded `$0.98` / `$3.98` fallback (`COINS_10000_PRICE` / `REMOVE_ADS_PRICE`). Local feature details: [documents/modules/local-features.md](./documents/modules/local-features.md). Mid-run save: [documents/modules/game-run.md](./documents/modules/game-run.md).
 
 ## UI Framework
 
@@ -196,7 +196,7 @@ Assets live in `public/assets/audio/` and are preloaded in `PreloadScene`. Playb
 
 Change Fruit and Undo buttons use `sound: false` so only their skill SFX plays (no default pop).
 
-`ScreenManager` is available for custom overlay screens. Built-in user-facing scenes: Home, Gameplay, GameOver, Shop, Missions, Leaderboard, DailyReward, Settings, HowToPlay, Legal.
+Built-in user-facing scenes: Home, Gameplay, GameOver, Shop, Missions, Leaderboard, DailyReward, Settings, HowToPlay, Legal.
 
 ## Environment Config
 

@@ -96,17 +96,16 @@ export class MergeSystem {
     const nextLevel = a.fruitLevel + 1;
     const midX = (a.x + b.x) / 2;
     const midY = (a.y + b.y) / 2;
-    const multiplier = Math.max(a.scoreMultiplier, b.scoreMultiplier);
 
     this.factory.destroy(a);
     this.factory.destroy(b);
 
-    const created = this.factory.spawn(midX, midY, nextLevel, multiplier);
+    const created = this.factory.spawn(midX, midY, nextLevel);
     if (created.body) {
       created.setVelocity(0, -2);
     }
 
-    const points = FRUIT_TYPES[nextLevel].mergeScore * multiplier;
+    const points = FRUIT_TYPES[nextLevel].mergeScore;
     this.callbacks.onScore(points);
     this.callbacks.onMerge();
     eventBus.emit('merge', { count: 1 });

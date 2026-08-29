@@ -11,7 +11,7 @@ export interface DailyRewardModel {
   /** Next reward day in the 7-day cycle (1–7). */
   currentDay: number;
   /** Local calendar date of the last claim (`YYYY-MM-DD`). */
-  lastClaimDate: string | null;
+  lastClaimDate: null | string;
 }
 
 type RewardDayStatus = 'locked' | 'claimed' | 'current';

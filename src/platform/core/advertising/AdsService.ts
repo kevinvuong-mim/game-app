@@ -33,10 +33,6 @@ class AdsService {
     this.provider = provider;
   }
 
-  setRemoteConfig(config: AdsRemoteConfig): void {
-    this.remoteConfig = config;
-  }
-
   async initialize(): Promise<void> {
     this.bindNetworkListeners();
 
@@ -86,11 +82,11 @@ class AdsService {
     }
   }
 
-  /** Production + AdMob must never silently grant rewards via mock. */
+  /** Native production bundles + AdMob must never silently grant rewards via mock. */
   private shouldFailClosedOnProviderError(providerName: string): boolean {
     if (providerName !== 'admob') return false;
     if (!Capacitor.isNativePlatform()) return false;
-    return getEnvironment() === 'production';
+    return getEnvironment() === 'production' || import.meta.env.PROD;
   }
 
   async init(): Promise<void> {
@@ -145,6 +141,7 @@ class AdsService {
   }
 
   async loadRewarded(): Promise<void> {
+    if (this.adsRemoved) return;
     await this.loadFormat('rewarded', () => this.getProvider().loadRewarded());
   }
 
@@ -271,6 +268,7 @@ class AdsService {
   }
 
   canShowRewarded(placement: string): boolean {
+    if (this.adsRemoved) return false;
     if (!this.enabled || !this.provider || !this.online) return false;
     if (!this.remoteConfig.rewardEnabled) return false;
     if (this.resolveFormat(placement) !== 'rewarded') return false;

@@ -3,7 +3,6 @@ import type Phaser from 'phaser';
 export type FruitBody = Phaser.Physics.Matter.Image & {
   isMerging: boolean;
   fruitLevel: number;
-  scoreMultiplier: number;
 };
 
 export type ActiveSkill =

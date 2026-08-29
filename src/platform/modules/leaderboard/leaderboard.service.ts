@@ -31,7 +31,11 @@ export class LeaderboardService {
 
   async init(): Promise<void> {
     const gameId = getConfig().gameId;
-    const cache = await this.repository.loadCache(gameId, this.currentPage);
+    const cache = await this.repository.loadCache(
+      gameId,
+      this.currentPage,
+      this.guestService.getGuestId()
+    );
     if (cache) {
       this.view = this.enrichWithLocalBest(
         this.buildView(cache.data, {
@@ -106,26 +110,66 @@ export class LeaderboardService {
     };
     this.view = view;
     this.emit(view);
+    void this.persistSelfRank(rank, bestScore);
+  }
+
+  /** Drop in-memory view after guest identity changes so cache.self cannot leak. */
+  resetForGuestChange(): void {
+    this.fetchSeq += 1;
+    this.inflight = null;
+    this.inflightPage = null;
+    this.view = createInitialView();
+    this.emit(this.view);
   }
 
   private async serveCachedPage(page: number): Promise<boolean> {
     const gameId = getConfig().gameId;
-    const cache = await this.repository.loadCache(gameId, page);
+    const cache = await this.repository.loadCache(gameId, page, this.guestService.getGuestId());
     if (!cache) {
       return false;
     }
 
-    const view = this.enrichWithLocalBest(
-      this.buildView(cache.data, {
-        fromCache: true,
-        isStale: !isCacheFresh(cache),
-        lastUpdated: cache.updatedAt,
-      })
+    const view = this.keepFresherSelf(
+      this.enrichWithLocalBest(
+        this.buildView(cache.data, {
+          fromCache: true,
+          isStale: !isCacheFresh(cache),
+          lastUpdated: cache.updatedAt,
+        })
+      )
     );
 
     this.view = view;
     this.emit(view);
     return true;
+  }
+
+  /** Cache may lag `updateSelfRank` if persist has not finished yet. */
+  private keepFresherSelf(view: LeaderboardView): LeaderboardView {
+    const current = this.view;
+    if (current.myRank === null || current.myBestScore === null) return view;
+    if (view.myBestScore !== null && view.myBestScore > current.myBestScore) return view;
+    return {
+      ...view,
+      myRank: current.myRank,
+      myBestScore: current.myBestScore,
+    };
+  }
+
+  private async persistSelfRank(rank: number, bestScore: number): Promise<void> {
+    const gameId = getConfig().gameId;
+    const guestId = this.guestService.getGuestId();
+    const cache = await this.repository.loadCache(gameId, this.currentPage, guestId);
+    if (!cache) return;
+
+    await this.repository.saveCache(
+      {
+        ...cache,
+        data: { ...cache.data, self: { rank, bestScore } },
+      },
+      gameId,
+      guestId
+    );
   }
 
   private async runFetch(seq: number, page: number): Promise<LeaderboardView> {
@@ -167,7 +211,11 @@ export class LeaderboardService {
     guestId: string | null
   ): Promise<LeaderboardView> {
     const updatedAt = Date.now();
-    await this.repository.saveCache({ page: data.page, data, updatedAt }, getConfig().gameId);
+    await this.repository.saveCache(
+      { page: data.page, data, updatedAt },
+      getConfig().gameId,
+      guestId
+    );
 
     const view = this.buildView(data, {
       fromCache: false,

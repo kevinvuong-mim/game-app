@@ -24,7 +24,12 @@ class MissionController {
       }),
 
       events.on('merge', ({ count }) => {
-        void this.handleProgress('MERGE', count ?? 1);
+        const amount = count ?? 1;
+        if (amount < 0) {
+          void this.handleRevert('MERGE', -amount);
+          return;
+        }
+        void this.handleProgress('MERGE', amount);
       }),
 
       events.on('player:name:updated', () => {
@@ -54,6 +59,14 @@ class MissionController {
 
     await saveService.saveLocal();
     logger.debug('[MissionController] Progress saved', { type, amount, mode });
+  }
+
+  private async handleRevert(type: string, amount: number): Promise<void> {
+    const updated = this.service.revertProgressByType(type, amount);
+    if (!updated) return;
+
+    await saveService.saveLocal();
+    logger.debug('[MissionController] Progress reverted', { type, amount });
   }
 
   private async handleResets(): Promise<void> {

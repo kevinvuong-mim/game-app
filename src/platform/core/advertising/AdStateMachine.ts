@@ -42,10 +42,6 @@ export class AdStateMachine {
     this.state = 'ERROR';
   }
 
-  markDestroyed(): void {
-    this.state = 'DESTROYED';
-  }
-
   reset(): void {
     if (this.state !== 'DESTROYED') {
       this.state = 'IDLE';

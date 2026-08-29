@@ -132,8 +132,10 @@ export class DropController {
   private dropFruit(): void {
     if (!this.callbacks.canDrop() || !this.callbacks.isActive()) return;
 
-    this.callbacks.onBeforeDrop();
+    // Start the session before the checkpoint so undo cannot rewind
+    // `sessionStarted` and re-emit `game:start` on the next drop.
     this.callbacks.onFirstDrop();
+    this.callbacks.onBeforeDrop();
 
     this.callbacks.setCanDrop(false);
     this.dropperFruit?.setVisible(false);

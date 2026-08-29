@@ -125,6 +125,12 @@ class DeviceSyncService {
         current = await this.flushDeviceRegistration(current);
       }
     } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        // Recovery already reset notification state and re-enqueued the token
+        // for the new guest — do not persist the pre-401 snapshot over it.
+        logger.error('[DeviceSync] Guest auth failed — credentials may be invalid', error);
+        return;
+      }
       current = await this.markAttemptFailed(current, error);
       logger.warn('[DeviceSync] Flush failed, will retry later', error);
     }
@@ -164,7 +170,16 @@ class DeviceSyncService {
     state: NotificationState,
     error: unknown
   ): Promise<NotificationState> {
-    const syncAttempts = state.syncAttempts + 1;
+    const latest = await this.loadState();
+    // A concurrent rebind (e.g. guest recovery) may have replaced pending work.
+    if (
+      latest.pendingToken !== state.pendingToken ||
+      latest.unregisterPending !== state.unregisterPending
+    ) {
+      return latest;
+    }
+
+    const syncAttempts = latest.syncAttempts + 1;
     const backoffMs = Math.min(
       MAX_DEVICE_SYNC_BACKOFF_MS,
       BASE_DEVICE_SYNC_BACKOFF_MS * 2 ** Math.max(0, syncAttempts - 1)
@@ -172,12 +187,8 @@ class DeviceSyncService {
     const now = Date.now();
     const errorCode = error instanceof ApiError ? String(error.status) : 'network';
 
-    if (error instanceof ApiError && error.status === 401) {
-      logger.error('[DeviceSync] Guest auth failed — credentials may be invalid', error);
-    }
-
     const failed: NotificationState = {
-      ...state,
+      ...latest,
       syncAttempts,
       lastErrorCode: errorCode,
       lastAttemptAt: new Date(now).toISOString(),

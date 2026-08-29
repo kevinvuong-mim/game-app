@@ -11,7 +11,7 @@ export const HOW_TO_PLAY_STEPS: HowToPlayStepConfig[] = [
   },
   {
     iconKey: 'fruit-6',
-    resultIconKey: 'fruit-4',
+    resultIconKey: 'fruit-7',
     secondaryIconKey: 'fruit-6',
     bodyKey: 'howToPlay.step2Body',
     titleKey: 'howToPlay.step2Title',

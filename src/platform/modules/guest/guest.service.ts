@@ -266,8 +266,8 @@ export class GuestService {
         secretToken: payload.secretToken,
       });
       apiClient.setAuthToken(payload.secretToken);
-      this.markReady(payload.guestId);
       await this.adoptPendingName();
+      this.markReady(payload.guestId);
       logger.info('[Guest] Created new guest identity');
     } catch (error) {
       this.guestStatus = 'pending';
@@ -279,26 +279,63 @@ export class GuestService {
   }
 
   private async runRecovery(): Promise<boolean> {
+    const stored = await this.repository.loadCredentials();
+    const preservedName = this.resolvePreservedName(
+      stored?.name ?? (await this.repository.loadPendingName())
+    );
+
     await this.repository.clearCredentials();
     apiClient.setAuthToken(null);
     this.guestStatus = 'pending';
     this.guestId = null;
-    this.playerName = null;
+    this.playerName = preservedName;
+
+    if (preservedName) {
+      await this.repository.savePendingName(preservedName);
+      usePlatformStore.getState().setUser({ displayName: preservedName });
+    }
 
     // Offline score queue must not follow a new identity — drop orphans instead of rebinding.
-    const { gameSyncRepository } = await import('@platform/modules/game-sync/game-sync.repository');
-    await gameSyncRepository.clear();
+    const { gameSync } = await import('@platform/modules/game-sync/game-sync.service');
+    await gameSync.clearQueue();
     await notificationRepository.saveState(createDefaultNotificationState());
+    const { leaderboard } = await import('@platform/modules/leaderboard/leaderboard.service');
+    leaderboard.resetForGuestChange();
     logger.info('[Guest] Auth recovery — credentials and sync queue cleared');
 
-    await this.init();
+    await this.createGuestIdentity();
     const recovered = this.getStatus() === 'ready';
-    if (recovered) {
+    await this.rebindPushAfterRecovery();
+    return recovered;
+  }
+
+  /** Keep the local display name so the new guest can PATCH it after 401 recovery. */
+  private resolvePreservedName(storedName?: string | null): string | null {
+    const candidate = this.playerName ?? storedName;
+    if (!candidate) return null;
+    try {
+      return normalizePlayerName(candidate);
+    } catch {
+      return null;
+    }
+  }
+
+  private async rebindPushAfterRecovery(): Promise<void> {
+    const rebind = async () => {
       const { notificationService } =
         await import('@platform/modules/notifications/notification.service');
       await notificationService.rebindPushAfterGuestRecovery();
+    };
+
+    if (this.guestStatus === 'ready') {
+      await rebind();
+      return;
     }
-    return recovered;
+
+    const unsub = this.onReady(() => {
+      unsub();
+      void rebind();
+    });
   }
 
   private markReady(guestId: string): void {

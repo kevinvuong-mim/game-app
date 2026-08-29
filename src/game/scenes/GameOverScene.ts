@@ -2,13 +2,13 @@ import Phaser from 'phaser';
 
 import {
   t,
+  ads,
   i18n,
   toast,
   gameSync,
   rateService,
   RateAppModal,
   shareService,
-  usePlatformStore,
 } from '@platform/ui';
 import {
   PANEL_BG,
@@ -102,7 +102,7 @@ export class GameOverScene extends Phaser.Scene {
 
     const score = data.score ?? 0;
     this.coinsEarned = Math.max(0, Math.floor(score));
-    this.showDoubleCoins = this.coinsEarned > 0;
+    this.showDoubleCoins = this.coinsEarned > 0 && !ads.isAdsRemoved();
     const { width, height } = this.cameras.main;
     const centerX = width / 2;
 
@@ -184,7 +184,8 @@ export class GameOverScene extends Phaser.Scene {
         content: t('game.retry'),
         style: { fontSize: 32, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
-      onClick: () => this.scene.start('Gameplay', { returnTo: this.returnTo }),
+      onClick: () =>
+        this.leaveIfIdle(() => this.scene.start('Gameplay', { returnTo: this.returnTo })),
     });
     buttonY += BUTTON_HEIGHT;
 
@@ -198,10 +199,11 @@ export class GameOverScene extends Phaser.Scene {
         content: t('game.home'),
         style: { fontSize: 32, fontStyle: 'bold', border: { width: 4, color: '#000000' } },
       },
-      onClick: () => {
-        eventBus.emit('game:destroy', undefined);
-        this.scene.start(this.returnTo);
-      },
+      onClick: () =>
+        this.leaveIfIdle(() => {
+          eventBus.emit('game:destroy', undefined);
+          this.scene.start(this.returnTo);
+        }),
     });
     buttonY += BUTTON_HEIGHT;
 
@@ -221,6 +223,15 @@ export class GameOverScene extends Phaser.Scene {
     if (rateService.shouldPrompt()) {
       this.rateModal = new RateAppModal(this);
     }
+
+    this.unsubscribers.push(
+      eventBus.on('app:back', () => {
+        this.leaveIfIdle(() => {
+          eventBus.emit('game:destroy', undefined);
+          this.scene.start(this.returnTo);
+        });
+      })
+    );
   }
 
   private addBackgroundImage(width: number, height: number): void {
@@ -502,15 +513,17 @@ export class GameOverScene extends Phaser.Scene {
     this.doubleRequesting = true;
     this.mergeHit?.disableInteractive();
     this.drawMergeOrb(true);
-    eventBus.emit('ad:reward:request', { placement: DOUBLE_COINS_PLACEMENT });
+    eventBus.emit('ad:reward:request', {
+      placement: DOUBLE_COINS_PLACEMENT,
+      amount: this.coinsEarned,
+    });
   }
 
   private handleDoubleCoinsResult(success: boolean, message?: string): void {
     this.doubleRequesting = false;
 
-    if (!this.sys.isActive()) return;
-
     if (!success) {
+      if (!this.sys.isActive()) return;
       this.drawMergeOrb(false);
       this.mergeHit?.setInteractive({ useHandCursor: true });
       this.startMergeOrbPulse();
@@ -518,11 +531,15 @@ export class GameOverScene extends Phaser.Scene {
       return;
     }
 
-    if (this.doubleClaimed || this.coinsEarned <= 0) return;
-
+    if (this.doubleClaimed) return;
     this.doubleClaimed = true;
-    usePlatformStore.getState().addCoins(this.coinsEarned);
+    if (!this.sys.isActive()) return;
     this.playMergeDoubleAnimation();
+  }
+
+  private leaveIfIdle(leave: () => void): void {
+    if (this.doubleRequesting) return;
+    leave();
   }
 
   /** Slam both coin pills into the orb — fruit-merge fantasy for x2. */

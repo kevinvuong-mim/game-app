@@ -6,7 +6,7 @@ Module quản lý **push notification** (FCM) và **local notification** (daily 
 
 | Loại                  | Nguồn                       | Khi nào                                                                                                                      |
 | --------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Push — Top 100 exited | Backend FCM                 | Guest #100 bị đẩy xuống rank >100 khi một submitter vào Top 100 từ ngoài (xem API FCM jobs)                                 |
+| Push — Top 100 exited | Backend FCM                 | Guest #100 bị đẩy xuống rank >100 khi một submitter vào Top 100 từ ngoài (xem API FCM jobs)                                  |
 | Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (FRULOOP mặc định: 9:00 Thứ 7 VN); FCM type `rank_push`                             |
 | Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                                                        |
 | Local — Daily reward  | Client schedule             | 07:00 mỗi sáng (one-shot `at` horizon N ngày, `allowWhileIdle`); claim / past 07:00 thì bỏ hôm nay và arm các sáng tiếp theo |
@@ -110,6 +110,8 @@ App resume: refresh FCM token + flush pending sync (không còn heartbeat endpoi
 
 State local: key `notification-state-v1` (durable storage → Preferences/IndexedDB; trên Preferences có prefix `gsk:`).
 
+`POST /devices` 401: `ApiClient` recovery guest mới rồi **không** replay body cũ. `flushState` **không** `markAttemptFailed` + `saveState` snapshot pre-401 (recovery đã reset state + `enqueueRegister` token cho guest mới; ghi đè sẽ làm guest mới không bao giờ re-register FCM). `markAttemptFailed` cũng bỏ qua nếu `pendingToken` / `unregisterPending` đã đổi (rebind song song).
+
 ## Tap notification → màn trong app
 
 **Không dùng deeplink URL.** Backend gửi FCM `data: { type, route, ...params }` — mọi value trên FCM data là **string** (client coerce `rank`). Rank push gồm `rank`; local notification gắn `extra: { route: 'DailyReward' }` (không có `type`).
@@ -139,21 +141,23 @@ Khi nhận push trong foreground (`pushNotificationReceived`), `notificationServ
 
 ### Cold start (pending navigation)
 
-Khi app bị kill, tap notification có thể tới **trước** khi Phaser sẵn sàng. `navigationService` **defer** payload cho đến `boot:preload-complete`:
+Khi app bị kill, tap notification có thể tới **trước** khi Phaser sẵn sàng. `navigationService` **defer** payload cho đến Preload xong:
 
 1. Tap sớm → lưu `pending` (không navigate).
-2. `PreloadScene.create()` emit `boot:preload-complete` → `navigationService.markBootComplete()`.
-3. `PreloadScene` đọc `peekPendingNavigation()` và `scene.start()` tới pending scene hoặc `Home`.
+2. `PreloadScene.create()` **peek** `peekPendingNavigation()` rồi `scene.start()` tới pending scene hoặc `Home`.
+3. Sau đó emit `boot:preload-complete` → `bindNavigationEvents` gọi `markBootComplete()` và `consumePendingNavigation()` (xóa pending đã dùng).
+
+Peek **trước** emit: handler `boot:preload-complete` consume pending ngay khi emit; nếu đảo thứ tự thì Preload sẽ thấy `pending === null`.
 
 ## Events liên quan
 
-| Event                          | Handler                                                                     |
-| ------------------------------ | --------------------------------------------------------------------------- |
-| Cold start (`App` privacy seq) | Local: reconcile sau permission (không phải lúc `bind`)                     |
-| `app:resume`                   | Push: refresh token + flush; local: reconcile + optional exact-alarm prompt |
-| `daily:claim`                  | Local: reconcile (live `canClaim` lúc execute — thường skip hôm nay)        |
-| `settings:change` (`language`) | Push: locale sync; local: re-arm title/body theo locale mới                 |
-| `boot:preload-complete`        | `markBootComplete()`; PreloadScene `peekPendingNavigation()` rồi navigate   |
+| Event                          | Handler                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| Cold start (`App` privacy seq) | Local: reconcile sau permission (không phải lúc `bind`)                         |
+| `app:resume`                   | Push: refresh token + flush; local: reconcile + optional exact-alarm prompt     |
+| `daily:claim`                  | Local: reconcile (live `canClaim` lúc execute — thường skip hôm nay)            |
+| `settings:change` (`language`) | Push: locale sync; local: re-arm title/body theo locale mới                     |
+| `boot:preload-complete`        | Preload đã peek + `scene.start`; handler `markBootComplete()` + consume pending |
 
 ## API backend
 

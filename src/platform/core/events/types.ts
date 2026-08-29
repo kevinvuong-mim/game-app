@@ -24,7 +24,7 @@ export type EventHandler<T extends PlatformEvent> = (
 ) => void | Promise<void>;
 
 export interface PlatformEventMap {
-  // Gameplay (game layer emits, platform consumes)
+  // Gameplay (game layer emits, platform consumes). `merge.count` may be negative to unwind Undo.
   merge: { count?: number };
   'score:update': { score: number };
 
@@ -67,11 +67,9 @@ export interface PlatformEventMap {
   'ad:context:change': { context: AdContext | string };
   'ad:show:request': { placement: AdPlacement | string };
   'iap:entitlement:changed': IapEntitlementChangedPayload;
-  'ad:reward:request': { placement: AdPlacement | string };
   'mission:update': { missionId: string; progress: number };
-  'game:sync:completed': { rank: number; bestScore: number };
   analytics: { event: AnalyticsEvent; params?: AnalyticsParams };
-  'game:sync:dropped': { clientResultId: string; attempts: number };
+  'ad:reward:request': { placement: AdPlacement | string; amount?: number };
 }
 
 export interface IEventBus {

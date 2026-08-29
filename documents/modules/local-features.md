@@ -17,9 +17,9 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 
 - Catalog: `src/platform/modules/shop/catalog.json` (boosts, remove-ads IAP, coin packs). Không có skin/equip trong catalog hiện tại.
 - **Boosts** (Shop scene): mua bằng coins → quantity trong inventory; gameplay skill bar đọc qua `shop` từ `@platform/ui` (`boost_hammer`, …). UI gọi `shop.purchase(itemId)` trực tiếp.
-- **Remove ads** (Settings → Hide ads): IAP non-consumable qua `shop.purchase('remove_ads')` → `iap.purchase`. Client-authoritative trong starter kit (xem README IAP warning).
+- **Remove ads** (Settings → Hide ads): IAP non-consumable qua `shop.purchase('remove_ads')` → `iap.purchase`. Bật entitlement thì `AdsService.setAdsRemoved(true)` chặn **banner, interstitial, và rewarded** (`DOUBLE_COINS`, `MISSION_WATCH`). Mission `WATCH_AD` ẩn khi ads đã gỡ (trừ lúc đang chờ claim). Client-authoritative trong starter kit (xem README IAP warning).
 - **Coin pack** (Get coins modal trên CoinBar): IAP consumable `coins_10000`; fulfill coins qua `iap:purchase:success` → `shop.fulfillIapProduct`.
-- Giá hiển thị: `iap.getDisplayPrice(productId, fallback)` — ưu tiên `priceString` từ store (RevenueCat/`getProducts`); fallback `$0.99` / `$3.99`. `normalizeStorePriceString` bỏ prefix kiểu `US$` → `$`.
+- Giá hiển thị: `iap.getDisplayPrice(productId, fallback)` — ưu tiên `priceString` từ store (RevenueCat/`getProducts`); fallback `COINS_10000_PRICE` (`$0.98`) / `REMOVE_ADS_PRICE` (`$3.98`) trong `iap.config.ts`. `normalizeStorePriceString` bỏ prefix kiểu `US$` → `$`.
 - Already-owned / store `PRODUCT_ALREADY_PURCHASED`: grant entitlement + success (không toast lỗi). Cancel → `ShopPurchaseResult.cancelled` (UI không toast lỗi).
 - Navigate/back bị chặn khi `shop.isPurchaseInFlight()` / `iap.isPurchasing()` / overlay Get-coins đang mua (`BasePanelScene`, Settings).
 - Restore: Settings modal; skip consumables; `iap:restore:success` → ads sync.
@@ -40,7 +40,7 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 - Definitions: `missions.json`; progress snapshot trong Zustand + `game-save`.
 - **Mọi transition** (progress / complete / claim / onClaim reset) chỉ qua `MissionService` — store chỉ còn `setMissions`.
 - `resetPolicy`: `'daily'` | `'never'` | `'onClaim'`.
-- Progress: `missionController` lắng nghe gameplay events (`score:update`, `ad:reward` với placement `MISSION_WATCH`, …) → `MissionService`.
+- Progress: `missionController` lắng nghe gameplay events (`score:update` lúc abort/game-over, `merge` kể cả `count` âm khi Undo, `ad:reward` với placement `MISSION_WATCH`, …) → `MissionService`. Undo không farm MERGE / REACH_SCORE.
 - Claim: UI gọi `missions.claimMission(id)` trực tiếp (không có `mission:claim:request` / `*:result`).
 - Daily reset theo `lastResetDayKey` / lịch local (không có clock anti-tamper).
 
@@ -49,7 +49,7 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 Typed `AdPlacement` / `AdContext` trong `advertising/types.ts`:
 
 - Banner: `HOME` / `SHOP` / `LEADERBOARD` (derive `BANNER_ALLOWED_PLACEMENTS` từ placements)
-- Rewarded: `MISSION_WATCH` (mission progress only)
+- Rewarded: `MISSION_WATCH` (mission progress only; ẩn/chặn khi remove-ads), `DOUBLE_COINS` (Game Over — nhân đôi coin của run; ads module grant + persist, không phụ thuộc scene còn sống; **không** hiện CTA khi `adsRemoved`)
 - Interstitial: `GAME_OVER`
 - Banner ẩn trên context `GAMEPLAY`
 

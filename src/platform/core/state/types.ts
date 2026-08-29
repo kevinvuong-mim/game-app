@@ -59,13 +59,10 @@ export const DEFAULT_STATE: PlatformState = {
   missions: {
     missions: {},
   },
-  progress: {
-    highScore: 0,
-    currentLevel: 1,
-    totalGamesPlayed: 0,
-    unlockedFeatures: [],
-    hasRatedApp: false,
-    lastRatePromptGamesPlayed: 0,
+  settings: {
+    language: 'en',
+    soundEnabled: true,
+    musicEnabled: true,
   },
   currency: { coins: 0 },
   inventory: { items: {} },
@@ -75,9 +72,12 @@ export const DEFAULT_STATE: PlatformState = {
     createdAt: Date.now(),
     lastLoginAt: Date.now(),
   },
-  settings: {
-    language: 'en',
-    soundEnabled: true,
-    musicEnabled: true,
+  progress: {
+    highScore: 0,
+    currentLevel: 1,
+    hasRatedApp: false,
+    totalGamesPlayed: 0,
+    unlockedFeatures: [],
+    lastRatePromptGamesPlayed: 0,
   },
 };

@@ -25,8 +25,8 @@ export type UIButtonPosition = {
 export type UIButtonTextStyle = {
   color?: string;
   stroke?: string;
-  fontStyle?: string;
   fontSize?: number;
+  fontStyle?: string;
   fontFamily?: string;
   strokeThickness?: number;
   border?: { color: string; width: number };
@@ -55,8 +55,8 @@ export interface UIButtonText {
 
 export interface ToastOptions {
   message: string;
-  type?: UIToastType;
   duration?: number;
+  type?: UIToastType;
   offset?: ToastOffset;
   position?: ToastPosition;
 }

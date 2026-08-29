@@ -24,16 +24,21 @@ Trên native Preferences / legacy localStorage, key vật lý có prefix `gsk:` 
 1. Đọc `guest` từ storage.
 2. Nếu có → `apiClient.setAuthToken(secretToken)`, xong (cold start không gọi mạng).
 3. Nếu không → giữ `pending`, **không block** cold start; `POST /api/guest/init` chạy nền khi online.
-4. Khi create xong → nếu `payload.gameId` **không khớp** `RuntimeConfig.gameId` thì **từ chối lưu credentials** (log error, giữ `pending`, retry khi online). Khớp thì lưu `{ guestId, secretToken }`, `markReady`, adopt pending name nếu có.
+4. Khi create xong → nếu `payload.gameId` **không khớp** `RuntimeConfig.gameId` thì **từ chối lưu credentials** (log error, giữ `pending`, retry khi online). Khớp thì lưu `{ guestId, secretToken }`, **adopt pending name**, rồi `markReady` (để `guest.onReady` flush tên đã nằm trên credentials).
 
 Nếu offline / create fail ở bước 3–4, guest ở `pending` và tự retry khi network online (`@capacitor/network` trên native, `window.online` trên web).
 
 Khi API trả 401, `guest.recoverFromUnauthorized()`:
 
+- Giữ tên local: copy sang `guest:pending-name` **trước** khi xóa credentials (tên trên credentials cũ sẽ mất nếu không làm bước này)
 - Xóa credentials cũ (`guest`) và reset notification state (`notification-state-v1`)
-- **Xóa** queue `game-sync:pending` — score cũ không được gắn sang guest mới
-- Tạo guest mới qua `init()`, rồi re-bind FCM device token cho guest mới
+- Reset in-memory leaderboard view (`leaderboard.resetForGuestChange()`)
+- **Xóa** queue `game-sync:pending` qua `gameSync.clearQueue()` (cùng lock với record/flush)
+- `await createGuestIdentity()` — adopt pending name **trước** `markReady` để `onReady` → `flushPendingName` thấy `nameSyncPending`
+- Re-bind FCM; nếu create còn pending (offline) thì re-bind khi `guest.onReady`
 - `ApiClient` **không** replay request cũ sau recovery (tránh gắn body của guest cũ)
+
+`device-sync` **không** `saveState` snapshot pre-401 sau recovery (tránh ghi đè token enqueue của guest mới).
 
 `init()` và `recoverFromUnauthorized()` dùng mutex để tránh race khi retry song song.
 

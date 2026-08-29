@@ -2,20 +2,23 @@
 
 Hybrid offline-first: đọc all-time leaderboard từ `game-api`, cache theo page (TTL 60s, `LEADERBOARD_LIMIT` = 100/page), stale-while-revalidate khi offline.
 
-## Events
+## Events / calls
 
-| Event                 | Mô tả                                           |
-| --------------------- | ----------------------------------------------- |
-| `leaderboard:refresh` | Load cache-aware; UI emit khi mở panel (page 1) |
-| `leaderboard:page`    | Load page cụ thể (force network)                |
-| `leaderboard:update`  | UI nhận view model sau khi load                 |
+Không còn event `leaderboard:refresh` / `leaderboard:page`. UI và lifecycle gọi service trực tiếp; service emit `leaderboard:update` với view model.
 
-`LeaderboardController` cũng gọi `refreshLeaderboard()` trên `app:resume`.
+| Nguồn                          | Hành vi                                          |
+| ------------------------------ | ------------------------------------------------ |
+| `LeaderboardPanel.refresh()`   | `leaderboard.refreshLeaderboard(1)` khi mở panel |
+| `app:resume` (`app-events.ts`) | `leaderboard.fetchLeaderboard({ force: false })` |
+| `leaderboard:update`           | UI nhận view model sau mỗi load / cache serve    |
 
 ## Offline / fetch behavior
 
 - `init()`: hydrate từ cache local nếu có; đánh dấu `isStale` khi cache hết TTL.
 - `fetchLeaderboard()` / `refreshLeaderboard()`: **luôn** serve cache trước (SWR), rồi revalidate mạng. `force` chỉ bỏ qua TTL freshness — không bỏ qua cache.
+- Cache key: `leaderboard:cache:{gameId}:{guestId|anon}:p{page}` (guest-scoped). Key cũ không có guestId bị xóa khi save cache mới.
+- `updateSelfRank` (sau `POST /results`) ghi `self` xuống cache; serve cache giữ `myRank`/`myBestScore` in-memory nếu mới hơn cache (tránh SWR đè rank vừa submit).
+- 401 guest recovery gọi `resetForGuestChange()` — không serve `self` của guest cũ.
 - Offline (`navigator.onLine === false`): trả cache ngay; nếu không có cache → `offlineLocalBest` / error view (không chờ timeout mạng).
 - In-flight reuse chỉ khi **cùng page** và `!force`. Mỗi request có `fetchSeq`; response cũ bị discard khi `seq !== fetchSeq` (tránh race khi đổi page / force refresh).
 - `status`: `idle` \| `ready` \| `error` \| `loading` \| `refreshing` — **không** có `'offline'`.

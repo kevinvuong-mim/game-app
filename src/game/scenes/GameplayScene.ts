@@ -38,8 +38,7 @@ export class GameplayScene extends Phaser.Scene {
       this.dropGestureArmed = false;
       return;
     }
-    this.dropGestureArmed = true;
-    this.skillBar.onPointerDown(pointer);
+    this.dropGestureArmed = !this.skillBar.onPointerDown(pointer);
   };
   private readonly onPointerUp = (pointer: Phaser.Input.Pointer) => this.handlePointerUp(pointer);
 
@@ -152,6 +151,7 @@ export class GameplayScene extends Phaser.Scene {
       refreshDropper: () => this.dropController.refreshVisual(),
       hideDropper: () => this.dropController.hide(),
       pushUndoCheckpoint: () => this.pushUndoCheckpoint(),
+      armDangerGrace: (ms) => this.dangerLine.armGrace(ms),
       canUndo: () => this.undoSnapshot != null,
       undoLastMove: () => this.applyUndo(),
     });
@@ -308,7 +308,6 @@ export class GameplayScene extends Phaser.Scene {
           x: fruit.x,
           y: fruit.y,
           level: fruit.fruitLevel,
-          scoreMultiplier: fruit.scoreMultiplier,
           vx: body.velocity?.x ?? 0,
           vy: body.velocity?.y ?? 0,
           angularVelocity: body.angularVelocity ?? 0,
@@ -336,11 +335,15 @@ export class GameplayScene extends Phaser.Scene {
     const saved = this.undoSnapshot;
     if (!saved) return;
 
+    const mergeDelta = this.merges - saved.merges;
     this.undoSnapshot = null;
     for (const fruit of [...this.fruits]) {
       this.factory.destroy(fruit);
     }
     this.restoreRun(saved);
+    if (mergeDelta > 0) {
+      eventBus.emit('merge', { count: -mergeDelta });
+    }
   }
 
   private persistRun(): void {
@@ -366,7 +369,7 @@ export class GameplayScene extends Phaser.Scene {
     this.dropController.refreshVisual();
 
     for (const fruit of saved.fruits) {
-      const spawned = this.factory.spawn(fruit.x, fruit.y, fruit.level, fruit.scoreMultiplier);
+      const spawned = this.factory.spawn(fruit.x, fruit.y, fruit.level);
       spawned.setVelocity(fruit.vx, fruit.vy);
       spawned.setAngularVelocity(fruit.angularVelocity);
     }
@@ -459,7 +462,8 @@ export class GameplayScene extends Phaser.Scene {
   private addScore(points: number): void {
     this.score += points;
     this.hud.setScore(this.score);
-    eventBus.emit('score:update', { score: this.score });
+    // High-score and REACH_SCORE commit on abort/complete so Undo cannot
+    // lock in a mid-run peak the player already rewound.
   }
 
   private triggerGameOver(violators: FruitBody[]): void {

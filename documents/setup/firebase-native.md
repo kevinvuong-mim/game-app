@@ -166,7 +166,7 @@ Kiểm tra:
 1. Backend gửi FCM với `data: { type, route, rank? }` (ví dụ `rank_push`, `route: Leaderboard`, `rank: "42"`)
 2. Tap notification → in-app navigation tới `Leaderboard` (không dùng deeplink URL)
 3. Foreground: toast dùng `notifications.rankPush.body` với `{ rank }`, hoặc `bodyFallback` nếu thiếu rank
-4. Cold start: navigation được defer cho đến sau preload assets; `navigationService` subscribe `boot:preload-complete` để `markBootComplete()`
+4. Cold start: navigation được defer; `PreloadScene` peek pending rồi start scene, sau đó emit `boot:preload-complete` (`markBootComplete()` + consume)
 
 ---
 
@@ -179,7 +179,7 @@ Client **không dùng deeplink URL**. Flow:
 | Push scheduled rank | `data.type` + `data.route` | `Leaderboard`; foreground → toast i18n |
 | Local daily reward  | `extra.route`              | `DailyReward`                          |
 
-**Cold start:** Nếu user tap notification khi app bị kill, `navigationService` lưu pending destination. Sau preload assets, `PreloadScene` emit `boot:preload-complete` (listener gọi `markBootComplete()`), đọc `peekPendingNavigation()`, rồi navigate tới target scene.
+**Cold start:** Nếu user tap notification khi app bị kill, `navigationService` lưu pending destination. Sau preload assets, `PreloadScene` **peek** pending rồi `scene.start()` tới target (hoặc `Home`); sau đó mới emit `boot:preload-complete` (`markBootComplete()` + consume pending).
 
 Chi tiết module: [Notifications](../modules/notifications.md).
 
@@ -215,6 +215,7 @@ native/
 └── ios/
     ├── AppDelegate.swift             # Firebase + FCM token bridge
     ├── App.entitlements              # Associated Domains (+ aps-environment khi push on)
+    ├── Main.storyboard
     └── FullscreenBridgeViewController.swift
 ```
 
