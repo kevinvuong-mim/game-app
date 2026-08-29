@@ -47,11 +47,7 @@ export class LeaderboardRepository {
     return storage.load<LeaderboardCache>(this.cacheKey(gameId, page, guestId));
   }
 
-  async saveCache(
-    cache: LeaderboardCache,
-    gameId: string,
-    guestId?: string | null
-  ): Promise<void> {
+  async saveCache(cache: LeaderboardCache, gameId: string, guestId?: string | null): Promise<void> {
     await storage.save(this.cacheKey(gameId, cache.page, guestId), cache);
     // Drop the unscoped pre-guestId key so a stale `self` cannot be served.
     await storage.remove(this.legacyCacheKey(gameId, cache.page));
