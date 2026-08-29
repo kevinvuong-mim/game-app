@@ -6,7 +6,7 @@ Module quản lý **push notification** (FCM) và **local notification** (daily 
 
 | Loại                  | Nguồn                       | Khi nào                                                                                                                      |
 | --------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Push — Top 100 exited | Backend FCM                 | Guest #100 bị đẩy xuống rank >100 khi submitter có previous best ngoài Top-100 score band (xem API FCM jobs)                 |
+| Push — Top 100 exited | Backend FCM                 | Guest #100 bị đẩy xuống rank >100 khi một submitter vào Top 100 từ ngoài (xem API FCM jobs)                                 |
 | Push — scheduled rank | Backend FCM (cron per-game) | Theo `GAME_CONFIG.rankPushCron` trên API (MEMORA mặc định: 9:00 Thứ 7 VN); FCM type `rank_push`                              |
 | Rank sau submit score | `POST /api/results`         | Client hiển thị in-app (Game Over, leaderboard cache)                                                                        |
 | Local — Daily reward  | Client schedule             | 07:00 mỗi sáng (one-shot `at` horizon N ngày, `allowWhileIdle`); claim / past 07:00 thì bỏ hôm nay và arm các sáng tiếp theo |
@@ -96,6 +96,8 @@ Android channel id: `game_alerts`. Notification ids `1001`…`1001+N-1`.
 
 ## Device token lifecycle (client)
 
+Headers cho `POST` / `PATCH` / `DELETE /api/devices`: `X-Api-Key` + `Authorization: Bearer <secretToken>`. Rate limit API: 10/60s per guest (chung key giữa 3 verb).
+
 ```
 Permission granted → FCM token
   → POST /api/devices (lần đầu / ghi đè)   → data: { guestId }
@@ -110,7 +112,7 @@ State local: key `notification-state-v1` (durable storage → Preferences/Indexe
 
 ## Tap notification → màn trong app
 
-**Không dùng deeplink URL.** Backend gửi FCM `data: { type, route, ...params }` (rank push gồm `rank`); local notification gắn `extra: { route: 'DailyReward' }` (không có `type`).
+**Không dùng deeplink URL.** Backend gửi FCM `data: { type, route, ...params }` — mọi value trên FCM data là **string** (client coerce `rank`). Rank push gồm `rank`; local notification gắn `extra: { route: 'DailyReward' }` (không có `type`).
 
 | Nguồn / payload                                 | Scene mở      |
 | ----------------------------------------------- | ------------- |
@@ -162,3 +164,5 @@ Xem [Devices API](../../../game-api/documents/apis/devices.md).
 - [Firebase Native Setup](../setup/firebase-native.md)
 - [Environment Variables](../setup/environment-variables.md)
 - [Local features](./local-features.md)
+- [game-api FCM jobs](../../../game-api/documents/schedule/fcm-notification-jobs.md)
+- [game-api Results API](../../../game-api/documents/apis/results.md)

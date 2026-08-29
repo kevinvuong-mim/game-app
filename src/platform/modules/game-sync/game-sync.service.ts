@@ -1,5 +1,6 @@
 import {
   MAX_BATCH_SIZE,
+  toClientResultId,
   toResultMetadata,
   toNonNegativeInt,
   MAX_SYNC_ATTEMPTS,
@@ -89,7 +90,7 @@ export class GameSyncService {
       const guestId = this.guestService.getGuestId() ?? '';
       const score = toNonNegativeInt(params.score);
       const playedAt = params.playedAt ?? new Date().toISOString();
-      const clientResultId = generateId('result');
+      const clientResultId = toClientResultId(generateId('result'));
 
       const result: PendingGameResult = {
         localId: clientResultId,
@@ -222,8 +223,8 @@ export class GameSyncService {
         const response = await this.repository.sync(
           gameId,
           batch.map(({ clientResultId, score, playedAt, metadata }) => ({
-            clientResultId,
-            score,
+            clientResultId: toClientResultId(clientResultId),
+            score: toNonNegativeInt(score),
             playedAt,
             metadata: toResultMetadata(metadata),
           }))

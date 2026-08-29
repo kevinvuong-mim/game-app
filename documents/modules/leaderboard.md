@@ -25,7 +25,7 @@ Hybrid offline-first: đọc all-time leaderboard từ `game-api`, cache theo pa
 ## Endpoint
 
 `GET /api/leaderboards?gameId=MEMORA&page=1&limit=100&guestId=<optional>`  
-Header: `X-Api-Key` (khớp `VITE_API_KEY` / game-api `API_KEY`).
+Header: `X-Api-Key` (khớp `VITE_API_KEY` / game-api `API_KEY`). Rate limit API: 30 requests / 60 giây per IP.
 
 ## Response (`data`)
 
