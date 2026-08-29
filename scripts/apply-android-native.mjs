@@ -47,6 +47,65 @@ function resolveAdMobAppId() {
   return '';
 }
 
+const ADMOB_BANNER_SKIP_INSETS =
+  '// game-app: skip Android 15+ inset margin override (left-align + bottom gap).';
+
+function endOfMatchingBrace(source, openBraceIndex) {
+  let depth = 0;
+  for (let i = openBraceIndex; i < source.length; i += 1) {
+    if (source[i] === '{') depth += 1;
+    else if (source[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return i + 1;
+    }
+  }
+  return -1;
+}
+
+function stripAndroid15InsetsOverride(source) {
+  const marker = '// set Safe Area only for Android 15+';
+  const start = source.indexOf(marker);
+  if (start === -1) return source;
+
+  const ifToken = 'if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM)';
+  const ifPos = source.indexOf(ifToken, start);
+  if (ifPos === -1) return source;
+
+  const braceStart = source.indexOf('{', ifPos);
+  if (braceStart === -1) return source;
+
+  const braceEnd = endOfMatchingBrace(source, braceStart);
+  if (braceEnd === -1) return source;
+
+  let end = braceEnd;
+  while (end < source.length && (source[end] === '\n' || source[end] === '\r')) {
+    end += 1;
+  }
+
+  return `${source.slice(0, start)}${ADMOB_BANNER_SKIP_INSETS}\n\n${source.slice(end)}`;
+}
+
+function repairBrokenAdMobInsetsStrip(source) {
+  return source.replace(
+    new RegExp(
+      `${ADMOB_BANNER_SKIP_INSETS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n\\n` +
+        '\\s+mAdViewLayout\\.setLayoutParams\\(mAdViewLayoutParams\\);\\n' +
+        '\\s+return insets;\\n' +
+        '\\s+\\}\\);\\n' +
+        '\\s+\\}\\n\\n'
+    ),
+    `${ADMOB_BANNER_SKIP_INSETS}\n\n`
+  );
+}
+
+function isAdMobBannerPatchComplete(source) {
+  return (
+    source.includes('Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL') &&
+    source.includes(ADMOB_BANNER_SKIP_INSETS) &&
+    !source.includes('setOnApplyWindowInsetsListener')
+  );
+}
+
 /**
  * Upstream @capacitor-community/admob BannerExecutor on Android 15+:
  * 1) uses Gravity.BOTTOM without CENTER_HORIZONTAL → WRAP_CONTENT sticks left
@@ -64,12 +123,10 @@ function patchAdMobBannerExecutor() {
     return 'skipped';
   }
 
-  let source = readFileSync(bannerPath, 'utf8');
-  const alreadyPatched =
-    source.includes('Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL') &&
-    !source.includes('set Safe Area only for Android 15+');
+  let source = repairBrokenAdMobInsetsStrip(readFileSync(bannerPath, 'utf8'));
 
-  if (alreadyPatched) {
+  if (isAdMobBannerPatchComplete(source)) {
+    writeFileSync(bannerPath, source);
     return 'present';
   }
 
@@ -104,14 +161,11 @@ function patchAdMobBannerExecutor() {
     return 'failed';
   }
 
-  const insetsBlock =
-    /\/\/ set Safe Area only for Android 15\+\s*\n\s*if \(Build\.VERSION\.SDK_INT >= Build\.VERSION_CODES\.VANILLA_ICE_CREAM\) \{\n(?:.*\n)*?\s*\}\n\n/;
+  source = stripAndroid15InsetsOverride(source);
 
-  if (insetsBlock.test(source)) {
-    source = source.replace(
-      insetsBlock,
-      '// game-app: skip Android 15+ inset margin override (left-align + bottom gap).\n\n'
-    );
+  if (!isAdMobBannerPatchComplete(source)) {
+    console.warn('[android-native] AdMob BannerExecutor insets block changed — patch manually');
+    return 'failed';
   }
 
   writeFileSync(bannerPath, source);

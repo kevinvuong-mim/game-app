@@ -12,7 +12,7 @@
 #   SKIP_GRADLE=1          — skip `./gradlew assembleDebug`
 #   BOOT_TIMEOUT_SEC=300   — max wait for emulator boot
 #   SHOW_LOGS=1            — tail Capacitor console after launch
-#   JAVA_HOME=<path>       — JDK 21+ home (Capacitor 7); auto-detects Android Studio JBR if unset
+#   JAVA_HOME=<path>       — JDK 21–23 home (Capacitor 7 / Gradle 8.11); prefers Homebrew openjdk@21, skips JBR 25+
 
 set -euo pipefail
 
@@ -37,7 +37,13 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "Missing command: $1"
 }
 
-# Capacitor 7 compiles with JavaVersion.VERSION_21 — JDK must be 21+.
+# Capacitor 7 compiles with JavaVersion.VERSION_21.
+# Gradle 8.11.1 (Capacitor Android) can run on JDK 21–23 only. Android Studio's
+# bundled JBR is often Java 25 (class file major 69) and fails with:
+#   Unsupported class file major version 69
+MIN_JAVA_MAJOR=21
+MAX_JAVA_MAJOR=23
+
 java_major_version() {
   local home="$1"
   local java_bin="$home/bin/java"
@@ -45,40 +51,62 @@ java_major_version() {
   "$java_bin" -version 2>&1 | awk -F[\".] '/version/ { print ($2=="1" ? $3 : $2); exit }'
 }
 
-is_jdk_21_plus() {
+is_gradle_compatible_jdk() {
   local major
   major="$(java_major_version "$1" 2>/dev/null || true)"
-  [[ -n "$major" && "$major" -ge 21 ]]
+  [[ -n "$major" && "$major" -ge "$MIN_JAVA_MAJOR" && "$major" -le "$MAX_JAVA_MAJOR" ]]
+}
+
+append_java_home_candidate() {
+  local home="$1"
+  [[ -n "$home" && -d "$home" ]] || return 0
+  local existing
+  for existing in "${candidates[@]+"${candidates[@]}"}"; do
+    if [[ "$existing" == "$home" ]]; then
+      return 0
+    fi
+  done
+  candidates+=("$home")
 }
 
 resolve_java_home() {
-  local candidates=()
+  candidates=()
 
+  # Honour an explicit compatible JAVA_HOME; skip it (with a warning) if too new.
   if [[ -n "${JAVA_HOME:-}" ]]; then
-    candidates+=("$JAVA_HOME")
+    if is_gradle_compatible_jdk "$JAVA_HOME"; then
+      printf '%s' "$JAVA_HOME"
+      return 0
+    fi
+    log "Ignoring JAVA_HOME=$JAVA_HOME (Java $(java_major_version "$JAVA_HOME" 2>/dev/null || echo '?') — Gradle 8.11 needs JDK ${MIN_JAVA_MAJOR}–${MAX_JAVA_MAJOR})"
   fi
-
-  candidates+=(
-    "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-    "/Applications/Android Studio.app/Contents/jre/Contents/Home"
-    "$HOME/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-  )
 
   if command -v /usr/libexec/java_home >/dev/null 2>&1; then
-    local brew_home
-    brew_home="$(/usr/libexec/java_home -v 21 2>/dev/null || true)"
-    [[ -n "$brew_home" ]] && candidates+=("$brew_home")
+    local version
+    for version in 21 22 23; do
+      append_java_home_candidate "$(/usr/libexec/java_home -v "$version" 2>/dev/null || true)"
+    done
   fi
+
+  append_java_home_candidate "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"
+  append_java_home_candidate "/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+  append_java_home_candidate "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+  append_java_home_candidate "/opt/homebrew/opt/openjdk@21"
+  append_java_home_candidate "/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+  append_java_home_candidate "/usr/local/opt/openjdk@21"
+  append_java_home_candidate "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+  append_java_home_candidate "/Applications/Android Studio.app/Contents/jre/Contents/Home"
+  append_java_home_candidate "$HOME/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 
   local candidate
   for candidate in "${candidates[@]}"; do
-    if [[ -d "$candidate" ]] && is_jdk_21_plus "$candidate"; then
+    if is_gradle_compatible_jdk "$candidate"; then
       printf '%s' "$candidate"
       return 0
     fi
   done
 
-  fail 'Capacitor 7 requires JDK 21+. Install Android Studio (bundled JBR) or set JAVA_HOME to a JDK 21+ path.'
+  fail "Gradle 8.11 needs JDK ${MIN_JAVA_MAJOR}–${MAX_JAVA_MAJOR} (Android Studio JBR is often Java 25). Install JDK 21: brew install openjdk@21"
 }
 
 resolve_android_home() {

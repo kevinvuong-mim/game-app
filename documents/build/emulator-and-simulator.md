@@ -49,15 +49,15 @@ Capacitor config hoặc native code; thay đổi TypeScript/CSS/assets chỉ c�
 
 **Android** (`run:android`):
 
-| Variable               | Mô tả                                                        |
-| ---------------------- | ------------------------------------------------------------ |
-| `ANDROID_AVD`          | Tên AVD (mặc định: AVD đầu tiên trong `emulator -list-avds`) |
-| `ANDROID_HEADLESS=1`   | Emulator không cửa sổ (CI)                                   |
-| `SKIP_BUILD=1`         | Bỏ qua `npm run build:android` (native-ops build helper)     |
-| `SKIP_GRADLE=1`        | Bỏ qua `./gradlew assembleDebug`                             |
-| `BOOT_TIMEOUT_SEC=300` | Timeout chờ emulator boot                                    |
-| `SHOW_LOGS=1`          | Tail `adb logcat` Capacitor sau khi launch                   |
-| `JAVA_HOME`            | JDK 21+ (nếu trống, script dùng Android Studio JBR nếu có)   |
+| Variable               | Mô tả                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| `ANDROID_AVD`          | Tên AVD (mặc định: AVD đầu tiên trong `emulator -list-avds`)                    |
+| `ANDROID_HEADLESS=1`   | Emulator không cửa sổ (CI)                                                      |
+| `SKIP_BUILD=1`         | Bỏ qua `npm run build:android` (native-ops build helper)                        |
+| `SKIP_GRADLE=1`        | Bỏ qua `./gradlew assembleDebug`                                                |
+| `BOOT_TIMEOUT_SEC=300` | Timeout chờ emulator boot                                                       |
+| `SHOW_LOGS=1`          | Tail `adb logcat` Capacitor sau khi launch                                      |
+| `JAVA_HOME`            | JDK 21–23 (nếu trống, script ưu tiên Homebrew `openjdk@21`; bỏ qua JBR Java 25) |
 
 **iOS** (`run:ios`):
 
@@ -85,19 +85,19 @@ npm run build && SKIP_BUILD=1 npm run run:android
 
 ## Yêu cầu hệ thống
 
-| Thành phần      | Android                            | iOS                           |
-| --------------- | ---------------------------------- | ----------------------------- |
-| OS              | macOS / Linux / Windows            | **macOS** (bắt buộc)          |
-| Node.js         | ≥ 20                               | ≥ 20                          |
-| IDE / SDK       | Android Studio + Android SDK       | **Xcode** (kèm iOS Simulator) |
-| Biến môi trường | `ANDROID_HOME` trỏ tới Android SDK | Không bắt buộc thêm           |
-| Java            | JDK 21+ (Capacitor 7 / Android Gradle) | —                    |
+| Thành phần      | Android                                                          | iOS                           |
+| --------------- | ---------------------------------------------------------------- | ----------------------------- |
+| OS              | macOS / Linux / Windows                                          | **macOS** (bắt buộc)          |
+| Node.js         | ≥ 20                                                             | ≥ 20                          |
+| IDE / SDK       | Android Studio + Android SDK                                     | **Xcode** (kèm iOS Simulator) |
+| Biến môi trường | `ANDROID_HOME` trỏ tới Android SDK                               | Không bắt buộc thêm           |
+| Java            | JDK 21–23 (Capacitor 7 / Gradle 8.11; `brew install openjdk@21`) | —                             |
 
 Kiểm tra nhanh:
 
 ```bash
 node -v          # >= 20
-java -version    # 21.x (hoặc Android Studio JBR — script `run:android` tự detect)
+java -version    # 21.x (Gradle 8.11 không chạy trên JBR Java 25 của Android Studio)
 echo $ANDROID_HOME
 xcodebuild -version
 ```
