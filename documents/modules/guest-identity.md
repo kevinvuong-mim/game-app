@@ -63,7 +63,18 @@ Sau sync thành công: `nameSyncPending: false`.
 
 ## Endpoints
 
+Mọi request kèm `X-Api-Key` (khớp `VITE_API_KEY` / game-api `API_KEY`).
+
 ### `POST /api/guest/init`
+
+Không cần Bearer (`auth: false`). Rate limit API: 3/60s + 15/3600s per IP.
+
+Headers:
+
+```
+Content-Type: application/json
+X-Api-Key: <API_KEY>
+```
 
 Body:
 
@@ -83,7 +94,7 @@ Response (`data`):
 
 ### `PATCH /api/guest/name`
 
-Header: `Authorization: Bearer <secretToken>`
+Headers: `X-Api-Key` + `Authorization: Bearer <secretToken>`. Rate limit API: 10/60s per guest.
 
 Body:
 

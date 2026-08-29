@@ -127,8 +127,8 @@ eventBus.emit('analytics', { event: AnalyticsEvents.SESSION_START });
 
 | Module        | Backend? | Description                                                                                                                |
 | ------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, storage key `guest`)                                                  |
-| game-sync     | **API**  | Offline queue → batch upload (`POST /results`) on `game:over`                                                              |
+| guest         | **API**  | Anonymous guest + `secretToken` (`POST /guest/init`, `X-Api-Key`; storage key `guest`)                                     |
+| game-sync     | **API**  | Offline queue → batch upload (`POST /results`, `X-Api-Key` + Bearer) on `game:over`                                        |
 | game-run      | Local    | Mid-run board snapshot (`gameplay-run`); schema in `@game/gameplay/GameRunSave`                                            |
 | leaderboard   | **API**  | Offline cache, TTL, Top 100 REST (`LEADERBOARD_LIMIT` = 100/page)                                                          |
 | notifications | **API**  | Push (FCM) + local daily reward; device token sync (`/devices`)                                                            |

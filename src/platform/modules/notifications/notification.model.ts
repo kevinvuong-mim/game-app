@@ -30,7 +30,7 @@ const NOTIFICATION_ROUTES = {
 
 export type NotificationRoute = (typeof NOTIFICATION_ROUTES)[keyof typeof NOTIFICATION_ROUTES];
 
-/** FCM push types sent by game-api — local-only notifications use `route` only. */
+/** FCM `data.type` values from game-api. `top_100_exited` is rank displacement (#100 → rank >100), not a score cutoff. */
 export const NOTIFICATION_TYPES = {
   RANK_PUSH: 'rank_push',
   TOP_100_EXITED: 'top_100_exited',
@@ -107,7 +107,7 @@ export function deviceSyncNeeded(state: NotificationState): boolean {
 }
 
 export interface PushNotificationPayload {
-  /** Present on rank_push FCM data payloads from game-api. */
+  /** Coerced from FCM `data.rank` (always a string on the wire). */
   rank?: number;
   type?: NotificationType;
   route?: NotificationRoute;

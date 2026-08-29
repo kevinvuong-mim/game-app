@@ -2,12 +2,22 @@
  * Offline game-result sync model.
  *
  * Results are queued locally and batch-uploaded to `POST /results`.
+ * Limits below match game-api `SubmitResultDto` / `@IsValidMetadata`.
  */
 
 export const MAX_BATCH_SIZE = 50;
 export const MAX_SYNC_ATTEMPTS = 10;
 export const MAX_PENDING_RESULTS = 500;
 export const PENDING_RESULTS_KEY = 'game-sync:pending';
+
+/** Prisma `Int` / PostgreSQL `integer` upper bound. */
+export const MAX_RESULT_SCORE = 2_147_483_647;
+export const CLIENT_RESULT_ID_MAX_LENGTH = 128;
+
+const METADATA_MAX_KEYS = 10;
+const METADATA_MAX_JSON_LENGTH = 2048;
+const METADATA_MAX_KEY_LENGTH = 64;
+const METADATA_MAX_STRING_LENGTH = 256;
 
 /**
  * Transient / retry-forever error codes for the offline queue.
@@ -57,10 +67,14 @@ export interface ResultSubmitData {
 
 export function toNonNegativeInt(value: number): number {
   if (!Number.isFinite(value) || value < 0) return 0;
-  return Math.floor(value);
+  return Math.min(Math.floor(value), MAX_RESULT_SCORE);
 }
 
-/** Keep only flat primitive metadata values the API accepts. */
+export function toClientResultId(value: string): string {
+  return value.trim().slice(0, CLIENT_RESULT_ID_MAX_LENGTH);
+}
+
+/** Keep only flat primitive metadata values the API `@IsValidMetadata` accepts. */
 export function toResultMetadata(
   metadata?: Record<string, unknown>
 ): Record<string, string | number | boolean | null> | undefined {
@@ -68,13 +82,29 @@ export function toResultMetadata(
 
   const result: Record<string, string | number | boolean | null> = {};
   for (const [key, value] of Object.entries(metadata)) {
-    if (value === null || typeof value === 'boolean' || typeof value === 'string') {
+    if (Object.keys(result).length >= METADATA_MAX_KEYS) break;
+    if (key.length === 0 || key.length > METADATA_MAX_KEY_LENGTH) continue;
+
+    if (value === null || typeof value === 'boolean') {
       result[key] = value;
+      continue;
+    }
+    if (typeof value === 'string') {
+      result[key] = value.slice(0, METADATA_MAX_STRING_LENGTH);
       continue;
     }
     if (typeof value === 'number' && Number.isFinite(value)) {
       result[key] = value;
     }
+  }
+
+  while (
+    Object.keys(result).length > 0 &&
+    JSON.stringify(result).length > METADATA_MAX_JSON_LENGTH
+  ) {
+    const lastKey = Object.keys(result).at(-1);
+    if (!lastKey) break;
+    delete result[lastKey];
   }
 
   return Object.keys(result).length > 0 ? result : undefined;
