@@ -19,6 +19,22 @@ class DeepLinkService {
       return false;
     }
 
+    // iOS/Android often fire appUrlOpen with the same launch URL as getLaunchUrl.
+    // Do not overwrite cold_start — flushPendingDeepLink would then emit a second navigate.
+    if (
+      source === 'app_url_open' &&
+      this.pendingDeepLink?.source === 'cold_start' &&
+      this.pendingDeepLink.scene === parsed.scene &&
+      this.pendingDeepLink.path === parsed.path
+    ) {
+      logger.info('[DeepLink] Ignored duplicate launch URL', {
+        scene: parsed.scene,
+        path: parsed.path,
+        source,
+      });
+      return true;
+    }
+
     this.pendingDeepLink = parsed;
     logger.info('[DeepLink] Received', {
       scene: parsed.scene,

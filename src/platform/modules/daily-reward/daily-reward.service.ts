@@ -20,6 +20,8 @@ import { dailyRewardRepository, type DailyRewardRepository } from './daily-rewar
 export class DailyRewardService {
   private initialized = false;
   private claimInFlight = false;
+  private persistDirty = false;
+  private writeChain: Promise<void> = Promise.resolve();
   private model: DailyRewardModel = createDefaultModel();
 
   constructor(private readonly repository: DailyRewardRepository = dailyRewardRepository) {}
@@ -98,11 +100,30 @@ export class DailyRewardService {
     void this.persist();
   }
 
-  private async persist(): Promise<void> {
-    // Preferences is the only durable store for daily-reward; do not mirror onto PlatformState.
-    await this.repository.save(this.model);
-    // Persist currency/other store changes (e.g. coins from claim).
-    await saveService.saveLocal();
+  /**
+   * Coalesce concurrent writes so a streak-gap persist cannot overwrite a completed claim
+   * with a stale snapshot (Preferences stringify is not atomic with in-memory mutations).
+   */
+  private persist(): Promise<void> {
+    this.persistDirty = true;
+    this.writeChain = this.writeChain.then(
+      () => this.flushDirty(),
+      () => this.flushDirty()
+    );
+    return this.writeChain;
+  }
+
+  private async flushDirty(): Promise<void> {
+    while (this.persistDirty) {
+      this.persistDirty = false;
+      const snapshot: DailyRewardModel = {
+        version: this.model.version,
+        currentDay: this.model.currentDay,
+        lastClaimDate: this.model.lastClaimDate,
+      };
+      await this.repository.save(snapshot);
+      await saveService.saveLocal();
+    }
   }
 }
 

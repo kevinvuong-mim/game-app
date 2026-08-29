@@ -32,6 +32,22 @@ class NotificationService {
   }
 
   /**
+   * Bind FCM tap/receive listeners before ATT / guest init so a killed-app
+   * notification tap can be queued on `navigationService` before Preload.
+   */
+  async attachLaunchListeners(): Promise<void> {
+    if (!Capacitor.isNativePlatform() || !getConfig().pushNotificationsEnabled) {
+      return;
+    }
+
+    pushNotificationService.setHandlers({
+      onReceived: (payload) => this.handleForegroundNotification(payload),
+      onAction: (payload) => this.handleNotificationTap(payload),
+    });
+    await pushNotificationService.attachListeners();
+  }
+
+  /**
    * Show the system notification permission dialog(s) without registering FCM
    * or scheduling local reminders. Used by App bootstrap between ATT and UMP.
    */

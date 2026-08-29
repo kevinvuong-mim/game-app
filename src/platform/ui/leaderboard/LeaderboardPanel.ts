@@ -523,21 +523,21 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
   }
 
   private resolveSelfEntry(view: LeaderboardView): LeaderboardEntry | null {
-    if (view.myGuestId) {
-      const fromList = view.entries.find((entry) => entry.guestId === view.myGuestId);
-      if (fromList) return fromList;
-    }
+    const fromList = view.myGuestId
+      ? view.entries.find((entry) => entry.guestId === view.myGuestId)
+      : undefined;
 
+    // Prefer sync-updated myRank/myBestScore over a stale Top 100 row.
     if (view.myRank && view.myRank > 0 && view.myBestScore !== null) {
       return {
         rank: view.myRank,
-        guestId: view.myGuestId ?? 'self',
+        guestId: view.myGuestId ?? fromList?.guestId ?? 'self',
         bestScore: view.myBestScore,
-        name: guest.getName(),
+        name: fromList?.name ?? guest.getName(),
       };
     }
 
-    return null;
+    return fromList ?? null;
   }
 
   private setScroll(value: number): void {

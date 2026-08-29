@@ -19,6 +19,8 @@ export interface FetchOptions {
 
 export class LeaderboardService {
   private fetchSeq = 0;
+  /** Bumped on guest 401 recovery so in-flight fetches cannot apply under a new identity. */
+  private fetchEpoch = 0;
   private currentPage = 1;
   private inflightPage: number | null = null;
   private view: LeaderboardView = createInitialView();
@@ -98,14 +100,31 @@ export class LeaderboardService {
   }
 
   updateSelfRank(rank: number, bestScore: number): void {
+    const guestId = this.guestService.getGuestId();
+    const entries = this.view.entries.map((entry) =>
+      guestId && entry.guestId === guestId ? { ...entry, rank, bestScore } : entry
+    );
     const view = {
       ...this.view,
+      entries,
       myRank: rank,
       isStale: true,
       myBestScore: bestScore,
     };
     this.view = view;
     this.emit(view);
+  }
+
+  /**
+   * Guest 401 recovery: drop in-flight apply/cache and reset the view so the old
+   * guest's rank cannot attach to the new identity.
+   */
+  async abortForGuestRecovery(): Promise<void> {
+    this.fetchEpoch += 1;
+    this.fetchSeq += 1;
+    this.view = createInitialView();
+    this.emit(this.view);
+    await this.repository.clearCache(getConfig().gameId, this.currentPage);
   }
 
   private async serveCachedPage(page: number): Promise<boolean> {
@@ -131,6 +150,7 @@ export class LeaderboardService {
   private async runFetch(seq: number, page: number): Promise<LeaderboardView> {
     const gameId = getConfig().gameId;
     const hasData = this.view.entries.length > 0;
+    const epoch = this.fetchEpoch;
 
     this.transition({ status: hasData ? 'refreshing' : 'loading', error: null });
 
@@ -143,14 +163,17 @@ export class LeaderboardService {
         guestId,
       });
 
-      // Discard stale responses from an older page/force request.
-      if (seq !== this.fetchSeq) {
+      if (seq !== this.fetchSeq || epoch !== this.fetchEpoch) {
         return this.view;
       }
 
-      return this.applySuccess(data, guestId);
+      if (guestId !== this.guestService.getGuestId()) {
+        return this.view;
+      }
+
+      return this.applySuccess(data, guestId, epoch);
     } catch (error) {
-      if (seq !== this.fetchSeq) {
+      if (seq !== this.fetchSeq || epoch !== this.fetchEpoch) {
         return this.view;
       }
 
@@ -164,17 +187,29 @@ export class LeaderboardService {
 
   private async applySuccess(
     data: LeaderboardData,
-    guestId: string | null
+    guestId: string | null,
+    epoch: number
   ): Promise<LeaderboardView> {
+    if (epoch !== this.fetchEpoch || guestId !== this.guestService.getGuestId()) {
+      return this.view;
+    }
+
     const updatedAt = Date.now();
     await this.repository.saveCache({ page: data.page, data, updatedAt }, getConfig().gameId);
 
-    const view = this.buildView(data, {
-      fromCache: false,
-      isStale: false,
-      lastUpdated: updatedAt,
-      myGuestId: guestId,
-    });
+    if (epoch !== this.fetchEpoch || guestId !== this.guestService.getGuestId()) {
+      await this.repository.clearCache(getConfig().gameId, data.page);
+      return this.view;
+    }
+
+    const view = this.enrichWithLocalBest(
+      this.buildView(data, {
+        fromCache: false,
+        isStale: false,
+        lastUpdated: updatedAt,
+        myGuestId: guestId,
+      })
+    );
     this.view = view;
     this.emit(view);
     return view;

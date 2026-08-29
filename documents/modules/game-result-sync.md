@@ -81,10 +81,11 @@ Client chỉ gửi flat primitives (`string` / finite `number` / `boolean` / `nu
 
 ## Flow
 
-1. `game:over` với `submitScore: true` (infinity) → queue local (`gameSyncController`). Metadata `duration` là **giây** (`Math.round(durationMs / 1000)`), kèm optional `merges` (số match). Level/map (`submitScore: false`) không queue.
+1. `game:over` với `submitScore: true` (infinity) → queue local (`gameSyncController`). Metadata `duration` là **giây** (`Math.round(durationMs / 1000)`), kèm optional `merges` (số pair match — field name vẫn là `merges`). Campaign/level (`submitScore: false`) không queue.
 2. Rời gameplay giữa chừng **không** emit `game:over` — mid-run persist (`GameRunSave` / `game-run`). Chỉ session kết thúc thật mới emit `game:over`.
-3. `flush()` khi online / `app:resume` / guest ready / controller bind / native network reconnect.
+3. `flush()` khi online / `app:resume` / guest ready / controller bind / native network reconnect. Concurrent `flush()` chain thành một drain loop — `dirty` set sau khi một pass vừa xong vẫn được drain (không kẹt queue).
 4. Batch tối đa 50 items, `X-Api-Key` + Bearer. Orphan queue items thuộc guest khác bị drop khi guest ready.
 5. Đánh dấu `synced: true` khi batch HTTP thành công (kể cả server dedup — `insertedCount` có thể là 0).
+6. Guest 401 recovery gọi `abortAndClearForRecovery()` (epoch + xóa queue dưới lock) **trước** khi xoay token — flush đang bay không apply/POST sang guest mới. Cùng lúc `leaderboard.abortForGuestRecovery()` discard fetch/cache của guest cũ.
 
 Mid-run leave: [game-run.md](./game-run.md). Backend contract: [Results API](../../../game-api/documents/apis/results.md).

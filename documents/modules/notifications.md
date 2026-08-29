@@ -50,10 +50,11 @@ Sau bước 2: `App` gọi `notificationService.reconcileDailyRewardSchedule()` 
 
 Chi tiết:
 
-1. `App.init()` → `notificationController.bind(events)` — **chỉ gắn listeners** (`app:resume`, `daily:claim`, language); **không** reconcile tại `bind`.
-2. `runPrivacyPromptSequence()` (fire-and-forget, không block game shell) → permission → **cold-start reconcile**.
-3. Push sau guest ready: `PushNotifications.register()` → listener `registration` → `POST /api/devices`.
-4. Local: sau permission, arm one-shot horizon 07:00 theo `dailyRewards.canClaim()` **đọc lúc job chạy** (không snapshot lúc enqueue).
+1. `App.init()` (sớm, native + push on) → `notificationService.attachLaunchListeners()` — gắn Capacitor `pushNotificationActionPerformed` **trước** ATT/guest, queue tap nếu handler chưa sẵn.
+2. `notificationController.bind(events)` — listeners lifecycle (`app:resume`, `daily:claim`, language); **không** reconcile tại `bind`.
+3. `runPrivacyPromptSequence()` (fire-and-forget, không block game shell) → permission → **cold-start reconcile**.
+4. Push sau guest ready: `PushNotifications.register()` → listener `registration` → `POST /api/devices`.
+5. Local: sau permission, arm one-shot horizon 07:00 theo `dailyRewards.canClaim()` **đọc lúc job chạy** (không snapshot lúc enqueue).
 
 Chỉ xin quyền / schedule trên `Capacitor.isNativePlatform()`.
 
@@ -139,11 +140,11 @@ Khi nhận push trong foreground (`pushNotificationReceived`), `notificationServ
 
 ### Cold start (pending navigation)
 
-Khi app bị kill, tap notification có thể tới **trước** khi Phaser sẵn sàng. `navigationService` **defer** payload cho đến `boot:preload-complete`:
+Khi app bị kill, tap notification có thể tới **trước** khi Phaser sẵn sàng. `navigationService` **defer** payload cho đến Preload:
 
-1. Tap sớm → lưu `pending` (không navigate).
-2. `PreloadScene.create()` emit `boot:preload-complete` → `navigationService.markBootComplete()`.
-3. `PreloadScene` đọc `peekPendingNavigation()` và `scene.start()` tới pending scene hoặc `Home`.
+1. `App.init` gắn FCM tap listener sớm; tap → `handleNotificationTap()` → lưu `pending` nếu boot chưa xong.
+2. `PreloadScene` `consumePendingNavigation()` rồi `scene.start()` tới pending scene hoặc `Home`.
+3. Emit `boot:preload-complete` → `markBootComplete()`. Tap tới giữa `scene.start` được consume lần 2 và `navigateToScene`.
 
 ## Events liên quan
 
@@ -153,7 +154,7 @@ Khi app bị kill, tap notification có thể tới **trước** khi Phaser sẵ
 | `app:resume`                   | Push: refresh token + flush; local: reconcile + optional exact-alarm prompt |
 | `daily:claim`                  | Local: reconcile (live `canClaim` lúc execute — thường skip hôm nay)        |
 | `settings:change` (`language`) | Push: locale sync; local: re-arm title/body theo locale mới                 |
-| `boot:preload-complete`        | `markBootComplete()`; PreloadScene `peekPendingNavigation()` rồi navigate   |
+| `boot:preload-complete`        | `markBootComplete()`; Preload đã `consumePendingNavigation()` rồi `scene.start` |
 
 ## API backend
 

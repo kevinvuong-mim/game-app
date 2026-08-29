@@ -179,7 +179,7 @@ Client **không dùng deeplink URL**. Flow:
 | Push scheduled rank | `data.type` + `data.route` | `Leaderboard`; foreground → toast i18n |
 | Local daily reward  | `extra.route`              | `DailyReward`                          |
 
-**Cold start:** Nếu user tap notification khi app bị kill, `navigationService` lưu pending destination. Sau preload assets, `PreloadScene` emit `boot:preload-complete` (listener gọi `markBootComplete()`), đọc `peekPendingNavigation()`, rồi navigate tới target scene.
+**Cold start:** `App.init` gắn FCM tap listener sớm. Tap khi app bị kill → `navigationService` pending. `PreloadScene` `consumePendingNavigation()` rồi `scene.start()` tới target; sau đó emit `boot:preload-complete` (`markBootComplete()`).
 
 Chi tiết module: [Notifications](../modules/notifications.md).
 

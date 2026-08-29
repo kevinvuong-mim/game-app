@@ -2,7 +2,6 @@ import {
   ads,
   type AdContext,
   type AdPlacement,
-  type AdsRemoteConfig,
   DEFAULT_REMOTE_CONFIG,
   BANNER_HIDDEN_CONTEXTS,
   CONTEXT_TO_BANNER_PLACEMENT,
@@ -17,8 +16,6 @@ interface RewardRequestResult {
 }
 
 class AdsModuleService {
-  private runtimeConfig: AdsRemoteConfig = { ...DEFAULT_REMOTE_CONFIG };
-
   async showPlacement(
     placement: AdPlacement | string
   ): Promise<{ shown: boolean; error?: string }> {
@@ -65,9 +62,7 @@ class AdsModuleService {
       return { success: false, message: t('ads.rewardUnavailable') };
     }
 
-    const reward =
-      this.runtimeConfig.rewards[placement as AdPlacement] ??
-      DEFAULT_REMOTE_CONFIG.rewards[placement as AdPlacement];
+    const reward = DEFAULT_REMOTE_CONFIG.rewards[placement as AdPlacement];
     if (!reward) {
       return {
         success: false,

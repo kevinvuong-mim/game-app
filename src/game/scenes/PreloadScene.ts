@@ -47,7 +47,6 @@ const IMAGE_ASSETS: ImageAsset[] = [
   { key: 'shop-banner', path: '/assets/images/banner.png' },
   { key: 'back-icon', path: '/assets/images/back-icon.png' },
   { key: 'trophy-icon', path: '/assets/images/trophy-icon.png' },
-  { key: 'quit-icon', path: '/assets/images/quit-icon.png' },
   { key: 'shop-icon', path: '/assets/images/shop-icon.png' },
   {
     key: 'circle-button-background',
@@ -91,7 +90,6 @@ const IMAGE_ASSETS: ImageAsset[] = [
 const FALLBACK_TEXTURES: FallbackTexture[] = [
   { key: 'back-icon', width: 72, height: 72, color: 0x3cb043 },
   { key: 'trophy-icon', width: 72, height: 72, color: 0xf5c518 },
-  { key: 'quit-icon', width: 72, height: 72, color: 0xc62828 },
   { key: 'coin-icon', width: 48, height: 48, color: 0xffd700 },
   { key: 'plus-icon', width: 48, height: 48, color: 0x3cb043 },
   { key: 'shop-icon', width: 80, height: 82, color: 0x4a90d9 },
@@ -184,15 +182,18 @@ export class PreloadScene extends Phaser.Scene {
     this.setProgress(1);
 
     this.time.delayedCall(PRELOAD_DELAY_MS, () => {
-      const pending = navigationService.peekPendingNavigation();
-      const sceneKey = pending?.sceneKey ?? 'Home';
-      const data = pending?.data;
-
-      eventBus.emit('boot:preload-complete', undefined);
+      const pending = navigationService.consumePendingNavigation();
       soundManager.syncMusic();
 
       // Must transition from this scene — game.scene.start() would leave Preload visible.
-      this.scene.start(sceneKey, data);
+      this.scene.start(pending?.sceneKey ?? 'Home', pending?.data);
+
+      eventBus.emit('boot:preload-complete', undefined);
+
+      const late = navigationService.consumePendingNavigation();
+      if (late) {
+        navigationService.navigateToScene(late.sceneKey, late.data);
+      }
     });
   }
 

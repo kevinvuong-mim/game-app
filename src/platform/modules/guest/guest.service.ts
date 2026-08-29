@@ -279,15 +279,18 @@ export class GuestService {
   }
 
   private async runRecovery(): Promise<boolean> {
+    // Invalidate in-flight result POSTs before rotating the auth token.
+    const { gameSync } = await import('@platform/modules/game-sync/game-sync.service');
+    await gameSync.abortAndClearForRecovery();
+    const { leaderboard } = await import('@platform/modules/leaderboard/leaderboard.service');
+    await leaderboard.abortForGuestRecovery();
+
     await this.repository.clearCredentials();
     apiClient.setAuthToken(null);
     this.guestStatus = 'pending';
     this.guestId = null;
     this.playerName = null;
 
-    // Offline score queue must not follow a new identity — drop orphans instead of rebinding.
-    const { gameSyncRepository } = await import('@platform/modules/game-sync/game-sync.repository');
-    await gameSyncRepository.clear();
     await notificationRepository.saveState(createDefaultNotificationState());
     logger.info('[Guest] Auth recovery — credentials and sync queue cleared');
 

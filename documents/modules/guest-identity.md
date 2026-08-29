@@ -30,8 +30,9 @@ Nếu offline / create fail ở bước 3–4, guest ở `pending` và tự retr
 
 Khi API trả 401, `guest.recoverFromUnauthorized()`:
 
+- Gọi `gameSync.abortAndClearForRecovery()` **trước** khi xoay token (bump epoch + xóa queue dưới lock) để flush đang bay không POST/apply sang guest mới
+- Gọi `leaderboard.abortForGuestRecovery()` (bump fetch epoch + xóa cache) để response in-flight không gắn rank guest cũ
 - Xóa credentials cũ (`guest`) và reset notification state (`notification-state-v1`)
-- **Xóa** queue `game-sync:pending` — score cũ không được gắn sang guest mới
 - Tạo guest mới qua `init()`, rồi re-bind FCM device token cho guest mới
 - `ApiClient` **không** replay request cũ sau recovery (tránh gắn body của guest cũ)
 
@@ -39,7 +40,7 @@ Khi API trả 401, `guest.recoverFromUnauthorized()`:
 
 ## IAP linking
 
-Khi guest trở thành `ready` (kể cả sau offline retry), `App.ts` gọi `iap.linkGuestUser(guestId)` → RevenueCat adapter `Purchases.logIn({ appUserID })` và sync entitlements từ server.
+Khi guest trở thành `ready` (kể cả sau offline retry), `App.ts` gọi `iap.linkGuestUser(guestId)`. Nếu IAP chưa `ready`, guest id được giữ lại và `Purchases.logIn({ appUserID })` chạy ngay sau `iap.initialize()`. Sau đó sync entitlements từ store.
 
 ## Offline name sync
 

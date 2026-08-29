@@ -27,10 +27,6 @@ class NavigationService {
     this.bootComplete = true;
   }
 
-  peekPendingNavigation(): PendingNavigation | null {
-    return this.pending;
-  }
-
   consumePendingNavigation(): PendingNavigation | null {
     const pending = this.pending;
     this.pending = null;
@@ -78,6 +74,5 @@ export const navigationService = new NavigationService();
 export function bindNavigationEvents(): () => void {
   return eventBus.on('boot:preload-complete', () => {
     navigationService.markBootComplete();
-    navigationService.consumePendingNavigation();
   });
 }

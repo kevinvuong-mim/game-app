@@ -25,6 +25,8 @@ export interface GameRunSnapshot {
   cards: GameRunCardSnapshot[];
   revealArmed: boolean;
   cloverArmed: boolean;
+  /** Wall-clock ms of last infinity match; 0 if none. Optional on older v2 saves. */
+  lastMatchAt: number;
 }
 
 interface GameRunStore {
@@ -95,6 +97,7 @@ function parseSnapshot(value: unknown, mode: GameplayMode): GameRunSnapshot | un
     cards,
     revealArmed: value.revealArmed,
     cloverArmed: value.cloverArmed,
+    lastMatchAt: isFiniteNumber(value.lastMatchAt) && value.lastMatchAt > 0 ? value.lastMatchAt : 0,
   };
 }
 

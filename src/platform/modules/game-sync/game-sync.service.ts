@@ -31,7 +31,6 @@ export interface RecordResultParams {
  */
 export class GameSyncService {
   private dirty = false;
-  private flushPromise: Promise<number | null> | null = null;
   /** Serializes load→mutate→save on the offline queue (avoids wipe races). */
   private queueLock: Promise<void> = Promise.resolve();
   /**
@@ -41,6 +40,10 @@ export class GameSyncService {
   private latestResultSync: Promise<number | null> = Promise.resolve(null);
   /** Last `data.rank` from a successful `/results` response (this process). */
   private lastApiRank: number | null = null;
+  /** Bumped on guest auth recovery so in-flight flushes must not POST/apply under a new identity. */
+  private flushEpoch = 0;
+  /** Chains flush passes so a `dirty` set after a while-exit still drains. */
+  private flushChain: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly repository: GameSyncRepository = gameSyncRepository,
@@ -83,6 +86,19 @@ export class GameSyncService {
     return this.lastApiRank;
   }
 
+  /**
+   * Guest 401 recovery: drop the offline queue under the same lock as flush,
+   * and invalidate in-flight HTTP so old scores cannot attach to a new guest.
+   */
+  async abortAndClearForRecovery(): Promise<void> {
+    this.flushEpoch += 1;
+    this.dirty = false;
+    this.lastApiRank = null;
+    await this.withQueueLock(async () => {
+      await this.repository.clear();
+    });
+  }
+
   async recordResult(params: RecordResultParams): Promise<void> {
     await this.withQueueLock(async () => {
       const { gameId } = getConfig();
@@ -122,10 +138,6 @@ export class GameSyncService {
   }
 
   async flush(): Promise<number | null> {
-    if (this.flushPromise) {
-      this.dirty = true;
-      return this.flushPromise;
-    }
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
 
     const gameId = getConfig().gameId;
@@ -135,30 +147,34 @@ export class GameSyncService {
       return null;
     }
 
-    this.flushPromise = this.runFlush(gameId, guestId);
-    try {
-      return await this.flushPromise;
-    } finally {
-      this.flushPromise = null;
-    }
+    this.dirty = true;
+    const epoch = this.flushEpoch;
+    const run = this.flushChain.then(() => this.drainFlush(gameId, guestId, epoch));
+    this.flushChain = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
   }
 
-  private async runFlush(gameId: string, guestId: string): Promise<number | null> {
-    do {
+  private async drainFlush(gameId: string, guestId: string, epoch: number): Promise<number | null> {
+    while (this.dirty) {
+      if (epoch !== this.flushEpoch) {
+        return this.lastApiRank;
+      }
       this.dirty = false;
       try {
-        await this.flushForGuest(gameId, guestId);
+        await this.flushForGuest(gameId, guestId, epoch);
       } catch (error) {
-        // Preserve dirty so a concurrent flush waiter / retry can drain the queue.
         this.dirty = true;
         logger.error('[GameSync] Flush failed — will retry on next trigger', error);
         throw error;
       }
-    } while (this.dirty);
+    }
     return this.lastApiRank;
   }
 
-  private async flushForGuest(gameId: string, guestId: string): Promise<void> {
+  private async flushForGuest(gameId: string, guestId: string, epoch: number): Promise<void> {
     const prepared = await this.withQueueLock(async () => {
       let queue = await this.repository.loadQueue();
       let mutated = false;
@@ -215,8 +231,10 @@ export class GameSyncService {
     });
 
     if (!prepared) return;
+    if (epoch !== this.flushEpoch) return;
 
     for (let i = 0; i < prepared.length; i += MAX_BATCH_SIZE) {
+      if (epoch !== this.flushEpoch) return;
       const batch = prepared.slice(i, i + MAX_BATCH_SIZE);
 
       try {
@@ -230,7 +248,10 @@ export class GameSyncService {
           }))
         );
 
+        if (epoch !== this.flushEpoch) return;
+
         await this.withQueueLock(async () => {
+          if (epoch !== this.flushEpoch) return;
           let queue = await this.repository.loadQueue();
           queue = this.applyBatchSyncResults(queue, batch, gameId, guestId);
           this.applyRankFromApi(response);
@@ -239,7 +260,9 @@ export class GameSyncService {
         });
       } catch (error) {
         this.logExpectedApiErrors(error);
+        if (epoch !== this.flushEpoch) return;
         await this.withQueueLock(async () => {
+          if (epoch !== this.flushEpoch) return;
           let queue = await this.repository.loadQueue();
           queue = this.incrementAttempts(queue, batch, gameId, error);
           queue = this.pruneQueue(queue);
@@ -300,10 +323,6 @@ export class GameSyncService {
 
       // Never drop scores that failed due to transient network / server blips.
       if (item.syncAttempts >= MAX_SYNC_ATTEMPTS && !isTransientSyncErrorCode(item.lastErrorCode)) {
-        eventBus.emit('game:sync:dropped', {
-          clientResultId: item.clientResultId,
-          attempts: item.syncAttempts,
-        });
         continue;
       }
 

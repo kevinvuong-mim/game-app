@@ -79,7 +79,6 @@ export interface PlatformEventMap {
   'mission:update': { missionId: string; progress: number };
   'game:sync:completed': { rank: number; bestScore: number };
   analytics: { event: AnalyticsEvent; params?: AnalyticsParams };
-  'game:sync:dropped': { clientResultId: string; attempts: number };
 }
 
 export interface IEventBus {

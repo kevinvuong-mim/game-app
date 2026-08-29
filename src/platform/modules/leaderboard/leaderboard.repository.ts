@@ -47,6 +47,10 @@ export class LeaderboardRepository {
     await storage.save(this.cacheKey(gameId, cache.page), cache);
   }
 
+  async clearCache(gameId: string, page = 1): Promise<void> {
+    await storage.remove(this.cacheKey(gameId, page));
+  }
+
   private normalize(
     data: LeaderboardData | undefined,
     page: number,

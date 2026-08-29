@@ -14,6 +14,7 @@ class PushNotificationService {
   private currentToken: string | null = null;
   private onAction: PushActionHandler | null = null;
   private onReceived: PushActionHandler | null = null;
+  private queuedAction: PushNotificationPayload | null = null;
   private listenerHandles: PluginListenerHandle[] = [];
 
   constructor(private readonly repository: NotificationRepository = notificationRepository) {}
@@ -21,6 +22,30 @@ class PushNotificationService {
   setHandlers(handlers: { onAction?: PushActionHandler; onReceived?: PushActionHandler }): void {
     this.onAction = handlers.onAction ?? null;
     this.onReceived = handlers.onReceived ?? null;
+    if (this.queuedAction && this.onAction) {
+      const queued = this.queuedAction;
+      this.queuedAction = null;
+      this.onAction(queued);
+    }
+  }
+
+  /**
+   * Bind Capacitor listeners before permission / guest init so a killed-app
+   * notification tap is not dropped. Safe to call more than once.
+   */
+  async attachListeners(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
+
+    try {
+      if (!this.listenersBound) {
+        await this.bindListeners();
+        this.listenersBound = true;
+      }
+    } catch (error) {
+      logger.warn('[PushNotification] Early listener attach failed', error);
+    }
   }
 
   /**
@@ -163,7 +188,11 @@ class PushNotificationService {
       }),
       await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
         const payload = this.extractPayload(action.notification.data);
-        this.onAction?.(payload);
+        if (this.onAction) {
+          this.onAction(payload);
+          return;
+        }
+        this.queuedAction = payload;
       })
     );
   }

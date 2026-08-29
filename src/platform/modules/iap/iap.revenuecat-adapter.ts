@@ -257,11 +257,14 @@ function mapNonSubscriptionPurchases(customerInfo: CustomerInfo): ProviderPurcha
         ? tx.purchaseDateMillis
         : Date.parse(tx.purchaseDate ?? '');
     if (!Number.isFinite(purchaseTime)) continue;
+    // Never invent `${productId}-${purchaseTime}` — purchase() uses the store
+    // transactionIdentifier, so a synthetic id would double-grant the same buy.
+    if (!tx.transactionIdentifier) continue;
 
     purchases.push({
       productId,
-      transactionId: tx.transactionIdentifier ?? `${productId}-${purchaseTime}`,
-      receipt: tx.transactionIdentifier ?? productId,
+      transactionId: tx.transactionIdentifier,
+      receipt: tx.transactionIdentifier,
       purchaseTime,
     });
   }

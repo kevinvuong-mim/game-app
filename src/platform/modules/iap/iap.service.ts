@@ -40,6 +40,8 @@ class IapService {
   private provider: IAPProvider | null = null;
   private initPromise: Promise<void> | null = null;
   private products = new Map<string, ProviderProduct>();
+  /** Guest id to RevenueCat-logIn after init when `onReady` raced ahead of `ready`. */
+  private pendingGuestLink: string | null = null;
 
   constructor(deps: IapServiceDeps = {}) {
     this.storage = deps.storage ?? purchaseStorage;
@@ -127,6 +129,14 @@ class IapService {
       // Init may finish after bindIapController's first sync — notify so ads/UI catch up.
       for (const entitlement of this.entitlements) {
         this.emitEntitlementChanged(entitlement, true);
+      }
+
+      if (this.pendingGuestLink) {
+        try {
+          await this.applyGuestLink(this.pendingGuestLink);
+        } catch (error) {
+          logger.warn('[IAP] Guest link after init failed', error);
+        }
       }
     } catch (error) {
       logger.error('[IAP] Initialization failed', error);
@@ -312,7 +322,7 @@ class IapService {
         if (product.type === 'consumable') {
           const withinMs = IAP_PURCHASE_TIMEOUT_MS + IAP_TIMEOUT_RECOVERY_MS;
           const recent = await this.provider.findRecentPurchase?.(product.id, withinMs);
-          if (recent) {
+          if (recent?.transactionId) {
             await this.completePurchase(product, recent);
             logger.info('[IAP] Recovered consumable after purchase timeout', {
               productId: product.id,
@@ -403,7 +413,16 @@ class IapService {
 
   /** Associates the IAP provider with the guest id when it becomes available. */
   async linkGuestUser(guestId: string): Promise<void> {
-    if (!guestId || !this.ready || !this.provider?.linkAppUser) {
+    if (!guestId) return;
+    this.pendingGuestLink = guestId;
+    if (!this.ready) {
+      return;
+    }
+    await this.applyGuestLink(guestId);
+  }
+
+  private async applyGuestLink(guestId: string): Promise<void> {
+    if (!this.provider?.linkAppUser) {
       return;
     }
 

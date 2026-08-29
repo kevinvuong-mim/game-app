@@ -1,11 +1,4 @@
-import type {
-  AdFormat,
-  AdPlacement,
-  AdShowResult,
-  IAdsProvider,
-  AdsRemoteConfig,
-  AdsProviderConfig,
-} from './types';
+import type { AdFormat, AdPlacement, AdShowResult, IAdsProvider, AdsProviderConfig } from './types';
 import { logger } from '../error';
 import { Capacitor } from '@capacitor/core';
 import { createAdsProvider } from './providers';
@@ -26,15 +19,10 @@ class AdsService {
   private lastInterstitialAt = 0;
   private provider: IAdsProvider | null = null;
   private activeBannerPlacement: string | null = null;
-  private remoteConfig: AdsRemoteConfig = { ...DEFAULT_REMOTE_CONFIG };
   private online = typeof navigator === 'undefined' ? true : navigator.onLine;
 
   setProvider(provider: IAdsProvider): void {
     this.provider = provider;
-  }
-
-  setRemoteConfig(config: AdsRemoteConfig): void {
-    this.remoteConfig = config;
   }
 
   async initialize(): Promise<void> {
@@ -137,11 +125,7 @@ class AdsService {
   }
 
   resolveFormat(placement: string): AdFormat | null {
-    return (
-      this.remoteConfig.placements[placement as AdPlacement] ??
-      DEFAULT_REMOTE_CONFIG.placements[placement as AdPlacement] ??
-      null
-    );
+    return DEFAULT_REMOTE_CONFIG.placements[placement as AdPlacement] ?? null;
   }
 
   async loadRewarded(): Promise<void> {
@@ -223,7 +207,7 @@ class AdsService {
   }
 
   async loadBanner(): Promise<void> {
-    if (!this.remoteConfig.bannerEnabled || !this.online) return;
+    if (!DEFAULT_REMOTE_CONFIG.bannerEnabled || !this.online) return;
     if (!this.bannerState.startLoading()) return;
 
     try {
@@ -272,26 +256,26 @@ class AdsService {
 
   canShowRewarded(placement: string): boolean {
     if (!this.enabled || !this.provider || !this.online) return false;
-    if (!this.remoteConfig.rewardEnabled) return false;
+    if (!DEFAULT_REMOTE_CONFIG.rewardEnabled) return false;
     if (this.resolveFormat(placement) !== 'rewarded') return false;
 
-    const cooldownMs = this.remoteConfig.cooldowns.rewarded * 1000;
+    const cooldownMs = DEFAULT_REMOTE_CONFIG.cooldowns.rewarded * 1000;
     return Date.now() - this.lastRewardedAt >= cooldownMs;
   }
 
   canShowInterstitial(placement: string): boolean {
     if (this.adsRemoved) return false;
     if (!this.enabled || !this.provider) return false;
-    if (!this.remoteConfig.interstitialEnabled) return false;
+    if (!DEFAULT_REMOTE_CONFIG.interstitialEnabled) return false;
     if (this.resolveFormat(placement) !== 'interstitial') return false;
 
-    const cooldownMs = this.remoteConfig.cooldowns.interstitial * 1000;
+    const cooldownMs = DEFAULT_REMOTE_CONFIG.cooldowns.interstitial * 1000;
     return Date.now() - this.lastInterstitialAt >= cooldownMs;
   }
 
   canShowBanner(placement: string): boolean {
     if (this.adsRemoved) return false;
-    if (!this.enabled || !this.provider || !this.remoteConfig.bannerEnabled) return false;
+    if (!this.enabled || !this.provider || !DEFAULT_REMOTE_CONFIG.bannerEnabled) return false;
     if (!BANNER_ALLOWED_PLACEMENTS.has(placement as AdPlacement)) return false;
     return this.resolveFormat(placement) === 'banner';
   }

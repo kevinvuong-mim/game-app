@@ -49,6 +49,10 @@ class App {
 
     logger.info('[App] Initializing platform...');
 
+    if (Capacitor.isNativePlatform() && config().pushNotificationsEnabled) {
+      await notificationService.attachLaunchListeners();
+    }
+
     const store = usePlatformStore.getState();
     if (!store.user.displayName) {
       store.setUser({ displayName: 'Player' });

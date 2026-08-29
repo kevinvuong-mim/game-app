@@ -47,7 +47,6 @@ export const INFINITY_RESPAWN_DELAY_MS = 320;
 export interface MapDefinition {
   id: number;
   levelCount: number;
-  nameKey: string;
   bannerName: string;
 }
 
@@ -60,7 +59,6 @@ export function getMapDefinition(mapId: number): MapDefinition {
   return {
     id: mapId,
     levelCount,
-    nameKey: `map.name`,
     bannerName: `Map ${mapId}`,
   };
 }
@@ -117,8 +115,6 @@ export const BOARD_SIZE_ROWS = 5;
 export const BOARD_PAD_X = 64;
 export const BOARD_CARD_FILL = 0.78;
 export const BOARD_CARD_HEIGHT_FILL = 0.9;
-
-export const INFINITY_GRID: GridSize = { cols: BOARD_COLS, rows: BOARD_SIZE_ROWS };
 
 export function gridForCellCount(cellCount: number): GridSize {
   return { cols: BOARD_COLS, rows: Math.max(1, Math.ceil(cellCount / BOARD_COLS)) };

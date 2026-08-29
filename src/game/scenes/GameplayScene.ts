@@ -89,6 +89,8 @@ export class GameplayScene extends Phaser.Scene {
   private cloverArmed = false;
   /** Set as soon as the last campaign pair is confirmed (before clear anim). */
   private pendingCampaignWin = false;
+  /** Remaining time latched at last-pair confirm — stars must not wait on tweens. */
+  private starRemainingMs: number | null = null;
 
   private infinityPool: string[] = [];
   private unsubscribers: Array<() => void> = [];
@@ -158,7 +160,7 @@ export class GameplayScene extends Phaser.Scene {
     if (this.remainingMs <= 0) {
       this.remainingMs = 0;
       if (this.resolving) return;
-      void this.finishRun(false);
+      void this.finishIfTimedOut(this.runId);
     }
   }
 
@@ -188,6 +190,7 @@ export class GameplayScene extends Phaser.Scene {
     this.revealArmed = false;
     this.cloverArmed = false;
     this.pendingCampaignWin = false;
+    this.starRemainingMs = null;
     this.lastMatchAt = 0;
     this.startTime = Date.now();
 
@@ -276,41 +279,42 @@ export class GameplayScene extends Phaser.Scene {
 
     const pair = findMatchingPair(picked);
     if (!pair) {
+      this.commitMismatch();
       await this.wait(FLIP_BACK_DELAY_MS, runId);
       if (!this.isRunLive(runId)) return;
       await Promise.all(picked.filter((card) => card.active).map((card) => card.flipTo('back')));
       if (!this.isRunLive(runId)) return;
-      this.onMismatch();
       this.resolving = false;
-      this.clearTurnBoosts();
       this.persistRun();
       await this.finishIfTimedOut(runId);
       return;
     }
 
-    if (
-      this.mode === 'campaign' &&
-      this.liveCards().every((card) => card === pair[0] || card === pair[1])
-    ) {
-      this.pendingCampaignWin = true;
+    this.latchCampaignWinIfBoardWillClear(pair);
+
+    const leftover = picked.filter((card) => card !== pair[0] && card !== pair[1] && card.active);
+    this.commitMatchedPair(pair[0], pair[1], false);
+
+    let cloverExtra: [CardView, CardView] | null = null;
+    if (this.cloverArmed) {
+      cloverExtra = this.commitLuckyClover();
     }
+    this.clearTurnBoosts();
+    this.persistRun();
 
     await this.wait(MATCH_CLEAR_DELAY_MS, runId);
     if (!this.isRunLive(runId)) return;
 
-    const leftover = picked.filter((card) => card !== pair[0] && card !== pair[1] && card.active);
-    await this.clearMatchedPair(pair[0], pair[1], false, runId);
+    await this.playMatchedPairClear(pair[0], pair[1], runId);
     if (!this.isRunLive(runId)) return;
 
     await Promise.all(leftover.map((card) => card.flipTo('back')));
     if (!this.isRunLive(runId)) return;
 
-    if (this.cloverArmed) {
-      await this.applyLuckyClover(pair, runId);
+    if (cloverExtra) {
+      await this.playLuckyCloverReveal(cloverExtra, runId);
       if (!this.isRunLive(runId)) return;
     }
-
-    this.clearTurnBoosts();
 
     if (this.mode === 'infinity' && this.liveCards().length === 0) {
       await this.wait(INFINITY_RESPAWN_DELAY_MS, runId);
@@ -328,35 +332,59 @@ export class GameplayScene extends Phaser.Scene {
     }
   }
 
-  private async clearMatchedPair(
-    a: CardView,
-    b: CardView,
-    fromClover: boolean,
-    runId: number
-  ): Promise<void> {
+  /** Combo / penalty / Reveal consume before any await so pause/leave persist a finished miss. */
+  private commitMismatch(): void {
+    this.onMismatch();
+    this.revealArmed = false;
+    this.skillBar.setHint(this.cloverArmed ? t('game.skillHintClover') : '');
+    this.skillBar.updateSelectionVisual();
+    this.persistRun();
+  }
+
+  private latchCampaignWinIfBoardWillClear(pair: [CardView, CardView]): void {
+    if (this.mode !== 'campaign') return;
+    const leftover = this.liveCards().filter((card) => card !== pair[0] && card !== pair[1]);
+    const cloverClearsRest =
+      this.cloverArmed && leftover.length === 2 && pickRandomRemainingPair(leftover) !== null;
+    if (leftover.length !== 0 && !cloverClearsRest) return;
+
+    this.pendingCampaignWin = true;
+    if (this.starRemainingMs === null) {
+      this.starRemainingMs = Math.max(this.remainingMs, 0);
+    }
+  }
+
+  private commitMatchedPair(a: CardView, b: CardView, fromClover: boolean): void {
+    this.onMatchSuccess(fromClover);
     this.removeCard(a);
     this.removeCard(b);
     if (this.mode === 'campaign' && this.liveCards().length === 0) {
       this.pendingCampaignWin = true;
+      if (this.starRemainingMs === null) {
+        this.starRemainingMs = Math.max(this.remainingMs, 0);
+      }
     }
-
-    await Promise.all([a.playMatchClear(), b.playMatchClear()]);
-    if (!this.isRunLive(runId)) return;
-
-    soundManager.playCombine();
-    this.onMatchSuccess(fromClover);
   }
 
-  private async applyLuckyClover(justMatched: [CardView, CardView], runId: number): Promise<void> {
-    const extra = pickRandomRemainingPair(
-      this.liveCards().filter((card) => card !== justMatched[0] && card !== justMatched[1])
-    );
-    if (!extra) return;
+  private commitLuckyClover(): [CardView, CardView] | null {
+    const extra = pickRandomRemainingPair(this.liveCards());
+    if (!extra) return null;
+    this.commitMatchedPair(extra[0], extra[1], true);
+    return extra;
+  }
+
+  private async playMatchedPairClear(a: CardView, b: CardView, runId: number): Promise<void> {
+    await Promise.all([a.playMatchClear(), b.playMatchClear()]);
+    if (!this.isRunLive(runId)) return;
+    soundManager.playCombine();
+  }
+
+  private async playLuckyCloverReveal(extra: [CardView, CardView], runId: number): Promise<void> {
     await Promise.all([extra[0].flipTo('front'), extra[1].flipTo('front')]);
     if (!this.isRunLive(runId)) return;
     await this.wait(180, runId);
     if (!this.isRunLive(runId)) return;
-    await this.clearMatchedPair(extra[0], extra[1], true, runId);
+    await this.playMatchedPairClear(extra[0], extra[1], runId);
   }
 
   private onMatchSuccess(fromClover: boolean): void {
@@ -501,8 +529,9 @@ export class GameplayScene extends Phaser.Scene {
     if (!this.isRunLive(runId)) return true;
     if (this.remainingMs > 0) return false;
     this.remainingMs = 0;
-    this.pendingCampaignWin = false;
-    await this.finishRun(false);
+    const campaignWin =
+      this.mode === 'campaign' && (this.pendingCampaignWin || this.liveCards().length === 0);
+    await this.finishRun(campaignWin);
     return true;
   }
 
@@ -515,10 +544,10 @@ export class GameplayScene extends Phaser.Scene {
     clearGameRun(this.mode);
 
     const duration = Date.now() - this.startTime;
+    const remainingForStars = this.starRemainingMs ?? Math.max(this.remainingMs, 0);
+    this.starRemainingMs = null;
     const stars =
-      won && this.mode === 'campaign'
-        ? starsFromTimeRatio(Math.max(this.remainingMs, 0) / this.totalMs)
-        : 0;
+      won && this.mode === 'campaign' ? starsFromTimeRatio(remainingForStars / this.totalMs) : 0;
 
     if (this.mode === 'campaign' && won) {
       recordLevelStars(this.mapId, this.levelIndex, stars);
@@ -562,10 +591,10 @@ export class GameplayScene extends Phaser.Scene {
   private leaveWithoutFinishing(sceneKey: string, data: Record<string, unknown> = {}): void {
     if (this.sessionEnded) return;
 
-    // Last campaign pair already confirmed — don't discard the win on Back.
-    // Still lose if the timer already hit zero during that clear.
+    // Last campaign pair already confirmed — keep the win even if the timer
+    // hit zero during the clear tween (same rule as finishIfTimedOut).
     if (this.mode === 'campaign' && this.pendingCampaignWin) {
-      void this.finishRun(this.remainingMs > 0);
+      void this.finishRun(true);
       return;
     }
 
@@ -582,6 +611,7 @@ export class GameplayScene extends Phaser.Scene {
     this.resolving = false;
     this.selected = [];
     this.pendingCampaignWin = false;
+    this.starRemainingMs = null;
 
     if (sceneKey === 'LevelSelect') {
       this.scene.start('LevelSelect', { mapId: this.mapId, returnTo: 'Map', ...data });
@@ -644,7 +674,7 @@ export class GameplayScene extends Phaser.Scene {
     this.revealArmed = snapshot.revealArmed;
     this.cloverArmed = snapshot.cloverArmed;
     this.startTime = Date.now() - snapshot.elapsedMs;
-    this.lastMatchAt = 0;
+    this.lastMatchAt = snapshot.lastMatchAt > 0 ? Math.min(snapshot.lastMatchAt, Date.now()) : 0;
   }
 
   private applyRestoredSkills(): void {
@@ -700,6 +730,7 @@ export class GameplayScene extends Phaser.Scene {
       })),
       revealArmed: this.revealArmed,
       cloverArmed: this.cloverArmed,
+      lastMatchAt: this.lastMatchAt,
     });
   }
 

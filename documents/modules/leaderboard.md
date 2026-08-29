@@ -2,25 +2,27 @@
 
 Hybrid offline-first: đọc all-time leaderboard từ `game-api`, cache theo page (TTL 60s, `LEADERBOARD_LIMIT` = 100/page), stale-while-revalidate khi offline.
 
-## Events
+Không có `LeaderboardController`. UI và bootstrap gọi `leaderboard` service trực tiếp; service emit `leaderboard:update` khi view đổi.
 
-| Event                 | Mô tả                                           |
-| --------------------- | ----------------------------------------------- |
-| `leaderboard:refresh` | Load cache-aware; UI emit khi mở panel (page 1) |
-| `leaderboard:page`    | Load page cụ thể (force network)                |
-| `leaderboard:update`  | UI nhận view model sau khi load                 |
+## Load path
 
-`LeaderboardController` cũng gọi `refreshLeaderboard()` trên `app:resume`.
+| Caller                         | Method                                      | Khi nào                                              |
+| ------------------------------ | ------------------------------------------- | ---------------------------------------------------- |
+| `LeaderboardPanel` (mở panel)  | `leaderboard.refreshLeaderboard(1)`         | Force network (vẫn SWR: serve cache trước)           |
+| `bindAppEvents` (`app:resume`) | `leaderboard.fetchLeaderboard({ force: false })` | Revalidate nếu cache hết TTL                    |
+| `game-sync` (sync thành công)  | `leaderboard.updateSelfRank(rank, bestScore)` | Cập nhật footer rank/best từ `POST /results`     |
+
+Event bus chỉ có **`leaderboard:update`** (view model). Không còn `leaderboard:refresh` / `leaderboard:page`.
 
 ## Offline / fetch behavior
 
 - `init()`: hydrate từ cache local nếu có; đánh dấu `isStale` khi cache hết TTL.
-- `fetchLeaderboard()` / `refreshLeaderboard()`: **luôn** serve cache trước (SWR), rồi revalidate mạng. `force` chỉ bỏ qua TTL freshness — không bỏ qua cache.
+- `fetchLeaderboard()` / `refreshLeaderboard()`: **luôn** serve cache trước (SWR), rồi revalidate mạng. `force` (`refreshLeaderboard`) chỉ bỏ qua TTL freshness — không bỏ qua cache.
 - Offline (`navigator.onLine === false`): trả cache ngay; nếu không có cache → `offlineLocalBest` / error view (không chờ timeout mạng).
-- In-flight reuse chỉ khi **cùng page** và `!force`. Mỗi request có `fetchSeq`; response cũ bị discard khi `seq !== fetchSeq` (tránh race khi đổi page / force refresh).
+- In-flight reuse chỉ khi **cùng page** và `!force`. Mỗi request có `fetchSeq`; response cũ bị discard khi `seq !== fetchSeq` (tránh race khi đổi page / force refresh). Guest 401 recovery bump `fetchEpoch` + xóa cache page hiện tại — response/cache của guest cũ không apply sang identity mới.
 - `status`: `idle` \| `ready` \| `error` \| `loading` \| `refreshing` — **không** có `'offline'`.
 - Banner UI dựa trên `isStale` + `error` i18n (`leaderboard.offlineLocalBest`, `leaderboard.error`).
-- `myBestScore`: enrich từ `progress.highScore` local khi API không trả `self`.
+- `myBestScore`: enrich từ `progress.highScore` local khi API không trả `self` (kể cả network success). Footer "Your Rank" ưu tiên `myRank` / `myBestScore` (kể cả sau `updateSelfRank`) hơn dòng Top 100 có thể stale.
 
 ## Endpoint
 

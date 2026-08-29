@@ -34,8 +34,10 @@ export class CardView extends Phaser.GameObjects.Container {
     const art = scene.add.image(0, 0, pairKey);
     const artMaxW = cardWidth * 0.62;
     const artMaxH = cardHeight * 0.62;
-    const scale = Math.min(artMaxW / art.width, artMaxH / art.height);
-    art.setDisplaySize(art.width * scale, art.height * scale);
+    if (art.width > 0 && art.height > 0) {
+      const scale = Math.min(artMaxW / art.width, artMaxH / art.height);
+      art.setDisplaySize(art.width * scale, art.height * scale);
+    }
     this.front.add([frame, art]);
     this.front.setVisible(false);
 
@@ -89,6 +91,7 @@ export class CardView extends Phaser.GameObjects.Container {
         duration: 220,
         ease: 'Back.In',
         onComplete: () => resolve(),
+        onStop: () => resolve(),
       });
     });
     if (this.active) this.destroy();
@@ -112,6 +115,7 @@ function tweenScaleX(
       duration,
       ease: 'Sine.InOut',
       onComplete: () => resolve(),
+      onStop: () => resolve(),
     });
   });
 }
