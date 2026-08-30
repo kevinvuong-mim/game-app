@@ -4,6 +4,8 @@
 
 Tài liệu này mô tả các biến môi trường runtime của `memora`. Vì project dùng Vite, các biến đọc trong client phải có prefix `VITE_`.
 
+Script native (`verify-game-config`, `apply-*-native`) load cùng cascade file với Vite: `.env` → `.env.local` → `.env.[mode]` → `.env.[mode].local`. Mode mặc định là `production` (khớp `vite build`); ghi đè bằng `VITE_MODE=development` nếu cần. Biến đã có trong process environment không bị file ghi đè.
+
 `src/game/config.ts` khai báo display identity: `id` từ `VITE_GAME_ID`; `name`, `width`, `height`, `version`, `physics` chỉnh trong file.
 
 ---
@@ -104,7 +106,7 @@ VITE_ADMOB_IOS_REWARDED_ID=
 
 ## Release monetization gates
 
-`npm run game:verify-config` (và mọi `build:android` / `build:ios` qua `native-ops.mjs`) enforce khi `VITE_APP_ENV=production` **hoặc** `ENFORCE_RELEASE_MONETIZATION=true`:
+`npm run game:verify-config` (và mọi `build:android` / `build:ios` qua `native-ops.mjs`) enforce khi `VITE_APP_ENV=production`:
 
 - `VITE_IAP_PROVIDER=revenuecat` + đủ cả hai RevenueCat keys
 - `VITE_ADS_PROVIDER=admob` + đủ AdMob app id + 8 unit ids (banner / interstitial / rewarded × iOS / Android)
@@ -120,7 +122,7 @@ Header: X-Api-Key: {VITE_API_KEY}
 
 404 = `gameId` chưa có trên backend.
 
-Script-only env (không phải `VITE_*`): `ENFORCE_RELEASE_MONETIZATION`, `SKIP_API_CHECK`, `CAP_SERVER_URL`, biến emulator trong [emulator-and-simulator.md](../build/emulator-and-simulator.md).
+Script-only env (không phải `VITE_*` client): `SKIP_API_CHECK`, `CAP_SERVER_URL`, `VITE_MODE`, biến emulator trong [emulator-and-simulator.md](../build/emulator-and-simulator.md).
 
 ---
 

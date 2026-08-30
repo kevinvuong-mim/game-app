@@ -19,7 +19,7 @@
 | `npm run build:ios`          | Full iOS pipeline: verify-config → build web → add platform if missing → assets → pods → sync → patches     |
 | `npm run run:android`        | Build + emulator install + launch (`scripts/run-android-emulator.sh`)                                       |
 | `npm run run:ios`            | Build + simulator install + launch (`scripts/run-ios-simulator.sh`)                                         |
-| `npm run dev:android`        | Live reload trên emulator (`CAP_SERVER_URL=http://10.0.2.2:5173`)                                           |
+| `npm run dev:android`        | Live reload trên emulator (`CAP_SERVER_URL=http://localhost:5173`, `adb reverse` sau khi device sẵn sàng)   |
 | `npm run dev:ios`            | Live reload trên simulator (`CAP_SERVER_URL=http://localhost:5173`)                                         |
 
 ---

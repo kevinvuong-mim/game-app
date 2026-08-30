@@ -72,13 +72,6 @@ function patchPodfile(podfilePath) {
     );
     changed = true;
     console.log('[ios-native] Pinned GoogleUserMessagingPlatform 3.0.0 in Podfile');
-  } else if (content.includes("pod 'GoogleUserMessagingPlatform', '~> 2.3'")) {
-    content = content.replace(
-      "pod 'GoogleUserMessagingPlatform', '~> 2.3'",
-      "pod 'GoogleUserMessagingPlatform', '3.0.0'"
-    );
-    changed = true;
-    console.log('[ios-native] Upgraded GoogleUserMessagingPlatform pin to 3.0.0');
   }
 
   if (resolvePushNotificationsEnabled() && !content.includes("pod 'FirebaseMessaging'")) {
@@ -105,14 +98,6 @@ function patchNotificationPlist(plistPath) {
     content = content.replace(
       '</dict>\n</plist>',
       '\t<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>remote-notification</string>\n\t</array>\n</dict>\n</plist>'
-    );
-    changed = true;
-  }
-
-  if (!content.includes('FirebaseAppDelegateProxyEnabled')) {
-    content = content.replace(
-      '</dict>\n</plist>',
-      '\t<key>FirebaseAppDelegateProxyEnabled</key>\n\t<true/>\n</dict>\n</plist>'
     );
     changed = true;
   }
@@ -433,8 +418,7 @@ if (existsSync(nativeDir)) {
     if (!resolvePushNotificationsEnabled()) {
       stripApsEnvironment(join(iosAppDir, ENTITLEMENTS_FILE));
     } else {
-      const apsEnv =
-        (process.env.VITE_APP_ENV ?? 'development') === 'production' ? 'production' : 'development';
+      const apsEnv = isProductionAppEnv() ? 'production' : 'development';
       setApsEnvironment(join(iosAppDir, ENTITLEMENTS_FILE), apsEnv);
       console.log(`[ios-native] aps-environment set to ${apsEnv}`);
     }

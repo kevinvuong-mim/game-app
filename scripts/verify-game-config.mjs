@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { loadEnvFile } from './env-file.mjs';
+import { loadEnvFile, resolveAppEnv } from './env-file.mjs';
 import { isGoogleTestAdId } from './admob-constants.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -101,18 +101,9 @@ function assertReleaseAdsSafe(adsProvider) {
 }
 
 function assertReleaseMonetizationSafe() {
-  const appEnv = process.env.VITE_APP_ENV ?? 'development';
-  const enforce =
-    appEnv === 'production' || process.env.ENFORCE_RELEASE_MONETIZATION === 'true';
-
-  if (!enforce) {
-    return;
-  }
-
+  const appEnv = resolveAppEnv();
   if (appEnv !== 'production') {
-    throw new Error(
-      'ENFORCE_RELEASE_MONETIZATION=true requires VITE_APP_ENV=production (got "' + appEnv + '").'
-    );
+    return;
   }
 
   const iapProvider = process.env.VITE_IAP_PROVIDER ?? 'mock';
@@ -133,7 +124,7 @@ async function main() {
 
   assertReleaseMonetizationSafe();
 
-  if ((process.env.VITE_APP_ENV ?? 'development') === 'production') {
+  if (resolveAppEnv() === 'production') {
     requireNonEmpty('VITE_API_KEY');
   }
 
@@ -143,7 +134,7 @@ async function main() {
   }
 
   // Local packaging with mock providers should not require network.
-  if ((process.env.VITE_APP_ENV ?? 'development') !== 'production') {
+  if (resolveAppEnv() !== 'production') {
     console.log('Skipped backend check (VITE_APP_ENV is not production).');
     return;
   }

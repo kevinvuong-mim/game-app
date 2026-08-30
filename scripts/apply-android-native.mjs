@@ -85,19 +85,6 @@ function stripAndroid15InsetsOverride(source) {
   return `${source.slice(0, start)}${ADMOB_BANNER_SKIP_INSETS}\n\n${source.slice(end)}`;
 }
 
-function repairBrokenAdMobInsetsStrip(source) {
-  return source.replace(
-    new RegExp(
-      `${ADMOB_BANNER_SKIP_INSETS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n\\n` +
-        '\\s+mAdViewLayout\\.setLayoutParams\\(mAdViewLayoutParams\\);\\n' +
-        '\\s+return insets;\\n' +
-        '\\s+\\}\\);\\n' +
-        '\\s+\\}\\n\\n'
-    ),
-    `${ADMOB_BANNER_SKIP_INSETS}\n\n`
-  );
-}
-
 function isAdMobBannerPatchComplete(source) {
   return (
     source.includes('Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL') &&
@@ -123,10 +110,9 @@ function patchAdMobBannerExecutor() {
     return 'skipped';
   }
 
-  let source = repairBrokenAdMobInsetsStrip(readFileSync(bannerPath, 'utf8'));
+  let source = readFileSync(bannerPath, 'utf8');
 
   if (isAdMobBannerPatchComplete(source)) {
-    writeFileSync(bannerPath, source);
     return 'present';
   }
 
@@ -202,28 +188,35 @@ function injectAdMobManifest(manifestPath, appId) {
 
 function injectNotificationPermissions(manifestPath) {
   let manifest = readFileSync(manifestPath, 'utf8');
-  let changed = false;
+  const missing = ANDROID_PERMISSIONS.filter(
+    (permission) => !manifest.includes(`android:name="${permission}"`)
+  );
 
-  const permissionBlock = ANDROID_PERMISSIONS.map(
-    (permission) => `    <uses-permission android:name="${permission}" />`
-  ).join('\n');
+  if (missing.length === 0) {
+    return 'present';
+  }
 
-  for (const permission of ANDROID_PERMISSIONS) {
-    if (!manifest.includes(`android:name="${permission}"`)) {
-      changed = true;
-      break;
+  const permissionBlock = missing
+    .map((permission) => `    <uses-permission android:name="${permission}" />`)
+    .join('\n');
+
+  const internetIndex = manifest.indexOf('android.permission.INTERNET');
+  if (internetIndex !== -1) {
+    const lineStart = manifest.lastIndexOf('\n', internetIndex) + 1;
+    manifest = `${manifest.slice(0, lineStart)}${permissionBlock}\n${manifest.slice(lineStart)}`;
+  } else {
+    const appTag = manifest.search(/<application\b/);
+    if (appTag === -1) {
+      console.warn(
+        '[android-native] Could not inject notification permissions — no <application> tag'
+      );
+      return 'failed';
     }
+    manifest = `${manifest.slice(0, appTag)}${permissionBlock}\n    ${manifest.slice(appTag)}`;
   }
 
-  if (changed) {
-    manifest = manifest.replace(
-      '    <uses-permission android:name="android.permission.INTERNET" />',
-      `${permissionBlock}\n    <uses-permission android:name="android.permission.INTERNET" />`
-    );
-    writeFileSync(manifestPath, manifest);
-  }
-
-  return changed ? 'updated' : 'present';
+  writeFileSync(manifestPath, manifest);
+  return 'updated';
 }
 
 function injectFcmChannelMetadata(manifestPath) {

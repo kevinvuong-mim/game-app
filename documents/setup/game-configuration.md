@@ -43,7 +43,7 @@ Gameplay identity for API calls comes from `RuntimeConfig.gameId` (`VITE_GAME_ID
 VITE_GAME_ID=MEMORA
 ```
 
-Chạy `npm run game:verify-config` trước build production. `build:android` / `build:ios` tự gọi script này trước `npm run build`. Khi `VITE_APP_ENV=production` (hoặc `ENFORCE_RELEASE_MONETIZATION=true`), script còn enforce IAP/ads release gates + API probe — xem [environment-variables.md](./environment-variables.md).
+Chạy `npm run game:verify-config` trước build production. `build:android` / `build:ios` tự gọi script này trước `npm run build`. Khi `VITE_APP_ENV=production`, script còn enforce IAP/ads release gates + API probe — xem [environment-variables.md](./environment-variables.md).
 
 ## Bootstrap (`GameEngine`)
 

@@ -100,6 +100,12 @@ log "Using simulator: $UDID"
 if [[ "${SKIP_XCODEBUILD:-}" != "1" ]]; then
   if [[ "${SKIP_BUILD:-}" == "1" ]]; then
     log 'Applying iOS native templates (SKIP_BUILD=1)...'
+    node scripts/apply-ios-native.mjs pre-sync
+    if [[ ! -f ios/App/Podfile.lock ]]; then
+      require_cmd pod
+      log 'Resolving iOS pods after Podfile change...'
+      (cd ios/App && pod install --repo-update)
+    fi
     node scripts/apply-ios-native.mjs
   fi
   log 'Compiling for iOS Simulator (xcodebuild)...'

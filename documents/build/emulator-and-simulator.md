@@ -29,10 +29,9 @@ Script tự khởi động Vite, inject URL dev vào Capacitor, build và mở a
 đó chạy; các thay đổi trong `src/` sẽ được Vite cập nhật trên emulator/simulator.
 Nhấn `Ctrl+C` để dừng.
 
-URL mặc định:
+URL mặc định (cả hai platform): `http://localhost:5173`.
 
-- Android Emulator: `http://10.0.2.2:5173`
-- iOS Simulator: `http://localhost:5173`
+Android emulator / USB dùng `adb reverse` **sau khi device đã boot** để `localhost` trên máy ảo trỏ về Vite trên host. Thiết bị thật chỉ Wi-Fi thì reverse không dùng được — set `CAP_SERVER_URL` tới IP LAN.
 
 Với thiết bị thật, máy dev và thiết bị phải cùng mạng Wi-Fi rồi truyền IP LAN:
 
@@ -74,7 +73,7 @@ Ví dụ:
 # Android — AVD cụ thể + xem log
 ANDROID_AVD=Medium_Phone_API_36.1 SHOW_LOGS=1 npm run run:android
 
-# iOS — chỉ rebuild native, giữ web build cũ
+# iOS — chỉ rebuild native, giữ web build cũ (vẫn pre-sync Podfile + apply templates)
 SKIP_BUILD=1 npm run run:ios
 
 # Lặp nhanh sau khi sửa JS (đã build web trước đó)
@@ -204,7 +203,7 @@ Thứ tự thực thi:
 7. `cap sync ios` — copy web assets + cập nhật plugins
 8. `node scripts/apply-ios-native.mjs` — copy storyboard/Swift/`App.entitlements`, inject AdMob + Associated Domains (Universal Links)
 
-> **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@7.x` cần UMP **3.0.0**. Script `pre-sync` pin đúng phiên bản (và upgrade pin cũ `~> 2.3` nếu còn). Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
+> **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@7.x` cần UMP **3.0.0**. Script `pre-sync` pin đúng phiên bản. Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
 >
 > ```bash
 > cd ios/App

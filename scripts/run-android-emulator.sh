@@ -13,6 +13,7 @@
 #   BOOT_TIMEOUT_SEC=300   — max wait for emulator boot
 #   SHOW_LOGS=1            — tail Capacitor console after launch
 #   JAVA_HOME=<path>       — JDK 21–23 home (Capacitor 7 / Gradle 8.11); prefers Homebrew openjdk@21, skips JBR 25+
+#   CAP_SERVER_URL=<url>   — live reload; after emulator/device is up, sets adb reverse for the URL port
 
 set -euo pipefail
 
@@ -184,6 +185,33 @@ ensure_emulator() {
   wait_for_boot
 }
 
+# Map device localhost → host so CAP_SERVER_URL=http://localhost:PORT works on emulator/USB.
+# Must run after a device is ready; calling it before `ensure_emulator` fails on a cold start.
+setup_adb_reverse() {
+  [[ -n "${CAP_SERVER_URL:-}" ]] || return 0
+
+  local reverse_port
+  reverse_port="$(
+    node --input-type=module -e "
+      try {
+        const u = new URL(process.env.CAP_SERVER_URL);
+        process.stdout.write(u.port || (u.protocol === 'https:' ? '443' : '80'));
+      } catch {
+        process.exit(1);
+      }
+    "
+  )" || {
+    log "Could not parse CAP_SERVER_URL for adb reverse: $CAP_SERVER_URL"
+    return 0
+  }
+
+  if "$ADB" reverse "tcp:${reverse_port}" "tcp:${reverse_port}"; then
+    log "Configured adb reverse tcp:${reverse_port} -> tcp:${reverse_port}"
+  else
+    log "Could not configure adb reverse for port ${reverse_port}. If running on a physical device over Wi-Fi, set CAP_SERVER_URL to your LAN IP."
+  fi
+}
+
 ANDROID_HOME="$(resolve_android_home)"
 export ANDROID_HOME
 export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
@@ -223,6 +251,7 @@ fi
 
 "$ADB" start-server >/dev/null 2>&1 || true
 ensure_emulator
+setup_adb_reverse
 
 log "Installing $APK_PATH"
 "$ADB" install -r "$APK_PATH"
