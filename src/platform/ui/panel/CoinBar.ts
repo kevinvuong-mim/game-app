@@ -104,11 +104,13 @@ export class CoinBar extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     this.build();
     this.bindStore();
-    this.eventUnsubscribers.push(
-      eventBus.on(IAP_EVENTS.PRODUCTS_UPDATED, () => {
-        this.refreshIapPackPrice();
-      })
-    );
+    if (iap.isEnabled()) {
+      this.eventUnsubscribers.push(
+        eventBus.on(IAP_EVENTS.PRODUCTS_UPDATED, () => {
+          this.refreshIapPackPrice();
+        })
+      );
+    }
   }
 
   destroy(fromScene?: boolean): void {
@@ -222,12 +224,16 @@ export class CoinBar extends Phaser.GameObjects.Container {
 
     if (this.getCoinsModal) {
       this.getCoinsModal.setVisible(true);
-      this.refreshIapPackPrice();
-      void iap.refreshProducts();
+      if (iap.isEnabled()) {
+        this.refreshIapPackPrice();
+        void iap.refreshProducts();
+      }
       return;
     }
 
-    void iap.refreshProducts();
+    if (iap.isEnabled()) {
+      void iap.refreshProducts();
+    }
 
     const { width, height } = this.scene.cameras.main;
     const modal = this.scene.add.container(0, 0).setDepth(100);
@@ -251,7 +257,8 @@ export class CoinBar extends Phaser.GameObjects.Container {
       },
     }));
 
-    const hasDivider = navSections.length > 0;
+    const showIapPack = iap.isEnabled();
+    const hasDivider = showIapPack && navSections.length > 0;
     const panelWidth = Math.min(340, width * 0.82);
     const navGapTotal = Math.max(0, navSections.length - 1) * GET_COINS_ACTION_GAP;
     const dividerBlock = hasDivider ? GET_COINS_SECTION_GAP * 2 + GET_COINS_DIVIDER_HEIGHT : 0;
@@ -260,7 +267,7 @@ export class CoinBar extends Phaser.GameObjects.Container {
       navSections.length * GET_COINS_BTN_HEIGHT +
       navGapTotal +
       dividerBlock +
-      IAP_PACK_HEIGHT +
+      (showIapPack ? IAP_PACK_HEIGHT : 0) +
       GET_COINS_PAD_BOTTOM;
     const panelX = width / 2 - panelWidth / 2;
     const panelY = height / 2 - panelHeight / 2;
@@ -323,11 +330,13 @@ export class CoinBar extends Phaser.GameObjects.Container {
       cursorY += GET_COINS_DIVIDER_HEIGHT + GET_COINS_SECTION_GAP;
     }
 
-    modal.add(
-      this.createIapCoinPack(width / 2, cursorY, buttonWidth, () => {
-        void this.purchaseCoinPack();
-      })
-    );
+    if (showIapPack) {
+      modal.add(
+        this.createIapCoinPack(width / 2, cursorY, buttonWidth, () => {
+          void this.purchaseCoinPack();
+        })
+      );
+    }
 
     this.getCoinsModal = modal;
   }

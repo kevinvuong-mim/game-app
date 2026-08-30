@@ -85,6 +85,10 @@ class AdsService {
     await this.initialize();
   }
 
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     // Provider may not be initialized yet (setEnabled runs at bootstrap before init).
@@ -351,3 +355,7 @@ class AdsService {
 }
 
 export const ads = new AdsService();
+
+export function isAdsEnabled(): boolean {
+  return ads.isEnabled();
+}

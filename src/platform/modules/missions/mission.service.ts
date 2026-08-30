@@ -8,6 +8,7 @@ import missionsData from './missions.json';
 import { logger } from '@platform/core/error';
 import { guest } from '@platform/modules/guest';
 import { eventBus } from '@platform/core/events';
+import { getConfig } from '@platform/core/config';
 import { saveService } from '@platform/modules/save';
 import { getLocalDateKey } from '@platform/core/utils';
 import { usePlatformStore } from '@platform/core/state';
@@ -149,6 +150,7 @@ export class MissionService {
     retainClaimedIds?: ReadonlySet<string>
   ): boolean {
     const def = this.getDefinition(mission.id);
+    if (def?.type === 'WATCH_AD' && !getConfig().adsEnabled) return false;
     if (def?.type !== 'UPDATE_NAME') return true;
     if (mission.status === 'claimed') {
       return retainClaimedIds?.has(mission.id) ?? false;

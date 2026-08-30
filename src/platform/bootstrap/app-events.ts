@@ -16,7 +16,7 @@ import { leaderboard } from '@platform/modules/leaderboard';
 import { dailyRewards } from '@platform/modules/daily-reward';
 import { hideNativeSplash } from '@platform/bootstrap/capacitor';
 
-const { events, analytics } = services;
+const { events, analytics, config } = services;
 
 export function bindAppEvents(): () => void {
   const unsubs = [
@@ -27,7 +27,9 @@ export function bindAppEvents(): () => void {
     events.on('app:ready', () => {
       logger.info('[App] Game shell ready');
       void hideNativeSplash();
-      events.emit('ad:show:request', { placement: 'HOME' });
+      if (config().adsEnabled) {
+        events.emit('ad:show:request', { placement: 'HOME' });
+      }
     }),
 
     events.on('score:update', ({ score }) => {
@@ -53,7 +55,9 @@ export function bindAppEvents(): () => void {
         usePlatformStore.getState().addCoins(earned);
       }
       trackGameOver({ score, duration, merges });
-      events.emit('ad:show:request', { placement: 'GAME_OVER' });
+      if (config().adsEnabled) {
+        events.emit('ad:show:request', { placement: 'GAME_OVER' });
+      }
       await saveService.saveLocal();
     }),
 

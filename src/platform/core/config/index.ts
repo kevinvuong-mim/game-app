@@ -61,16 +61,18 @@ interface AdsConfig {
 const ENV_CONFIGS: Record<Environment, Partial<RuntimeConfig>> = {
   development: {
     debug: true,
-    adsEnabled: true,
-    iapEnabled: true,
+    // Ads / IAP hidden — set both back to true to restore monetization.
+    adsEnabled: false,
+    iapEnabled: false,
     analyticsEnabled: true,
     ...notificationEnvConfigs.development,
     apiUrl: 'https://game-api-s5kn.onrender.com/api',
   },
   production: {
     debug: false,
-    adsEnabled: true,
-    iapEnabled: true,
+    // Ads / IAP hidden — set both back to true to restore monetization.
+    adsEnabled: false,
+    iapEnabled: false,
     analyticsEnabled: true,
     ...notificationEnvConfigs.production,
     apiUrl: 'https://game-api-s5kn.onrender.com/api',

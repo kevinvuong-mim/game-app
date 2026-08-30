@@ -8,6 +8,7 @@ import {
   rateService,
   RateAppModal,
   shareService,
+  isAdsEnabled,
   usePlatformStore,
 } from '@platform/ui';
 import {
@@ -118,9 +119,12 @@ export class GameOverScene extends Phaser.Scene {
     this.levelIndex = data.levelIndex ?? 0;
     this.doubleClaimed = !!data.doubleClaimed;
     this.doubleRequesting = false;
-    this.showDoubleCoins = this.mode === 'infinity' && this.coinsEarned > 0 && !this.doubleClaimed;
+    this.showDoubleCoins =
+      isAdsEnabled() && this.mode === 'infinity' && this.coinsEarned > 0 && !this.doubleClaimed;
 
-    eventBus.emit('ad:context:change', { context: 'GAME_OVER' });
+    if (isAdsEnabled()) {
+      eventBus.emit('ad:context:change', { context: 'GAME_OVER' });
+    }
 
     if (this.mode === 'infinity') {
       this.createInfinityLayout();

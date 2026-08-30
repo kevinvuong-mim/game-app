@@ -21,5 +21,6 @@ export { t, i18n } from '@platform/modules/i18n/i18n.service';
 export { navigationService } from '@platform/modules/navigation';
 export { LeaderboardPanel } from './leaderboard/LeaderboardPanel';
 export { DailyRewardPanel } from './daily-reward/DailyRewardPanel';
+export { isAdsEnabled } from '@platform/core/advertising';
 export type { HowToPlayStepConfig } from './how-to-play/HowToPlayPanel';
 export type { PanelSceneData, PanelSceneOptions, GetCoinsOverlayHost } from './BasePanelScene';

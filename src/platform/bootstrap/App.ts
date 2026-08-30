@@ -81,6 +81,7 @@ class App {
       guest.onReady((guestId) => {
         analytics.setUserId(guestId);
         void guest.flushPendingName();
+        if (!config().iapEnabled) return;
         void iap.linkGuestUser(guestId).catch((error) => {
           logger.warn('[App] IAP guest link failed', error);
         });
@@ -90,11 +91,13 @@ class App {
 
     const fallbackUserId = usePlatformStore.getState().user.id || undefined;
     const analyticsUserId = guest.getGuestId() ?? fallbackUserId;
-    registerIapProvider(analyticsUserId);
-    // RevenueCat can hang offline — do not await before starting the game.
-    void iap.initialize().catch((error) => {
-      logger.warn('[App] IAP init failed — continuing without IAP', error);
-    });
+    if (config().iapEnabled) {
+      registerIapProvider(analyticsUserId);
+      // RevenueCat can hang offline — do not await before starting the game.
+      void iap.initialize().catch((error) => {
+        logger.warn('[App] IAP init failed — continuing without IAP', error);
+      });
+    }
 
     if (analyticsUserId) {
       analytics.setUserId(analyticsUserId);
@@ -116,12 +119,16 @@ class App {
     this.controllerUnsubscribers.push(
       guestController.bind(events),
       gameSyncController.bind(events),
-      adsModule.bind(events),
-      bindIapController(events),
       missionController.bind(events),
       notificationController.bind(events),
       deepLinkService.bind(events)
     );
+    if (config().adsEnabled) {
+      this.controllerUnsubscribers.push(adsModule.bind(events));
+    }
+    if (config().iapEnabled) {
+      this.controllerUnsubscribers.push(bindIapController(events));
+    }
 
     // Native: ATT → Notifications → UMP (non-blocking for game shell).
     // Web / ads-only paths still init ads without the notification step.

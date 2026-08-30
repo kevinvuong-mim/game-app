@@ -32,8 +32,11 @@ class ShopService {
   private purchaseInFlight = false;
 
   getItems(type?: ShopItemType): ShopItem[] {
-    if (!type) return this.items;
-    return this.items.filter((item) => item.type === type);
+    const items = type ? this.items.filter((item) => item.type === type) : this.items;
+    if (!iap.isEnabled()) {
+      return items.filter((item) => item.currency !== 'iap');
+    }
+    return items;
   }
 
   getItem(id: string): ShopItem | undefined {

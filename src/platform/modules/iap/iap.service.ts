@@ -81,6 +81,7 @@ class IapService {
 
   /** Initialize IAP once — safe to call multiple times. */
   async initialize(): Promise<void> {
+    if (!this.isEnabled()) return;
     if (this.ready) return;
     if (this.initPromise) return this.initPromise;
 

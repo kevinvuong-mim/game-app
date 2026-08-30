@@ -13,6 +13,7 @@ import { shop } from '@platform/modules/shop';
 import { toast } from '../toast/ToastManager';
 import { eventBus } from '@platform/core/events';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
+import { getConfig } from '@platform/core/config';
 import { createUIButton } from '../button/UIButton';
 import { drawRoundedRect } from '../panel/graphics';
 import { t } from '@platform/modules/i18n/i18n.service';
@@ -50,7 +51,9 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     this.onNavigate = options.onNavigate;
     scene.add.existing(this);
     this.build();
-    this.bindIapUi();
+    if (this.adsSection) {
+      this.bindIapUi();
+    }
   }
 
   destroy(fromScene?: boolean): void {
@@ -194,7 +197,10 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
       this.isPurchaseModalOpen()
     );
     const audioSection = new SettingsAudioSection(this.scene, this);
-    this.adsSection = new SettingsAdsSection(this.scene, this, sharedHelpers);
+    const showAdsSection = getConfig().adsEnabled && getConfig().iapEnabled;
+    if (showAdsSection) {
+      this.adsSection = new SettingsAdsSection(this.scene, this, sharedHelpers);
+    }
     this.languageSection = new SettingsLanguageSection(this.scene, this, sharedHelpers);
     const legalSection = new SettingsLegalSection(this.scene, this, (sceneKey, data) =>
       this.navigateTo(sceneKey, data)
@@ -206,8 +212,10 @@ export class SettingsPanel extends Phaser.GameObjects.Container {
     cursorY = this.addDivider(width / 2, cursorY + DIVIDER_GAP, contentWidth + 24) + DIVIDER_GAP;
     cursorY = audioSection.build(contentLeft, contentRight, cursorY);
     cursorY = this.addDivider(width / 2, cursorY + DIVIDER_GAP, contentWidth + 24) + DIVIDER_GAP;
-    cursorY = this.adsSection.build(contentLeft, contentRight, cursorY);
-    cursorY = this.addDivider(width / 2, cursorY + DIVIDER_GAP, contentWidth + 24) + DIVIDER_GAP;
+    if (this.adsSection) {
+      cursorY = this.adsSection.build(contentLeft, contentRight, cursorY);
+      cursorY = this.addDivider(width / 2, cursorY + DIVIDER_GAP, contentWidth + 24) + DIVIDER_GAP;
+    }
     cursorY = this.languageSection.build(contentLeft, contentRight, contentWidth, cursorY);
     cursorY = this.addDivider(width / 2, cursorY + DIVIDER_GAP, contentWidth + 24) + DIVIDER_GAP;
     cursorY = legalSection.build(contentLeft, contentRight, contentWidth, cursorY);
