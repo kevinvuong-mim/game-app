@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { t } from '@platform/ui';
+import { t, getNumberFormatLocale } from '@platform/ui';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import type { UIButton } from '@platform/ui/types';
 import { createUIButton } from '@platform/ui/button/UIButton';
@@ -187,7 +187,7 @@ export class GameplayHUD extends Phaser.GameObjects.Container {
   }
 
   setScore(score: number): void {
-    this.scoreValue?.setText(score.toLocaleString('en-US'));
+    this.scoreValue?.setText(new Intl.NumberFormat(getNumberFormatLocale()).format(score));
   }
 
   setCombo(combo: number): void {

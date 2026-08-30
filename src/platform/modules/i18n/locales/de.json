@@ -1,0 +1,198 @@
+{
+  "common": {
+    "close": "Schließen",
+    "loading": "Laden..."
+  },
+  "home": {
+    "map": "Karte",
+    "infinity": "Endlos",
+    "infinityLocked": "Schließe Karte 1 Level 5 ab, um den Endlos-Modus freizuschalten",
+    "shop": "Shop",
+    "settings": "Optionen",
+    "dailyReward": "Täglich",
+    "missions": "Missionen"
+  },
+  "howToPlay": {
+    "title": "So geht's",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "done": "OK",
+    "step1Title": "Zwei Karten drehen",
+    "step1Body": "Tippe auf eine Karte, dann auf eine zweite. Finde das passende Paar.",
+    "step2Title": "Paar finden",
+    "step2Body": "Gleiche Bilder verschwinden. Unterschiedliche drehen sich zurück — dann nochmal.",
+    "step3Title": "Gegen die Zeit",
+    "step3Body": "Räume alle Paare vor Ablauf der Zeit ab. Schneller = mehr Sterne.",
+    "step4Title": "Boosts nutzen",
+    "step4Body": "Kaufe Aufdecken, Extra-Zeit und Kleeblatt im Shop für knifflige Level."
+  },
+  "map": {
+    "selectTitle": "Karten",
+    "stars": "{{earned}}/{{max}}",
+    "previous": "ZUR",
+    "next": "WEITER",
+    "levelLocked": "Zuerst das vorherige Level schaffen",
+    "mapLocked": "Zuerst die vorherige Karte schaffen"
+  },
+  "game": {
+    "scoreLabel": "PUNKTE",
+    "levelLabel": "LEVEL {{level}}",
+    "levelShort": "LEVEL",
+    "yourScore": "DEINE PUNKTE",
+    "yourStars": "STERNE",
+    "rank": "Rang: #{{rank}}",
+    "coinsEarned": "MÜNZEN",
+    "gameOver": "GAME OVER",
+    "retry": "NOCHMAL",
+    "nextLevel": "WEITER",
+    "home": "START",
+    "map": "KARTE",
+    "doubleReward": "X2",
+    "shareScore": "TEILEN",
+    "shareScoreTitle": "Mein Ergebnis in {{gameName}}",
+    "shareScoreText": "Ich habe {{score}} Punkte in {{gameName}} erzielt! Kannst du das toppen?",
+    "shareStarsText": "Ich habe {{stars}} Sterne auf Karte {{map}} Level {{level}} in {{gameName}} geholt!",
+    "shareDialogTitle": "Dein Ergebnis teilen",
+    "shareUnavailable": "Teilen ist nicht verfügbar",
+    "skillHintReveal": "Tippe eine Karte — diesen Zug drehst du 3",
+    "skillHintClover": "Kleeblatt bereit — finde ein Paar!",
+    "combo": "COMBO x{{combo}}"
+  },
+  "shop": {
+    "title": "Shop",
+    "buy": "Kaufen",
+    "purchaseSuccess": "{{name}} gekauft!",
+    "purchaseFailed": "Kauf fehlgeschlagen",
+    "iapUnavailable": "Käufe sind derzeit nicht verfügbar",
+    "notEnoughCoins": "Nicht genug Münzen!",
+    "ownedQuantity": "Besitz: {{quantity}}",
+    "getCoins": {
+      "missions": "Missionen",
+      "dailyReward": "Täglich",
+      "or": "oder",
+      "coinPackAmount": "{{coins}}",
+      "coinPackLabel": "Münzen",
+      "buyPrice": "{{price}}",
+      "purchasing": "Kauf wird verarbeitet…",
+      "purchaseSuccess": "{{coins}} Münzen erhalten!"
+    },
+    "items": {
+      "boost_reveal": {
+        "name": "Aufdecken",
+        "description": "Diesen Zug 3 Karten drehen."
+      },
+      "boost_extra_time": {
+        "name": "+30 Sek",
+        "description": "30 Sekunden extra auf dem Timer!"
+      },
+      "boost_lucky_clover": {
+        "name": "Kleeblatt",
+        "description": "Nächstes richtiges Paar räumt ein Extra-Paar ab."
+      },
+      "remove_ads": {
+        "name": "Keine Ads",
+        "description": "Entferne alle Werbung dauerhaft"
+      },
+      "coins_10000": {
+        "name": "10000 Münzen",
+        "description": "Erhalte 10000 Münzen"
+      }
+    }
+  },
+  "settings": {
+    "title": "Optionen",
+    "profile": "Profil",
+    "language": "Sprache",
+    "sound": "Ton",
+    "music": "Musik",
+    "soundEffects": "Effekte",
+    "terms": "AGB",
+    "privacy": "Datenschutz",
+    "termsPrivacy": "AGB & Datenschutz",
+    "playerName": "Spielername",
+    "playerNamePlaceholder": "Namen eingeben",
+    "playerNameSave": "OK",
+    "playerNameRequired": "Bitte einen Namen eingeben",
+    "playerNameUpdated": "Name aktualisiert",
+    "playerNameSavedLocally": "Name gespeichert — wird online synchronisiert",
+    "playerNameFailed": "Name konnte nicht aktualisiert werden",
+    "playerNameOffline": "Erstelle zuerst online ein Gastprofil",
+    "ads": "Werbung",
+    "hideAds": "Ads aus",
+    "removeAdsPrice": "{{price}}",
+    "purchasingAds": "Kauf wird verarbeitet…",
+    "restorePurchasesHint": "Schon gekauft?",
+    "restoringPurchases": "Käufe werden wiederhergestellt…",
+    "restorePurchasesSuccess": "Käufe wiederhergestellt",
+    "restorePurchasesEmpty": "Keine Käufe zum Wiederherstellen",
+    "restorePurchasesFailed": "Käufe konnten nicht wiederhergestellt werden",
+    "version": "Version {{version}}"
+  },
+  "missions": {
+    "title": "Missionen",
+    "claim": "HOLEN",
+    "go": "LOS",
+    "claimed": "Abgeholt",
+    "progress": "{{current}}/{{target}}",
+    "claimFailed": "Noch nicht abholbar",
+    "get3Stars": "Hol 3 Sterne in einem Spiel",
+    "matchPairs15": "Finde 15 Kartenpaare",
+    "watchAd": "Sieh dir ein Werbevideo an",
+    "playGames3": "Spiele 3 Partien",
+    "dailyLogin": "Melde dich jeden Tag an",
+    "updatePlayerName": "Aktualisiere deinen Spielernamen"
+  },
+  "dailyReward": {
+    "title": "Tagesbelohnung",
+    "claim": "Abholen",
+    "day": "Tag {{day}}",
+    "comeBack": "Komm morgen wieder!"
+  },
+  "leaderboard": {
+    "title": "Rangliste",
+    "top100": "Top 100",
+    "yourRank": "Dein Rang",
+    "retry": "Erneut",
+    "rank": "Dein Rang: #{{rank}}",
+    "empty": "Noch keine Punkte. Spiele eine Runde, um auf die Liste zu kommen!",
+    "anonymous": "Spieler",
+    "rankUnavailable": "Dein Rang ist noch nicht verfügbar",
+    "error": "Rangliste konnte nicht geladen werden. Prüfe die Verbindung und versuche es erneut.",
+    "offlineLocalBest": "Du bist offline — Spielstände werden lokal gespeichert.",
+    "localBest": "Dein Bestwert: {{score}}"
+  },
+  "legal": {
+    "title": "AGB & Datenschutz",
+    "tabTerms": "AGB",
+    "tabPrivacy": "Datenschutz",
+    "termsContent": "Zuletzt aktualisiert: August 2026\n\nDiese Nutzungsbedingungen gelten für Memora („das Spiel“), herausgegeben von Vraxion.\n\n1. Annahme\nDurch das Herunterladen, Installieren oder Nutzen von Memora stimmst du diesen Bedingungen zu. Wenn du nicht zustimmst, nutze das Spiel bitte nicht.\n\n2. Lizenz\nWir gewähren dir eine beschränkte, nicht ausschließliche, nicht übertragbare Lizenz, das Spiel zu persönlichen, nicht kommerziellen Unterhaltungszwecken auf deinen eigenen Geräten zu nutzen.\n\n3. Gastkonto\nMemora verwendet ein Gastprofil, das auf deinem Gerät erstellt wird. Du kannst einen Anzeigenamen für Ranglisten festlegen. Es gibt keine E-Mail- oder Social-Login. Das Deinstallieren der App oder das Löschen der App-Daten kann dein Gastprofil und den lokalen Fortschritt dauerhaft entfernen.\n\n4. Virtuelle Gegenstände & Käufe\nMünzen, Münzpakete, Boosts (Aufdecken, Extra-Zeit und Kleeblatt) sowie Keine Ads sind virtuelle Gegenstände oder Rechte ohne realen Geldwert und können nicht gegen Geld eingetauscht werden. In-App-Käufe werden über den Apple App Store oder Google Play (und zugehörige Abrechnungspartner wie RevenueCat) abgewickelt. Käufe sind in der Regel endgültig, vorbehaltlich der Rückerstattungsregeln des Stores. Wir können virtuelle Gegenstände jederzeit ändern, ausbalancieren oder entfernen.\n\n5. Werbung\nDas Spiel kann Werbung anzeigen, sofern du nicht Keine Ads kaufst. Werbenetzwerke können Geräte- und Werbekennungen gemäß ihren eigenen Richtlinien und geltenden Einwilligungsbildschirmen erfassen.\n\n6. Fairplay\nDu verpflichtest dich, nicht zu betrügen, Fehler auszunutzen, Punkte oder Ranglisten zu manipulieren, andere zu belästigen oder das Spiel in einer Weise zu nutzen, die geltendes Recht verletzt.\n\n7. Ranglisten & Teilen\nMemora ist ein Einzelspieler-Spiel. Von dir übermittelte Punkte können mit deinem Anzeigenamen auf öffentlichen Ranglisten erscheinen. Du kannst dein Ergebnis über das Teilen-Menü deines Geräts teilen; dieses Teilen wird von uns nicht über das hinaus hochgeladen, was die Systemaktion erfordert.\n\n8. Änderungen\nWir können diese Bedingungen von Zeit zu Zeit aktualisieren. Die weitere Nutzung des Spiels nach Änderungen gilt als Annahme der aktualisierten Bedingungen.\n\n9. Kontakt\nFragen zu diesen Bedingungen: support@vraxion.com",
+    "privacyContent": "Zuletzt aktualisiert: August 2026\n\nDiese Datenschutzerklärung beschreibt, wie Memora („das Spiel“), herausgegeben von Vraxion, Informationen verarbeitet.\n\n1. Welche Informationen wir erheben\n• Gastprofil: eine Gäste-ID und ein sicheres Token für deine Installation sowie ein optionaler Anzeigename.\n• Spielverlauf auf unseren Servern: Punkte und zugehörige Spielmetadaten (z. B. Sitzungsdauer), die für Ranglisten übermittelt werden.\n• Gerät & Benachrichtigungen (wenn aktiviert): Plattform (iOS/Android), Sprache/Locale und Push-Token.\n• Nur auf deinem Gerät: Münzen, Boost-Inventar, Missionen, Tagesbelohnungen, laufende Spielstände, Einstellungen (Ton, Musik, Sprache) und lokaler Highscore.\n• Analyseereignisse (wenn aktiviert): Sitzungs- und Spielereignisse wie Spielstart/-ende, Käufe, Werbebelohnungen, tägliche Abholungen und Missionsabschluss. Analysen können mit deiner Gäste-ID verknüpft werden.\n• Werbung & Einwilligung (wenn Werbung gezeigt wird): Werbekennungen und Einwilligungsstatus über Plattformen wie Google AdMob, einschließlich ATT auf iOS und geltender Einwilligungsabfragen.\n\nWir benötigen weder deine E-Mail-Adresse noch ein Social-Account zum Spielen.\n\n2. Wie wir Informationen nutzen\nWir nutzen diese Informationen, um das Spiel zu betreiben, deine Gastsitzung aufrechtzuerhalten, Ranglisten anzuzeigen, Push- oder lokale Erinnerungen (z. B. Tagesbelohnungen oder Rang-Updates) zuzustellen, In-App-Käufe zu verarbeiten, Werbung zu zeigen oder auszublenden, das Produkt zu verbessern und Supportanfragen zu beantworten.\n\n3. Wo Daten gespeichert werden\nMünzen, Boosts, Missionen, Tagesbelohnungen, laufende Spielstände und die meisten Einstellungen bleiben auf deinem Gerät. Gastzugangsdaten, Anzeigename, Punkte (mit zugehörigen Spielmetadaten) und Geräte-Push-Token können auf unseren Servern gespeichert werden, damit Ranglisten und Benachrichtigungen über Sitzungen hinweg funktionieren. Das Löschen von App-Daten oder das Deinstallieren kann lokale Daten und die Gastverknüpfung auf diesem Gerät löschen.\n\n4. Drittanbieterdienste\nJe nach Build und Einstellungen kann das Spiel Folgendes nutzen:\n• Google AdMob (Werbung und Datenschutz-/Einwilligungstools)\n• Firebase Analytics\n• Firebase Cloud Messaging (Push-Benachrichtigungen)\n• RevenueCat und Apple-/Google-In-App-Abrechnung (Käufe)\n• Teilen- und In-App-Bewertungsfunktionen des Betriebssystems\n\nJeder Anbieter verarbeitet Daten gemäß eigener Datenschutzerklärung.\n\n5. Datenschutz von Kindern\nDas Spiel richtet sich nicht an Kinder unter 13 Jahren. Wir erheben wissentlich keine personenbezogenen Daten von Kindern unter 13 Jahren. Wenn du glaubst, dass ein Kind solche Informationen übermittelt hat, kontaktiere uns — wir werden geeignete Schritte unternehmen.\n\n6. Deine Rechte\nJe nach Region kannst du Zugang zu, Berichtigung oder Löschung personenbezogener Daten im Zusammenhang mit deinem Gastprofil verlangen, indem du support@vraxion.com kontaktierst. Store-Käufe und Rückerstattungen werden über Apple oder Google abgewickelt.\n\n7. Änderungen\nWir können diese Datenschutzerklärung von Zeit zu Zeit aktualisieren. Wesentliche Änderungen werden über die App oder unsere Website (z. B. memora.vraxion.com) mitgeteilt.\n\n8. Kontakt\nFragen zum Datenschutz: support@vraxion.com"
+  },
+  "ads": {
+    "rewardOffline": "Verbinde dich mit dem Internet, um deine Belohnung abzuholen",
+    "rewardUnavailable": "Belohnung nicht verfügbar",
+    "rewardNotConfigured": "Keine Belohnung für Platzierung {{placement}} konfiguriert",
+    "rewardIncomplete": "Werbung wurde nicht abgeschlossen",
+    "useRequestReward": "Verwende requestReward für belohnte Platzierungen"
+  },
+  "rateApp": {
+    "title": "BEWERTEN",
+    "message": "Bitte bewerte uns, damit wir das Spiel verbessern können!",
+    "rateNow": "Bewerten",
+    "later": "Später",
+    "thanks": "Danke für deine Bewertung!"
+  },
+  "notifications": {
+    "dailyReward": {
+      "title": "Tagesbelohnung bereit",
+      "body": "Deine Tagesbelohnung wartet. Komm zurück und hol sie dir!"
+    },
+    "top100Exited": {
+      "body": "Du bist aus den Top 100 gefallen. Komm zurück und verbessere deinen Rang."
+    },
+    "rankPush": {
+      "body": "Du bist aktuell auf Platz #{{rank}}.",
+      "bodyFallback": "Tippe, um deinen aktuellen Ranglistenplatz zu sehen."
+    }
+  }
+}

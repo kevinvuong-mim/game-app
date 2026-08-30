@@ -41,7 +41,8 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICA
 export const DAILY_REWARD_REMINDER_HOUR = 7;
 export const DAILY_REWARD_REMINDER_MINUTE = 0;
 
-export type DeviceLocale = 'EN' | 'VI';
+export const DEVICE_LOCALES = ['EN', 'VI', 'JA', 'KO', 'DE', 'FR', 'IT'] as const;
+export type DeviceLocale = (typeof DEVICE_LOCALES)[number];
 export type DevicePlatform = 'IOS' | 'ANDROID';
 
 export interface NotificationState {
@@ -85,10 +86,8 @@ export function normalizeNotificationState(value: unknown): NotificationState {
     lastErrorCode: typeof raw.lastErrorCode === 'string' ? raw.lastErrorCode : undefined,
     nextAttemptAt: typeof raw.nextAttemptAt === 'string' ? raw.nextAttemptAt : undefined,
     lastSyncedToken: typeof raw.lastSyncedToken === 'string' ? raw.lastSyncedToken : null,
-    pendingLocale:
-      raw.pendingLocale === 'EN' || raw.pendingLocale === 'VI' ? raw.pendingLocale : null,
-    lastSyncedLocale:
-      raw.lastSyncedLocale === 'EN' || raw.lastSyncedLocale === 'VI' ? raw.lastSyncedLocale : null,
+    pendingLocale: isDeviceLocale(raw.pendingLocale) ? raw.pendingLocale : null,
+    lastSyncedLocale: isDeviceLocale(raw.lastSyncedLocale) ? raw.lastSyncedLocale : null,
   };
 }
 
@@ -113,8 +112,25 @@ export interface PushNotificationPayload {
   route?: NotificationRoute;
 }
 
+const DEVICE_LOCALE_SET = new Set<string>(DEVICE_LOCALES);
+
+const LANGUAGE_TO_DEVICE_LOCALE: Record<string, DeviceLocale> = {
+  en: 'EN',
+  vi: 'VI',
+  ja: 'JA',
+  ko: 'KO',
+  de: 'DE',
+  fr: 'FR',
+  it: 'IT',
+};
+
+export function isDeviceLocale(value: unknown): value is DeviceLocale {
+  return typeof value === 'string' && DEVICE_LOCALE_SET.has(value);
+}
+
 export function mapLocaleToDeviceLocale(language: string): DeviceLocale {
-  return language.toLowerCase().startsWith('vi') ? 'VI' : 'EN';
+  const code = language.toLowerCase().split(/[-_]/)[0];
+  return LANGUAGE_TO_DEVICE_LOCALE[code] ?? 'EN';
 }
 
 /**

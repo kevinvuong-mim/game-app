@@ -17,7 +17,7 @@ export { SettingsPanel } from './settings/SettingsPanel';
 export { gameRunService } from '@platform/modules/game-run';
 export { dailyRewards } from '@platform/modules/daily-reward';
 export { HowToPlayPanel } from './how-to-play/HowToPlayPanel';
-export { t, i18n } from '@platform/modules/i18n/i18n.service';
+export { t, i18n, getNumberFormatLocale } from '@platform/modules/i18n/i18n.service';
 export { navigationService } from '@platform/modules/navigation';
 export { LeaderboardPanel } from './leaderboard/LeaderboardPanel';
 export { DailyRewardPanel } from './daily-reward/DailyRewardPanel';
