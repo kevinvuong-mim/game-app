@@ -26,6 +26,14 @@ export interface GetCoinsOverlayHost {
   isPurchaseInFlight?(): boolean;
 }
 
+/**
+ * Return target captured when leaving a panel via `openScreen`.
+ * Phaser reuses `settings.data` when `scene.start` gets a falsy data arg, so going
+ * back must pass an explicit payload — otherwise CoinBar hops (Missions ↔ DailyReward)
+ * overwrite each other's `returnTo` and back loops forever.
+ */
+const panelReturnByKey = new Map<string, PanelSceneData>();
+
 export abstract class BasePanelScene extends Phaser.Scene {
   private readonly options: PanelSceneOptions;
 
@@ -119,12 +127,34 @@ export abstract class BasePanelScene extends Phaser.Scene {
 
   protected goBack(): void {
     if (this.isNavigationBlockedByPurchase()) return;
-    this.scene.start(this.returnTo, this.returnData);
+    const dest = this.returnTo;
+    const saved = panelReturnByKey.get(dest);
+    if (saved) panelReturnByKey.delete(dest);
+    this.scene.start(dest, this.buildReturnPayload(saved));
   }
 
   protected openScreen(sceneKey: string, data?: Record<string, unknown>): void {
     if (this.isNavigationBlockedByPurchase()) return;
+    // CoinBar can target the panel we came from; pushing would create a returnTo cycle.
+    if (sceneKey === this.returnTo) {
+      this.goBack();
+      return;
+    }
+    panelReturnByKey.set(this.sceneKey, {
+      returnTo: this.returnTo,
+      returnData: this.returnData,
+    });
     this.scene.start(sceneKey, { returnTo: this.sceneKey, ...data });
+  }
+
+  /** Always pass a truthy object — Phaser keeps stale scene data when `data` is omitted. */
+  private buildReturnPayload(saved?: PanelSceneData): Record<string, unknown> {
+    if (saved) {
+      return saved.returnData
+        ? { returnTo: saved.returnTo, returnData: saved.returnData }
+        : { returnTo: saved.returnTo };
+    }
+    return this.returnData ?? {};
   }
 
   private addBackgroundImage(width: number, height: number, key: string): void {
