@@ -17,10 +17,10 @@ import { drawRoundedRect } from '../panel/graphics';
 import { formatNumber } from '@platform/core/utils';
 import { saveService } from '@platform/modules/save';
 import type { MissionProgress } from '@platform/core/state';
-import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
 import { missions } from '@platform/modules/missions/mission.service';
 import { getWorldPosition, spawnCoinsFlyTo } from '../effects/coinFly';
+import { t, getNumberFormatLocale } from '@platform/modules/i18n/i18n.service';
 
 const ACTION_BTN_WIDTH = 88;
 const REWARD_ICON_SIZE = 36;
@@ -34,8 +34,7 @@ const MISSION_AD_PLACEMENT = 'MISSION_WATCH';
 const FALLBACK_MISSION_ICON = 'mission-item-1';
 
 function formatMissionNumber(value: number): string {
-  const locale = i18n.getCurrentLanguage() === 'vi' ? 'vi-VN' : 'en-US';
-  return new Intl.NumberFormat(locale).format(Math.floor(value));
+  return new Intl.NumberFormat(getNumberFormatLocale()).format(Math.floor(value));
 }
 
 /**

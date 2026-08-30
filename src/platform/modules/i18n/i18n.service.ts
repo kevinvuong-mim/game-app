@@ -5,12 +5,40 @@ interface TranslationNode {
   [key: string]: string | TranslationNode;
 }
 
-const SUPPORTED_LANGUAGES = ['en', 'vi'] as const;
-type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+export const SUPPORTED_LANGUAGES = ['en', 'ja', 'ko', 'de', 'fr', 'it', 'vi'] as const;
+export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+
+/** Native names so the language picker stays readable after a mistaken switch. */
+export const LANGUAGE_NATIVE_NAMES: Record<SupportedLanguage, string> = {
+  en: 'English',
+  ja: '日本語',
+  ko: '한국어',
+  de: 'Deutsch',
+  fr: 'Français',
+  it: 'Italiano',
+  vi: 'Tiếng Việt',
+};
+
+const NUMBER_FORMAT_LOCALES: Record<SupportedLanguage, string> = {
+  en: 'en-US',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+  de: 'de-DE',
+  fr: 'fr-FR',
+  it: 'it-IT',
+  vi: 'vi-VN',
+};
+
+const SUPPORTED_LANGUAGE_SET = new Set<string>(SUPPORTED_LANGUAGES);
 
 /** Lazy loaders — each locale is a separate chunk in production builds */
 const LOCALE_LOADERS: Record<SupportedLanguage, () => Promise<{ default: TranslationNode }>> = {
   en: () => import('./locales/en.json'),
+  ja: () => import('./locales/ja.json'),
+  ko: () => import('./locales/ko.json'),
+  de: () => import('./locales/de.json'),
+  fr: () => import('./locales/fr.json'),
+  it: () => import('./locales/it.json'),
   vi: () => import('./locales/vi.json'),
 };
 
@@ -49,7 +77,7 @@ class LocalizationService {
   private detectDeviceLanguage(): SupportedLanguage {
     for (const candidate of this.getDeviceLanguageCandidates()) {
       const code = candidate.split('-')[0]?.toLowerCase();
-      if (code && SUPPORTED_LANGUAGES.includes(code as SupportedLanguage)) {
+      if (code && SUPPORTED_LANGUAGE_SET.has(code)) {
         return code as SupportedLanguage;
       }
     }
@@ -71,7 +99,7 @@ class LocalizationService {
 
   private normalizeLanguage(language: string): SupportedLanguage {
     const code = language.split('-')[0].toLowerCase();
-    if (SUPPORTED_LANGUAGES.includes(code as SupportedLanguage)) {
+    if (SUPPORTED_LANGUAGE_SET.has(code)) {
       return code as SupportedLanguage;
     }
     return this.fallbackLanguage;
@@ -127,6 +155,10 @@ class LocalizationService {
   getCurrentLanguage(): SupportedLanguage {
     return this.currentLanguage;
   }
+
+  getNumberFormatLocale(): string {
+    return NUMBER_FORMAT_LOCALES[this.currentLanguage];
+  }
 }
 
 export const i18n = new LocalizationService();
@@ -134,4 +166,8 @@ export const i18n = new LocalizationService();
 /** Shorthand translation function */
 export function t(key: string, params?: Record<string, string | number>): string {
   return i18n.t(key, params);
+}
+
+export function getNumberFormatLocale(): string {
+  return i18n.getNumberFormatLocale();
 }

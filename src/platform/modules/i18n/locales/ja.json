@@ -1,0 +1,196 @@
+{
+  "common": {
+    "close": "閉じる",
+    "loading": "読み込み中..."
+  },
+  "home": {
+    "play": "プレイ",
+    "shop": "ショップ",
+    "settings": "設定",
+    "leaderboard": "ランキング",
+    "dailyReward": "デイリー報酬",
+    "missions": "ミッション"
+  },
+  "howToPlay": {
+    "title": "遊び方",
+    "prev": "戻る",
+    "next": "次へ",
+    "done": "わかった",
+    "step1Title": "狙って落とす",
+    "step1Body": "左右にドラッグして狙い、指を離すとフルーツがグラスに落ちます。",
+    "step2Title": "同じフルーツを合体",
+    "step2Body": "同じフルーツが触れると、ひとつ大きなフルーツに合体して得点になります。",
+    "step3Title": "危険ラインに注意",
+    "step3Body": "落ち着いたフルーツが危険ラインより上に残ると、ラウンド終了です！",
+    "step4Title": "ブーストを使う",
+    "step4Body": "ショップでハンマー、入れ替え、成長などのブーストを買って、難しい積みを切り抜けましょう。"
+  },
+  "game": {
+    "scoreLabel": "スコア",
+    "yourScore": "あなたのスコア",
+    "rank": "順位: #{{rank}}",
+    "coinsEarned": "獲得コイン",
+    "gameOver": "ゲームオーバー",
+    "retry": "もう一度",
+    "home": "ホーム",
+    "shareScore": "シェア",
+    "shareScoreTitle": "{{gameName}} のスコア",
+    "shareScoreText": "{{gameName}} で {{score}} 点を出しました！勝てるかな？",
+    "shareDialogTitle": "スコアをシェア",
+    "shareUnavailable": "シェアは利用できません",
+    "skillHintHammer": "フルーツをタップして破壊",
+    "skillHintSwap": "2つのフルーツをタップして入れ替え",
+    "skillHintSwapSecond": "2つ目のフルーツをタップ",
+    "skillHintSize": "フルーツをタップして大きくする",
+    "skillUndoNothing": "元に戻す操作がありません",
+    "quitConfirmTitle": "このプレイを終了しますか？",
+    "quitConfirmMessage": "スコアが送信され、このプレイは終了します。",
+    "quitConfirm": "終了",
+    "quitCancel": "キャンセル"
+  },
+  "shop": {
+    "title": "ショップ",
+    "buy": "購入",
+    "purchaseSuccess": "{{name}} を購入しました！",
+    "purchaseFailed": "購入に失敗しました",
+    "iapUnavailable": "現在購入できません",
+    "notEnoughCoins": "コインが足りません！",
+    "ownedQuantity": "所持: {{quantity}}",
+    "getCoins": {
+      "missions": "ミッション",
+      "dailyReward": "デイリー報酬",
+      "or": "または",
+      "coinPackAmount": "{{coins}}",
+      "coinPackLabel": "コイン",
+      "buyPrice": "{{price}}",
+      "purchasing": "購入を処理中…",
+      "purchaseSuccess": "{{coins}} コインを獲得！"
+    },
+    "items": {
+      "boost_hammer": {
+        "name": "爆発ハンマー",
+        "description": "選んだフルーツを破壊！"
+      },
+      "boost_change": {
+        "name": "フルーツチェンジ",
+        "description": "吊り下がっているフルーツをランダムに変更！"
+      },
+      "boost_swap": {
+        "name": "入れ替え",
+        "description": "好きなフルーツの位置を入れ替え！"
+      },
+      "boost_size": {
+        "name": "サイズアップ",
+        "description": "フルーツを大きくする！"
+      },
+      "boost_undo": {
+        "name": "やり直し",
+        "description": "直前の操作を取り消す！"
+      },
+      "remove_ads": {
+        "name": "広告削除",
+        "description": "すべての広告を完全に削除"
+      },
+      "coins_10000": {
+        "name": "10000コイン",
+        "description": "10000コインを入手"
+      }
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "profile": "プロフィール",
+    "language": "言語",
+    "sound": "サウンド",
+    "music": "音楽",
+    "soundEffects": "効果音",
+    "terms": "利用規約",
+    "privacy": "プライバシー",
+    "termsPrivacy": "利用規約とプライバシー",
+    "playerName": "プレイヤー名",
+    "playerNamePlaceholder": "名前を入力",
+    "playerNameSave": "保存",
+    "playerNameRequired": "名前を入力してください",
+    "playerNameUpdated": "名前を更新しました",
+    "playerNameSavedLocally": "名前を保存しました — オンライン時に同期されます",
+    "playerNameFailed": "名前を更新できませんでした",
+    "playerNameOffline": "先にオンラインでゲストプロフィールを作成してください",
+    "ads": "広告",
+    "hideAds": "広告を非表示",
+    "removeAdsPrice": "{{price}}",
+    "purchasingAds": "購入を処理中…",
+    "restorePurchasesHint": "すでに購入済み？復元する",
+    "restoringPurchases": "購入を復元中…",
+    "restorePurchasesSuccess": "購入を復元しました",
+    "restorePurchasesEmpty": "復元する購入はありません",
+    "restorePurchasesFailed": "購入を復元できませんでした",
+    "version": "バージョン {{version}}"
+  },
+  "missions": {
+    "title": "ミッション",
+    "claim": "受け取る",
+    "go": "行く",
+    "claimed": "受取済み",
+    "progress": "{{current}}/{{target}}",
+    "claimFailed": "まだ受け取れません",
+    "reachScore2000": "2,000点に到達する",
+    "mergeFruit15": "フルーツを15回合体させる",
+    "watchAd": "広告動画を見る",
+    "playGames3": "3試合プレイする",
+    "dailyLogin": "毎日ログインする",
+    "updatePlayerName": "プレイヤー名を更新する"
+  },
+  "dailyReward": {
+    "title": "デイリー報酬",
+    "claim": "受け取る",
+    "day": "{{day}}日目",
+    "comeBack": "明日また来てね！"
+  },
+  "leaderboard": {
+    "title": "ランキング",
+    "top100": "トップ100",
+    "yourRank": "あなたの順位",
+    "retry": "再試行",
+    "rank": "あなたの順位: #{{rank}}",
+    "empty": "まだスコアがありません。プレイしてランキングに載ろう！",
+    "anonymous": "プレイヤー",
+    "rankUnavailable": "順位はまだ表示できません",
+    "error": "ランキングを読み込めませんでした。接続を確認して再試行してください。",
+    "offlineLocalBest": "オフラインです — スコアは端末に保存されます。",
+    "localBest": "自己ベスト: {{score}}"
+  },
+  "legal": {
+    "title": "利用規約とプライバシー",
+    "tabTerms": "利用規約",
+    "tabPrivacy": "プライバシー",
+    "termsContent": "最終更新: 2026年8月\n\n本利用規約は、Vraxion が配信する Fruloop（「本ゲーム」）に適用されます。\n\n1. 同意\nFruloop をダウンロード、インストール、または利用することで、本規約に同意したものとみなします。同意できない場合は、本ゲームを利用しないでください。\n\n2. ライセンス\n当社は、お客様ご自身の端末において、個人的かつ非営利の娯楽目的で本ゲームを利用するための、限定的、非独占的、譲渡不可のライセンスを付与します。\n\n3. ゲストアカウント\nFruloop は端末上に作成されるゲストプロフィールを使用します。ランキング用の表示名を設定できます。メールやソーシャルログインはありません。アプリのアンインストールやデータの消去により、ゲストプロフィールと端末上の進行状況が完全に失われる場合があります。\n\n4. 仮想アイテムと購入\nコイン、コインパック、ブースト（ハンマー、フルーツ変更、入れ替え、サイズアップ、やり直しなど）、広告削除は、現金価値のない仮想アイテムまたは権利であり、換金できません。アプリ内購入は Apple App Store または Google Play（および RevenueCat などの関連課金パートナー）によって処理されます。購入は原則として最終的であり、各ストアの返金ポリシーに従います。当社は仮想アイテムをいつでも変更、調整、または削除できます。\n\n5. 広告\n広告削除を購入しない限り、本ゲームは広告を表示する場合があります。広告ネットワークは、各社のポリシーおよび適用される同意画面に従い、端末識別子や広告識別子を収集する場合があります。\n\n6. フェアプレイ\nチート、バグの悪用、スコアやランキングの操作、他者への嫌がらせ、または適用法令に違反する利用を行わないことに同意します。\n\n7. ランキングとシェア\nFruloop はシングルプレイヤーゲームです。送信したスコアは表示名とともに公開ランキングに表示される場合があります。端末の共有シートでスコアをシェアできます。その共有は、OS の共有操作に必要な範囲を超えて当社がアップロードするものではありません。\n\n8. 変更\n本規約は随時更新される場合があります。変更後も本ゲームを利用し続けることで、更新後の規約に同意したものとみなします。\n\n9. お問い合わせ\n本規約に関するご質問: support@vraxion.com",
+    "privacyContent": "最終更新: 2026年8月\n\n本プライバシーポリシーは、Vraxion が配信する Fruloop（「本ゲーム」）が情報を取り扱う方法を説明します。\n\n1. 収集する情報\n• ゲストプロフィール: インストールごとに作成されるゲスト ID とセキュアトークン、任意の表示名。\n• サーバー上のプレイデータ: ランキング用に送信されるスコアおよび関連メタデータ（セッション時間や合体回数など）。\n• 端末と通知（有効時）: プラットフォーム（iOS/Android）、言語/ロケール、プッシュ通知トークン。\n• 端末のみ: コイン、ブースト所持数、ミッション、デイリー報酬、進行中のセーブ、設定（サウンド、音楽、言語）、端末内ハイスコア。\n• 分析イベント（有効時）: ゲーム開始/終了、購入、広告報酬、デイリー受取、ミッション完了などのセッションおよびプレイイベント。分析はゲスト ID に紐づく場合があります。\n• 広告と同意（広告表示時）: Google AdMob などのプラットフォーム経由の広告識別子と同意状態（iOS の ATT および適用される同意プロンプトを含む）。\n\nプレイにメールアドレスやソーシャルアカウントは不要です。\n\n2. 情報の利用目的\nゲームの運営、ゲストセッションの維持、ランキング表示、プッシュまたはローカルリマインダー（デイリー報酬や順位更新など）の配信、アプリ内購入の処理、広告の表示または非表示、製品改善、サポート対応のために利用します。\n\n3. データの保存場所\nコイン、ブースト、ミッション、デイリー報酬、進行中のセーブ、ほとんどの設定は端末に残ります。ゲスト認証情報、表示名、スコア（関連プレイメタデータを含む）、端末のプッシュトークンは、セッションをまたいでランキングと通知が機能するようサーバーに保存される場合があります。アプリデータの消去やアンインストールにより、端末上のデータとその端末のゲスト連携が削除される場合があります。\n\n4. 第三者サービス\nビルドと設定により、本ゲームは次を利用する場合があります。\n• Google AdMob（広告およびプライバシー/同意ツール）\n• Firebase Analytics\n• Firebase Cloud Messaging（プッシュ通知）\n• RevenueCat および Apple / Google のアプリ内課金（購入）\n• OS が提供する共有およびアプリ内レビュー機能\n\n各提供者は独自のプライバシーポリシーに従ってデータを処理します。\n\n5. 子どものプライバシー\n本ゲームは13歳未満の子どもを対象としていません。13歳未満の子どもから個人情報を故意に収集することはありません。子どもがそのような情報を提供したと思われる場合はご連絡ください。適切に対応します。\n\n6. あなたの権利\n地域により、support@vraxion.com に連絡することで、ゲストプロフィールに関連する個人データへのアクセス、訂正、削除を請求できる場合があります。ストアでの購入と返金は Apple または Google が処理します。\n\n7. 変更\n本プライバシーポリシーは随時更新される場合があります。重要な変更はアプリまたは当社ウェブサイト（例: fruloop.vraxion.com）でお知らせします。\n\n8. お問い合わせ\nプライバシーに関するご質問: support@vraxion.com"
+  },
+  "ads": {
+    "rewardOffline": "報酬を受け取るにはインターネットに接続してください",
+    "rewardUnavailable": "報酬を利用できません",
+    "rewardNotConfigured": "配置 {{placement}} に報酬が設定されていません",
+    "rewardIncomplete": "広告が完了しませんでした",
+    "useRequestReward": "報酬付き配置には requestReward を使用してください"
+  },
+  "rateApp": {
+    "title": "ゲームを評価",
+    "message": "ゲーム改善のため、ぜひ評価をお願いします！",
+    "rateNow": "今すぐ評価",
+    "later": "あとで",
+    "thanks": "評価ありがとうございます！"
+  },
+  "notifications": {
+    "dailyReward": {
+      "title": "デイリー報酬の準備完了",
+      "body": "デイリー報酬が待っています。戻って受け取りましょう！"
+    },
+    "top100Exited": {
+      "body": "トップ100から外れました。戻って順位を上げましょう。"
+    },
+    "rankPush": {
+      "body": "現在の順位は #{{rank}} です。",
+      "bodyFallback": "タップして現在のランキング順位を確認。"
+    }
+  }
+}

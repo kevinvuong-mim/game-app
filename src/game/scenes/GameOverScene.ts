@@ -3,12 +3,12 @@ import Phaser from 'phaser';
 import {
   t,
   ads,
-  i18n,
   toast,
   gameSync,
   rateService,
   RateAppModal,
   shareService,
+  getNumberFormatLocale,
 } from '@platform/ui';
 import {
   PANEL_BG,
@@ -697,6 +697,5 @@ export class GameOverScene extends Phaser.Scene {
 }
 
 function formatScore(score: number): string {
-  const locale = i18n.getCurrentLanguage() === 'vi' ? 'vi-VN' : 'en-US';
-  return new Intl.NumberFormat(locale).format(Math.floor(score));
+  return new Intl.NumberFormat(getNumberFormatLocale()).format(Math.floor(score));
 }

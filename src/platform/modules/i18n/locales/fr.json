@@ -1,0 +1,196 @@
+{
+  "common": {
+    "close": "Fermer",
+    "loading": "Chargement..."
+  },
+  "home": {
+    "play": "Jouer",
+    "shop": "Shop",
+    "settings": "Réglages",
+    "leaderboard": "Classement",
+    "dailyReward": "Cadeau",
+    "missions": "Missions"
+  },
+    "howToPlay": {
+    "title": "Comment jouer",
+    "prev": "Retour",
+    "next": "Suite",
+    "done": "OK",
+    "step1Title": "Viser & lâcher",
+    "step1Body": "Faites glisser à gauche ou à droite pour viser, puis relâchez pour faire tomber le fruit dans le verre.",
+    "step2Title": "Fusionner les mêmes fruits",
+    "step2Body": "Lorsque deux fruits identiques se touchent, ils fusionnent en un fruit plus grand et rapportent des points.",
+    "step3Title": "Attention à la ligne de danger",
+    "step3Body": "Ne laissez pas des fruits stables rester au-dessus de la ligne de danger — sinon la manche se termine !",
+    "step4Title": "Utiliser les boosts",
+    "step4Body": "Achetez des boosts dans la Boutique — marteau, échange, croissance, et plus — pour sauver les piles difficiles."
+  },
+  "game": {
+    "scoreLabel": "SCORE",
+    "yourScore": "VOTRE SCORE",
+    "rank": "Rang : #{{rank}}",
+    "coinsEarned": "PIÈCES GAGNÉES",
+    "gameOver": "TERMINÉ",
+    "retry": "REJOUER",
+    "home": "MENU",
+    "shareScore": "PARTAGER",
+    "shareScoreTitle": "Mon score dans {{gameName}}",
+    "shareScoreText": "J'ai marqué {{score}} dans {{gameName}} ! Pouvez-vous faire mieux ?",
+    "shareDialogTitle": "Partager votre score",
+    "shareUnavailable": "Le partage n'est pas disponible",
+    "skillHintHammer": "Touchez un fruit pour le détruire",
+    "skillHintSwap": "Touchez deux fruits pour les échanger",
+    "skillHintSwapSecond": "Touchez le second fruit",
+    "skillHintSize": "Touchez un fruit pour le faire grandir",
+    "skillUndoNothing": "Rien à annuler",
+    "quitConfirmTitle": "Quitter cette partie ?",
+    "quitConfirmMessage": "Votre score sera envoyé et la partie se terminera.",
+    "quitConfirm": "Quitter",
+    "quitCancel": "Annuler"
+  },
+  "shop": {
+    "title": "Shop",
+    "buy": "Acheter",
+    "purchaseSuccess": "{{name}} acheté !",
+    "purchaseFailed": "Achat échoué",
+    "iapUnavailable": "Les achats sont indisponibles pour le moment",
+    "notEnoughCoins": "Pas assez de pièces !",
+    "ownedQuantity": "Possédés : {{quantity}}",
+    "getCoins": {
+      "missions": "Missions",
+      "dailyReward": "Cadeau",
+      "or": "ou",
+      "coinPackAmount": "{{coins}}",
+      "coinPackLabel": "Pièces",
+      "buyPrice": "{{price}}",
+      "purchasing": "Traitement de l'achat…",
+      "purchaseSuccess": "{{coins}} pièces reçues !"
+    },
+    "items": {
+      "boost_hammer": {
+        "name": "Marteau explosif",
+        "description": "Détruisez le fruit de votre choix !"
+      },
+      "boost_change": {
+        "name": "Changer de fruit",
+        "description": "Remplacez le fruit suspendu par un fruit aléatoire !"
+      },
+      "boost_swap": {
+        "name": "Échanger",
+        "description": "Échangez la position de n'importe quels fruits !"
+      },
+      "boost_size": {
+        "name": "Agrandir",
+        "description": "Augmentez la taille du fruit !"
+      },
+      "boost_undo": {
+        "name": "Annuler",
+        "description": "Annulez votre dernier coup !"
+      },
+      "remove_ads": {
+        "name": "Sans pubs",
+        "description": "Supprimez toutes les publicités définitivement"
+      },
+      "coins_10000": {
+        "name": "10000 pièces",
+        "description": "Obtenez 10000 pièces"
+      }
+    }
+  },
+  "settings": {
+    "title": "Réglages",
+    "profile": "Profil",
+    "language": "Langue",
+    "sound": "Son",
+    "music": "Musique",
+    "soundEffects": "Effets",
+    "terms": "CGU",
+    "privacy": "Privée",
+    "termsPrivacy": "CGU et vie privée",
+    "playerName": "Nom du joueur",
+    "playerNamePlaceholder": "Entrez votre nom",
+    "playerNameSave": "OK",
+    "playerNameRequired": "Veuillez entrer un nom",
+    "playerNameUpdated": "Nom mis à jour",
+    "playerNameSavedLocally": "Nom enregistré — sera synchronisé en ligne",
+    "playerNameFailed": "Impossible de mettre à jour le nom",
+    "playerNameOffline": "Créez d'abord un profil invité en ligne",
+    "ads": "Publicités",
+    "hideAds": "Sans pubs",
+    "removeAdsPrice": "{{price}}",
+    "purchasingAds": "Traitement de l'achat…",
+    "restorePurchasesHint": "Déjà acheté ? Restaurer",
+    "restoringPurchases": "Restauration des achats…",
+    "restorePurchasesSuccess": "Achats restaurés",
+    "restorePurchasesEmpty": "Aucun achat à restaurer",
+    "restorePurchasesFailed": "Impossible de restaurer les achats",
+    "version": "Version {{version}}"
+  },
+  "missions": {
+    "title": "Missions",
+    "claim": "Récup",
+    "go": "GO",
+    "claimed": "Récupéré",
+    "progress": "{{current}}/{{target}}",
+    "claimFailed": "Pas encore récupérable",
+    "reachScore2000": "Atteindre 2 000 points",
+    "mergeFruit15": "Fusionner des fruits 15 fois",
+    "watchAd": "Regarder une publicité vidéo",
+    "playGames3": "Jouer 3 parties",
+    "dailyLogin": "Se connecter chaque jour",
+    "updatePlayerName": "Mettre à jour votre nom de joueur"
+  },
+  "dailyReward": {
+    "title": "Récompense quotidienne",
+    "claim": "Récupérer",
+    "day": "Jour {{day}}",
+    "comeBack": "Revenez demain !"
+  },
+  "leaderboard": {
+    "title": "Classement",
+    "top100": "Top 100",
+    "yourRank": "Votre rang",
+    "retry": "Réessayer",
+    "rank": "Votre rang : #{{rank}}",
+    "empty": "Aucun score pour le moment. Jouez une partie pour apparaître au classement !",
+    "anonymous": "Joueur",
+    "rankUnavailable": "Votre rang n'est pas encore disponible",
+    "error": "Impossible de charger le classement. Vérifiez votre connexion et réessayez.",
+    "offlineLocalBest": "Vous êtes hors ligne — les scores sont enregistrés localement.",
+    "localBest": "Votre meilleur : {{score}}"
+  },
+  "legal": {
+    "title": "CGU et vie privée",
+    "tabTerms": "CGU",
+    "tabPrivacy": "Privée",
+    "termsContent": "Dernière mise à jour : août 2026\n\nLes présentes Conditions d'utilisation s'appliquent à Fruloop (« le jeu »), publié par Vraxion.\n\n1. Acceptation\nEn téléchargeant, installant ou utilisant Fruloop, vous acceptez ces Conditions. Si vous n'êtes pas d'accord, veuillez ne pas utiliser le jeu.\n\n2. Licence\nNous vous accordons une licence limitée, non exclusive et non transférable pour utiliser le jeu à des fins de divertissement personnel et non commercial sur vos propres appareils.\n\n3. Compte invité\nFruloop utilise un profil invité créé sur votre appareil. Vous pouvez définir un nom d'affichage pour les classements. Il n'y a pas de connexion par e-mail ni de réseau social. Désinstaller l'application ou effacer ses données peut supprimer définitivement votre profil invité et votre progression locale.\n\n4. Objets virtuels et achats\nLes pièces, packs de pièces, boosts (marteau, changer de fruit, échanger, agrandir et annuler) et Supprimer les pubs sont des objets ou droits virtuels sans valeur monétaire réelle et ne peuvent pas être échangés contre de l'argent. Les achats intégrés sont traités par l'Apple App Store ou Google Play (et des partenaires de facturation associés tels que RevenueCat). Les achats sont généralement définitifs, sous réserve des règles de remboursement du magasin. Nous pouvons modifier, équilibrer ou retirer des objets virtuels à tout moment.\n\n5. Publicités\nLe jeu peut afficher des publicités sauf si vous achetez Supprimer les pubs. Les réseaux publicitaires peuvent collecter des identifiants d'appareil et publicitaires conformément à leurs propres politiques et aux écrans de consentement applicables.\n\n6. Fair-play\nVous acceptez de ne pas tricher, exploiter des bugs, manipuler les scores ou classements, harceler autrui, ni utiliser le jeu d'une manière contraire aux lois applicables.\n\n7. Classements et partage\nFruloop est un jeu solo. Les scores que vous envoyez peuvent apparaître sur des classements publics avec votre nom d'affichage. Vous pouvez partager votre score via la feuille de partage de votre appareil ; ce partage n'est pas téléversé par nous au-delà de ce que l'action système exige.\n\n8. Modifications\nNous pouvons mettre à jour ces conditions de temps à autre. Continuer à utiliser le jeu après des modifications vaut acceptation des conditions mises à jour.\n\n9. Contact\nQuestions relatives à ces conditions : support@vraxion.com",
+    "privacyContent": "Dernière mise à jour : août 2026\n\nCette politique de confidentialité décrit la façon dont Fruloop (« le jeu »), publié par Vraxion, traite les informations.\n\n1. Informations que nous collectons\n• Profil invité : un identifiant invité et un jeton sécurisé créés pour votre installation, plus un nom d'affichage facultatif.\n• Gameplay sur nos serveurs : scores et métadonnées de jeu associées (durée de session, nombre de fusions, etc.) envoyés pour les classements.\n• Appareil et notifications (si activés) : plateforme (iOS/Android), langue/locale et jeton de notification push.\n• Uniquement sur votre appareil : pièces, inventaire de boosts, missions, récompenses quotidiennes, sauvegardes en cours, réglages (son, musique, langue) et meilleur score local.\n• Événements d'analyse (si activés) : événements de session et de jeu tels que début/fin de partie, achats, récompenses publicitaires, réclamations quotidiennes et missions terminées. Les analyses peuvent être associées à votre identifiant invité.\n• Publicité et consentement (lorsque des publicités sont affichées) : identifiants publicitaires et état de consentement via des plateformes telles que Google AdMob, y compris ATT sur iOS et les invites de consentement applicables.\n\nNous n'exigeons ni adresse e-mail ni compte de réseau social pour jouer.\n\n2. Comment nous utilisons les informations\nNous utilisons ces informations pour faire fonctionner le jeu, maintenir votre session invitée, afficher les classements, envoyer des rappels push ou locaux (par exemple récompenses quotidiennes ou mises à jour de rang), traiter les achats intégrés, afficher ou masquer les publicités, améliorer le produit et répondre aux demandes d'assistance.\n\n3. Où les données sont stockées\nLes pièces, boosts, missions, récompenses quotidiennes, sauvegardes en cours et la plupart des réglages restent sur votre appareil. Les identifiants invité, le nom d'affichage, les scores (avec métadonnées de jeu associées) et les jetons push de l'appareil peuvent être stockés sur nos serveurs afin que les classements et notifications fonctionnent d'une session à l'autre. Effacer les données de l'application ou la désinstaller peut supprimer les données locales et le lien invité sur cet appareil.\n\n4. Services tiers\nSelon la version et les réglages, le jeu peut utiliser :\n• Google AdMob (publicités et outils de confidentialité/consentement)\n• Firebase Analytics\n• Firebase Cloud Messaging (notifications push)\n• RevenueCat et la facturation intégrée Apple / Google (achats)\n• Fonctions de partage et d'avis intégrés fournies par le système\n\nChaque prestataire traite les données selon sa propre politique de confidentialité.\n\n5. Confidentialité des enfants\nLe jeu ne s'adresse pas aux enfants de moins de 13 ans. Nous ne collectons pas sciemment d'informations personnelles auprès d'enfants de moins de 13 ans. Si vous pensez qu'un enfant a fourni de telles informations, contactez-nous et nous prendrons les mesures appropriées.\n\n6. Vos droits\nSelon votre région, vous pouvez demander l'accès, la correction ou la suppression des données personnelles associées à votre profil invité en contactant support@vraxion.com. Les achats et remboursements en magasin sont gérés par Apple ou Google.\n\n7. Modifications\nNous pouvons mettre à jour cette politique de confidentialité de temps à autre. Les changements importants seront communiqués via l'application ou notre site (par exemple fruloop.vraxion.com).\n\n8. Contact\nQuestions de confidentialité : support@vraxion.com"
+  },
+  "ads": {
+    "rewardOffline": "Connectez-vous à Internet pour récupérer votre récompense",
+    "rewardUnavailable": "Récompense indisponible",
+    "rewardNotConfigured": "Aucune récompense configurée pour l'emplacement {{placement}}",
+    "rewardIncomplete": "La publicité n'a pas été terminée",
+    "useRequestReward": "Utilisez requestReward pour les emplacements récompensés"
+  },
+  "rateApp": {
+    "title": "NOTER",
+    "message": "Notez-nous pour nous aider à améliorer le jeu !",
+    "rateNow": "Noter",
+    "later": "Plus tard",
+    "thanks": "Merci pour votre note !"
+  },
+  "notifications": {
+    "dailyReward": {
+      "title": "Récompense quotidienne prête",
+      "body": "Votre récompense quotidienne vous attend. Revenez la récupérer !"
+    },
+    "top100Exited": {
+      "body": "Vous avez quitté le Top 100. Revenez pour améliorer votre classement."
+    },
+    "rankPush": {
+      "body": "Vous êtes actuellement classé #{{rank}}.",
+      "bodyFallback": "Touchez pour voir votre rang actuel au classement."
+    }
+  }
+}

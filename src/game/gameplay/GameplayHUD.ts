@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 
-import { t } from '@platform/ui';
 import {
   PANEL_BG,
   TEXT_COLOR,
@@ -9,6 +8,7 @@ import {
 } from '@platform/ui/panel/panelTheme';
 import { FREDOKA_FONT } from '@platform/ui/fonts';
 import type { UIButton } from '@platform/ui/types';
+import { t, getNumberFormatLocale } from '@platform/ui';
 import { createUIButton } from '@platform/ui/button/UIButton';
 import { drawRoundedRect } from '@platform/ui/panel/graphics';
 
@@ -18,7 +18,7 @@ const PANEL_STROKE = 0xd4b896;
 const LABEL_COLOR = '#3a372f';
 
 function formatScore(score: number): string {
-  return score.toLocaleString('en-US');
+  return new Intl.NumberFormat(getNumberFormatLocale()).format(Math.floor(score));
 }
 
 export interface GameplayHUDOptions {

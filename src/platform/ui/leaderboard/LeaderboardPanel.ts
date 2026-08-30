@@ -20,8 +20,8 @@ import { FREDOKA_FONT } from '@platform/ui/fonts';
 import type { UIButton } from '@platform/ui/types';
 import { drawRoundedRect } from '../panel/graphics';
 import { createUIButton } from '../button/UIButton';
-import { t, i18n } from '@platform/modules/i18n/i18n.service';
 import { DeferredListRebuild } from '../panel/deferredListRebuild';
+import { t, getNumberFormatLocale } from '@platform/modules/i18n/i18n.service';
 
 const ROW_HEIGHT = 56;
 const CROWN_SIZE = 40;
@@ -553,6 +553,5 @@ export class LeaderboardPanel extends Phaser.GameObjects.Container {
 }
 
 function formatScore(score: number): string {
-  const locale = i18n.getCurrentLanguage() === 'vi' ? 'vi-VN' : 'en-US';
-  return new Intl.NumberFormat(locale).format(Math.floor(score));
+  return new Intl.NumberFormat(getNumberFormatLocale()).format(Math.floor(score));
 }

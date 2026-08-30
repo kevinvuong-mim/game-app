@@ -23,8 +23,19 @@ export function generateId(prefix = 'id'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+const NUMBER_FORMAT_LOCALES: Record<string, string> = {
+  en: 'en-US',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+  de: 'de-DE',
+  fr: 'fr-FR',
+  it: 'it-IT',
+  vi: 'vi-VN',
+};
+
 function getNumberLocale(): string {
-  return usePlatformStore.getState().settings.language === 'vi' ? 'vi-VN' : 'en-US';
+  const language = usePlatformStore.getState().settings.language;
+  return NUMBER_FORMAT_LOCALES[language] ?? 'en-US';
 }
 
 /** Compact from 1M (locale-aware): 999_999 → 999.999 / 999,999; 1_500_000 → 1,5 Tr / 1.5M; … */
