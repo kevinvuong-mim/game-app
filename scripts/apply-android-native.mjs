@@ -85,19 +85,6 @@ function stripAndroid15InsetsOverride(source) {
   return `${source.slice(0, start)}${ADMOB_BANNER_SKIP_INSETS}\n\n${source.slice(end)}`;
 }
 
-function repairBrokenAdMobInsetsStrip(source) {
-  return source.replace(
-    new RegExp(
-      `${ADMOB_BANNER_SKIP_INSETS.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n\\n` +
-        '\\s+mAdViewLayout\\.setLayoutParams\\(mAdViewLayoutParams\\);\\n' +
-        '\\s+return insets;\\n' +
-        '\\s+\\}\\);\\n' +
-        '\\s+\\}\\n\\n'
-    ),
-    `${ADMOB_BANNER_SKIP_INSETS}\n\n`
-  );
-}
-
 function isAdMobBannerPatchComplete(source) {
   return (
     source.includes('Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL') &&
@@ -123,10 +110,9 @@ function patchAdMobBannerExecutor() {
     return 'skipped';
   }
 
-  let source = repairBrokenAdMobInsetsStrip(readFileSync(bannerPath, 'utf8'));
+  let source = readFileSync(bannerPath, 'utf8');
 
   if (isAdMobBannerPatchComplete(source)) {
-    writeFileSync(bannerPath, source);
     return 'present';
   }
 

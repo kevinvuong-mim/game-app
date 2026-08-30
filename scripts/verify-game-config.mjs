@@ -100,16 +100,8 @@ function assertReleaseAdsSafe(adsProvider) {
 
 function assertReleaseMonetizationSafe() {
   const appEnv = process.env.VITE_APP_ENV ?? 'development';
-  const enforce = appEnv === 'production' || process.env.ENFORCE_RELEASE_MONETIZATION === 'true';
-
-  if (!enforce) {
-    return;
-  }
-
   if (appEnv !== 'production') {
-    throw new Error(
-      'ENFORCE_RELEASE_MONETIZATION=true requires VITE_APP_ENV=production (got "' + appEnv + '").'
-    );
+    return;
   }
 
   const iapProvider = process.env.VITE_IAP_PROVIDER ?? 'mock';

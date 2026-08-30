@@ -39,7 +39,7 @@ Gameplay nên emit `gameConfig.id` (cùng `VITE_GAME_ID`). ESLint chặn `@platf
 VITE_GAME_ID=FRULOOP
 ```
 
-Chạy `npm run game:verify-config` trước build production. `build:android` / `build:ios` tự gọi script này trước `npm run build`. Khi `VITE_APP_ENV=production` (hoặc `ENFORCE_RELEASE_MONETIZATION=true`), script còn enforce IAP/ads release gates + API probe — xem [environment-variables.md](./environment-variables.md).
+Chạy `npm run game:verify-config` trước build production. `build:android` / `build:ios` tự gọi script này trước `npm run build`. Khi `VITE_APP_ENV=production`, script còn enforce IAP/ads release gates + API probe — xem [environment-variables.md](./environment-variables.md).
 
 ## Bootstrap (`GameEngine`)
 

@@ -204,7 +204,7 @@ Thứ tự thực thi:
 7. `cap sync ios` — copy web assets + cập nhật plugins
 8. `node scripts/apply-ios-native.mjs` — copy storyboard/Swift/`App.entitlements`, inject AdMob + Associated Domains (Universal Links)
 
-> **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@7.x` cần UMP **3.0.0**. Script `pre-sync` pin đúng phiên bản (và upgrade pin cũ `~> 2.3` nếu còn). Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
+> **Quan trọng (iOS + AdMob):** `@capacitor-community/admob@7.x` cần UMP **3.0.0**. Script `pre-sync` pin đúng phiên bản. Nếu đổi Podfile hoặc gặp lỗi CocoaPods, xóa lock rồi cài lại:
 >
 > ```bash
 > cd ios/App

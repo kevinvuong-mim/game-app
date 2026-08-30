@@ -81,11 +81,11 @@ Nếu app id của platform hiện tại trống, runtime coi platform đó là 
 
 Hành vi production native:
 
-| Context                                         | Behavior                                                               |
-| ----------------------------------------------- | ---------------------------------------------------------------------- |
-| Native production / Vite `PROD` native + `mock` | Ads **disabled** |
-| Native + `admob` thiếu cấu hình | `ads.setEnabled(false)` — không silent-fallback mock trên store builds |
-| Native + Vite `PROD` **or** `VITE_APP_ENV=production` + AdMob `init` fail | Ads **disabled** — không fallback mock (`AdsService`) |
+| Context                                                                   | Behavior                                                               |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Native production / Vite `PROD` native + `mock`                           | Ads **disabled**                                                       |
+| Native + `admob` thiếu cấu hình                                           | `ads.setEnabled(false)` — không silent-fallback mock trên store builds |
+| Native + Vite `PROD` **or** `VITE_APP_ENV=production` + AdMob `init` fail | Ads **disabled** — không fallback mock (`AdsService`)                  |
 
 Production ad unit IDs (bắt buộc khi `game:verify-config` enforce release monetization):
 
@@ -105,7 +105,7 @@ VITE_ADMOB_IOS_REWARDED_ID=
 
 ## Release monetization gates
 
-`npm run game:verify-config` (và mọi `build:android` / `build:ios` qua `native-ops.mjs`) enforce khi `VITE_APP_ENV=production` **hoặc** `ENFORCE_RELEASE_MONETIZATION=true`:
+`npm run game:verify-config` (và mọi `build:android` / `build:ios` qua `native-ops.mjs`) enforce khi `VITE_APP_ENV=production`:
 
 - `VITE_IAP_PROVIDER=revenuecat` + đủ cả hai RevenueCat keys
 - `VITE_ADS_PROVIDER=admob` + đủ AdMob app id + 8 unit ids (banner / interstitial / rewarded × iOS / Android)
@@ -121,7 +121,7 @@ Header: X-Api-Key: {VITE_API_KEY}
 
 404 = `gameId` chưa có trên backend.
 
-Script-only env (không phải `VITE_*`): `ENFORCE_RELEASE_MONETIZATION`, `SKIP_API_CHECK`, `CAP_SERVER_URL`, biến emulator trong [emulator-and-simulator.md](../build/emulator-and-simulator.md).
+Script-only env (không phải `VITE_*`): `SKIP_API_CHECK`, `CAP_SERVER_URL`, biến emulator trong [emulator-and-simulator.md](../build/emulator-and-simulator.md).
 
 ---
 

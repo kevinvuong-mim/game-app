@@ -72,13 +72,6 @@ function patchPodfile(podfilePath) {
     );
     changed = true;
     console.log('[ios-native] Pinned GoogleUserMessagingPlatform 3.0.0 in Podfile');
-  } else if (content.includes("pod 'GoogleUserMessagingPlatform', '~> 2.3'")) {
-    content = content.replace(
-      "pod 'GoogleUserMessagingPlatform', '~> 2.3'",
-      "pod 'GoogleUserMessagingPlatform', '3.0.0'"
-    );
-    changed = true;
-    console.log('[ios-native] Upgraded GoogleUserMessagingPlatform pin to 3.0.0');
   }
 
   if (resolvePushNotificationsEnabled() && !content.includes("pod 'FirebaseMessaging'")) {
