@@ -103,10 +103,13 @@ class NotificationService {
     });
 
     const granted = await pushNotificationService.initialize();
-    if (granted) {
-      await pushNotificationService.syncDeviceState();
+    if (!granted) {
+      // Keep pushInitialized false so resume retries after the user enables
+      // notifications in system settings (same pattern as initializeLocal).
+      return;
     }
 
+    await pushNotificationService.syncDeviceState();
     void deviceSyncService.flush().catch(() => undefined);
 
     this.pushInitialized = true;
@@ -153,6 +156,8 @@ class NotificationService {
     const config = getConfig();
 
     if (config.pushNotificationsEnabled) {
+      // Heal deny-then-enable: initializePush is a no-op once granted.
+      await this.initializePush();
       await pushNotificationService.refreshTokenIfNeeded();
       await deviceSyncService.flush();
     }
@@ -167,6 +172,7 @@ class NotificationService {
     const config = getConfig();
 
     if (config.pushNotificationsEnabled) {
+      await this.initializePush();
       await pushNotificationService.refreshTokenIfNeeded();
       void deviceSyncService.flush().catch(() => undefined);
     }

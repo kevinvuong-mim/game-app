@@ -28,7 +28,9 @@ Trên native Preferences / legacy localStorage, key vật lý có prefix `gsk:` 
 
 Nếu offline / create fail ở bước 3–4, guest ở `pending` và tự retry khi network online (`@capacitor/network` trên native, `window.online` trên web).
 
-Khi API trả 401, `guest.recoverFromUnauthorized()`:
+Khi API trả 401 **`Invalid token`** (guest bearer bị từ chối), `guest.recoverFromUnauthorized()`:
+
+Sai/thiếu API key là **403** — không recover, không xóa identity. `Bearer token required` (request không gửi bearer) cũng không recover.
 
 - Giữ tên local: copy sang `guest:pending-name` **trước** khi xóa credentials (tên trên credentials cũ sẽ mất nếu không làm bước này)
 - Xóa credentials cũ (`guest`) và reset notification state (`notification-state-v1`)

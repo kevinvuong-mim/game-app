@@ -46,7 +46,7 @@ Thứ tự dialog hệ thống trên native cold start (orchestrated bởi `App.
 2. **Notifications** — `notificationService.requestInitialPermissions()` (local và/hoặc push, tùy flag).
 3. **UMP** — `ads.requestUmpConsentAndPreload()` (khi Google `REQUIRED`), rồi preload ads.
 
-Sau bước 2: `App` gọi `notificationService.reconcileDailyRewardSchedule()` (lần reconcile đầu). `guest.onReady` → `initializePush()` (đăng ký FCM — đã chờ xong bước permission nên không đụng dialog ATT).
+Sau bước 2: `App` gọi `notificationService.reconcileDailyRewardSchedule()` (lần reconcile đầu). `guest.onReady` → `initializePush()` (đăng ký FCM — đã chờ xong bước permission nên không đụng dialog ATT). Nếu user Deny lần đầu, `pushInitialized` **không** được set — `app:resume` / locale change gọi lại `initializePush()` sau khi họ bật quyền trong Settings.
 
 Chi tiết:
 

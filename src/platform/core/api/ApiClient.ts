@@ -64,7 +64,7 @@ class ApiClient implements IApiClient {
 
         if (
           error instanceof ApiErrorClass &&
-          error.status === 401 &&
+          isGuestTokenRejected(error) &&
           attemptConfig.auth !== false &&
           !attemptConfig._retried401 &&
           this.authRecoveryHandler
@@ -179,6 +179,29 @@ class ApiClient implements IApiClient {
 
     return Math.max(0, date - Date.now());
   }
+}
+
+/**
+ * Only a rejected guest bearer (`Invalid token`) may wipe identity.
+ * API-key failures are 403; missing bearer / WAF 401s must not recover.
+ */
+export function isGuestTokenRejected(error: ApiErrorClass): boolean {
+  if (error.status !== 401) return false;
+  return readApiErrorMessage(error) === 'Invalid token';
+}
+
+function readApiErrorMessage(error: ApiErrorClass): string | null {
+  const { body } = error;
+  if (typeof body === 'string' && body.trim() !== '') {
+    return body;
+  }
+  if (body && typeof body === 'object' && 'message' in body) {
+    const message = (body as { message: unknown }).message;
+    if (typeof message === 'string' && message.trim() !== '') {
+      return message;
+    }
+  }
+  return null;
 }
 
 export const apiClient = new ApiClient();

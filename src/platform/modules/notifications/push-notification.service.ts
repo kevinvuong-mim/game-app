@@ -53,7 +53,9 @@ class PushNotificationService {
     }
 
     try {
-      const granted = await this.requestPermission();
+      // Prefer checkPermissions so resume after Settings sees a new grant
+      // without relying on requestPermissions() (no-op / still-denied on some OS).
+      const granted = (await this.hasPermission()) || (await this.requestPermission());
       if (!granted) {
         return false;
       }
