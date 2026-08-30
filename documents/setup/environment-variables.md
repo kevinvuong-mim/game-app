@@ -99,7 +99,7 @@ VITE_ADMOB_IOS_INTERSTITIAL_ID=
 VITE_ADMOB_IOS_REWARDED_ID=
 ```
 
-`apply-*-native` chỉ cho phép Google sample AdMob app ids khi `VITE_APP_ENV != production`.
+`apply-*-native` luôn inject AdMob App ID vì plugin luôn được `cap sync` vào native project. Khi `VITE_APP_ENV != production`, thiếu env thì dùng Google sample App ID (kể cả `VITE_ADS_PROVIDER=mock`, để SDK không crash lúc launch). Production chỉ inject id thật.
 
 ---
 
@@ -119,7 +119,7 @@ GET {apiUrl}/leaderboards?gameId={VITE_GAME_ID}&page=1&limit=1
 Header: X-Api-Key: {VITE_API_KEY}
 ```
 
-404 = `gameId` chưa có trên backend.
+400 hoặc 404 = `gameId` chưa có trên backend (`@IsEnum(GameId)` trả 400).
 
 Script-only env (không phải `VITE_*`): `SKIP_API_CHECK`, `CAP_SERVER_URL`, biến emulator trong [emulator-and-simulator.md](../build/emulator-and-simulator.md).
 

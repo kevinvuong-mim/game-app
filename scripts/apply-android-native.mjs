@@ -40,8 +40,9 @@ function resolveAdMobAppId() {
     }
     return configured;
   }
-  // Never inject Google sample ids into store / production packaging.
-  if (isAdMobProvider() && !isProductionAppEnv()) {
+  // Plugin is always cap-synced, so non-production (including mock) needs an App ID
+  // or the Google Mobile Ads SDK crashes on launch. Never use sample ids in production.
+  if (!isProductionAppEnv()) {
     return GOOGLE_SAMPLE_ANDROID_APP_ID;
   }
   return '';
@@ -374,22 +375,19 @@ if (isProductionAppEnv() && isAdMobProvider() && bannerPatchResult === 'skipped'
   process.exit(1);
 }
 
-const adsProvider = process.env.VITE_ADS_PROVIDER ?? 'mock';
 const admobAppId = resolveAdMobAppId();
 
-if (adsProvider === 'admob') {
+if (admobAppId) {
   if (!existsSync(manifestPath)) {
     console.error('[android-native] AndroidManifest.xml not found — cannot inject AdMob App ID');
     process.exit(1);
   }
 
-  if (!admobAppId) {
-    console.error('[android-native] VITE_ADS_PROVIDER=admob requires VITE_ADMOB_ANDROID_APP_ID');
-    process.exit(1);
-  }
-
   const result = injectAdMobManifest(manifestPath, admobAppId);
   console.log(`[android-native] AdMob APPLICATION_ID ${result}: ${admobAppId}`);
+} else if (isAdMobProvider()) {
+  console.error('[android-native] VITE_ADS_PROVIDER=admob requires VITE_ADMOB_ANDROID_APP_ID');
+  process.exit(1);
 }
 
 const pushEnabled = resolvePushNotificationsEnabled();

@@ -1,4 +1,5 @@
 import {
+  isAdMobProvider,
   isGoogleTestAdId,
   isProductionAppEnv,
   GOOGLE_SAMPLE_IOS_APP_ID,
@@ -33,8 +34,9 @@ function resolveAdMobAppId() {
     }
     return configured;
   }
-  // Never inject Google sample ids into store / production packaging.
-  if (process.env.VITE_ADS_PROVIDER === 'admob' && !isProductionAppEnv()) {
+  // Plugin is always cap-synced, so non-production (including mock) needs an App ID
+  // or the Google Mobile Ads SDK crashes on launch. Never use sample ids in production.
+  if (!isProductionAppEnv()) {
     return GOOGLE_SAMPLE_IOS_APP_ID;
   }
   return '';
@@ -444,17 +446,14 @@ if (resolvePushNotificationsEnabled()) {
   copyFirebaseIosConfig(iosAppDir);
 }
 
-const adsProvider = process.env.VITE_ADS_PROVIDER ?? 'mock';
 const admobAppId = resolveAdMobAppId();
 
-if (adsProvider === 'admob') {
-  if (!admobAppId) {
-    console.error('[ios-native] VITE_ADS_PROVIDER=admob requires VITE_ADMOB_IOS_APP_ID');
-    process.exit(1);
-  }
-
+if (admobAppId) {
   const result = patchAdMobPlist(plistPath, admobAppId);
   console.log(`[ios-native] AdMob GADApplicationIdentifier ${result}: ${admobAppId}`);
+} else if (isAdMobProvider()) {
+  console.error('[ios-native] VITE_ADS_PROVIDER=admob requires VITE_ADMOB_IOS_APP_ID');
+  process.exit(1);
 }
 
 const deeplinkScheme = resolveDeepLinkScheme();

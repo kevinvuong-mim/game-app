@@ -46,7 +46,8 @@ async function verifyApiGame(apiUrl, gameId, apiKey) {
   const response = await fetch(url, {
     headers: { 'X-Api-Key': apiKey },
   });
-  if (response.status === 404) {
+  // Unknown GameId enum → 400 (class-validator). Missing route → 404.
+  if (response.status === 400 || response.status === 404) {
     throw new Error(`Backend does not support gameId "${gameId}".`);
   }
 

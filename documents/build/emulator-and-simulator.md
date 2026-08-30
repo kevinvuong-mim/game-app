@@ -134,7 +134,7 @@ VITE_ADMOB_IOS_APP_ID=ca-app-pub-xxxxxxxx~xxxxxxxx
 ```
 
 - Thiếu `VITE_ADMOB_*_APP_ID` trên platform tương ứng → runtime dùng Google sample ad units (dev).
-- `VITE_ADS_PROVIDER=admob` → script native inject AdMob App ID vào manifest/Info.plist. Sample Google App ID chỉ được inject khi `VITE_APP_ENV != production`.
+- Native apply luôn inject AdMob App ID vào manifest/Info.plist (plugin luôn có trong project). Sample Google App ID khi `VITE_APP_ENV != production` và thiếu env — kể cả `VITE_ADS_PROVIDER=mock`.
 - `VITE_APP_ENV=production` → `game:verify-config` yêu cầu revenuecat + admob thật (từ chối sample ids); thiếu sẽ fail native build.
 
 Chi tiết biến môi trường: [Environment Variables](../setup/environment-variables.md).

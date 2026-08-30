@@ -11,7 +11,8 @@ if (platform !== 'android' && platform !== 'ios') {
 }
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const defaultUrl = 'http://localhost:5173';
+// Android emulator reaches the host via 10.0.2.2; iOS simulator can use localhost.
+const defaultUrl = platform === 'android' ? 'http://10.0.2.2:5173' : 'http://localhost:5173';
 const liveReloadUrl = process.env.CAP_SERVER_URL || defaultUrl;
 
 let parsedUrl;
@@ -36,19 +37,21 @@ function log(message) {
   console.log(`[dev:native] ${message}`);
 }
 
-function setupAndroidPortReverse(currentPort) {
-  if (platform !== 'android') return;
+function usesLoopbackLiveReloadHost() {
+  return parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+}
+
+function setupAndroidPortReverse() {
+  if (platform !== 'android' || !usesLoopbackLiveReloadHost()) return true;
 
   try {
-    execFileSync('adb', ['reverse', `tcp:${currentPort}`, `tcp:${currentPort}`], {
+    execFileSync('adb', ['reverse', `tcp:${port}`, `tcp:${port}`], {
       stdio: 'ignore',
     });
-    log(`Configured adb reverse tcp:${currentPort} -> tcp:${currentPort}`);
+    log(`Configured adb reverse tcp:${port} -> tcp:${port}`);
+    return true;
   } catch {
-    log(
-      `Could not configure adb reverse for port ${currentPort}. ` +
-        'If running on a physical device, set CAP_SERVER_URL to your LAN IP.'
-    );
+    return false;
   }
 }
 
@@ -90,7 +93,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
 }
 
 async function main() {
-  setupAndroidPortReverse(port);
+  setupAndroidPortReverse();
 
   if (await serverIsReady()) {
     log(`Reusing the dev server at ${localServerUrl}`);
@@ -123,6 +126,14 @@ async function main() {
 
   if (exitCode !== 0) {
     throw new Error(`Native launch failed with code ${exitCode}`);
+  }
+
+  // Emulator/device is up only after run:android. Retry reverse for localhost URLs.
+  if (!setupAndroidPortReverse()) {
+    log(
+      `Could not configure adb reverse for port ${port}. ` +
+        'Emulator default is http://10.0.2.2:5173; for a physical device set CAP_SERVER_URL to your LAN IP.'
+    );
   }
 
   log('Live reload is active. Press Ctrl+C to stop the dev server.');
