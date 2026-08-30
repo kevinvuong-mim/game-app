@@ -147,7 +147,7 @@ eventBus.emit('analytics', { event: AnalyticsEvents.SESSION_START });
 | analytics     | Local    | Provider interface — Console + Firebase (core)                                                                                                                |
 | advertising   | Local    | AdMob / mock providers, placement state machines (core)                                                                                                       |
 
-\* IAP is client-authoritative in this starter kit (no game-api receipt validation). On native production / missing RevenueCat key, IAP is **disabled** (web still falls back to mock). Product IDs in `iap.config.ts` (`remove_ads`, `coins_10000`) must match App Store / Play / RevenueCat. UI prices use store `priceString` with hardcoded `$0.98` / `$3.98` fallback (`COINS_10000_PRICE` / `REMOVE_ADS_PRICE`). Local feature details: [documents/modules/local-features.md](./documents/modules/local-features.md). Mid-run save: [documents/modules/game-run.md](./documents/modules/game-run.md).
+\* IAP is client-authoritative in this starter kit (no game-api receipt validation). On native production / missing RevenueCat key, IAP is **disabled** (web still falls back to mock). Product IDs in `iap.config.ts` (`remove_ads`, `coins_10000`) must match App Store / Play / RevenueCat. UI prices use store `priceString` with hardcoded `$0.99` / `$3.99` fallback (`COINS_10000_PRICE` / `REMOVE_ADS_PRICE`). Local feature details: [documents/modules/local-features.md](./documents/modules/local-features.md). Mid-run save: [documents/modules/game-run.md](./documents/modules/game-run.md).
 
 ## UI Framework
 

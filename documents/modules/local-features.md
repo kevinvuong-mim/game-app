@@ -19,7 +19,7 @@ Các module dưới đây chạy **offline trên client**. Chúng không gọi `
 - **Boosts** (Shop scene): mua bằng coins → quantity trong inventory; gameplay skill bar đọc qua `shop` từ `@platform/ui` (`boost_hammer`, …). UI gọi `shop.purchase(itemId)` trực tiếp.
 - **Remove ads** (Settings → Hide ads): IAP non-consumable qua `shop.purchase('remove_ads')` → `iap.purchase`. Bật entitlement thì `AdsService.setAdsRemoved(true)` chặn **banner, interstitial, và rewarded** (`DOUBLE_COINS`, `MISSION_WATCH`). Mission `WATCH_AD` ẩn khi ads đã gỡ (trừ lúc đang chờ claim). Client-authoritative trong starter kit (xem README IAP warning).
 - **Coin pack** (Get coins modal trên CoinBar): IAP consumable `coins_10000`; fulfill coins qua `iap:purchase:success` → `shop.fulfillIapProduct`.
-- Giá hiển thị: `iap.getDisplayPrice(productId, fallback)` — ưu tiên `priceString` từ store (RevenueCat/`getProducts`); fallback `COINS_10000_PRICE` (`$0.98`) / `REMOVE_ADS_PRICE` (`$3.98`) trong `iap.config.ts`. `normalizeStorePriceString` bỏ prefix kiểu `US$` → `$`.
+- Giá hiển thị: `iap.getDisplayPrice(productId, fallback)` — ưu tiên `priceString` từ store (RevenueCat/`getProducts`); fallback `COINS_10000_PRICE` (`$0.99`) / `REMOVE_ADS_PRICE` (`$3.99`) trong `iap.config.ts`. `normalizeStorePriceString` bỏ prefix kiểu `US$` → `$`.
 - Already-owned / store `PRODUCT_ALREADY_PURCHASED`: grant entitlement + success (không toast lỗi). Cancel → `ShopPurchaseResult.cancelled` (UI không toast lỗi).
 - Navigate/back bị chặn khi `shop.isPurchaseInFlight()` / `iap.isPurchasing()` / overlay Get-coins đang mua (`BasePanelScene`, Settings).
 - Restore: Settings modal; skip consumables; `iap:restore:success` → ads sync.
