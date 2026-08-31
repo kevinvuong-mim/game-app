@@ -17,6 +17,10 @@ class SaveService {
   private hydrated = false;
   private writeChain: Promise<void> = Promise.resolve();
 
+  isHydrated(): boolean {
+    return this.hydrated;
+  }
+
   /**
    * Persist platform progress. Concurrent callers coalesce into one durable write
    * and every `await saveLocal()` waits until that write (including coalesced

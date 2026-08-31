@@ -10,6 +10,8 @@ interface UserState {
 
 interface CurrencyState {
   coins: number;
+  /** Consumable IAP transaction ids already applied to `coins` (same save blob). */
+  appliedConsumableTxIds: string[];
 }
 
 interface InventoryItem {
@@ -64,7 +66,6 @@ export const DEFAULT_STATE: PlatformState = {
     soundEnabled: true,
     musicEnabled: true,
   },
-  currency: { coins: 0 },
   inventory: { items: {} },
   user: {
     id: '',
@@ -80,4 +81,5 @@ export const DEFAULT_STATE: PlatformState = {
     unlockedFeatures: [],
     lastRatePromptGamesPlayed: 0,
   },
+  currency: { coins: 0, appliedConsumableTxIds: [] },
 };

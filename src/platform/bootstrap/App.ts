@@ -120,6 +120,10 @@ class App {
       deepLinkService.bind(events)
     );
 
+    void iap.settlePendingConsumables().catch((error) => {
+      logger.warn('[App] IAP pending consumable settle failed', error);
+    });
+
     // Native: ATT → Notifications → UMP (non-blocking for game shell).
     // Web / ads-only paths still init ads without the notification step.
     void this.runPrivacyPromptSequence().catch((error) => {

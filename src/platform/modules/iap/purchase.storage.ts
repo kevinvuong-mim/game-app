@@ -4,16 +4,25 @@ import type { StoredEntitlements } from './iap.types';
 import { IAP_STORAGE_KEY, IAP_CONSUMABLE_TX_KEY } from './iap.config';
 
 const STORAGE_VERSION = 1;
+const MAX_COMPLETED_TX_IDS = 500;
+const CONSUMABLE_STORE_VERSION = 2;
+
+export interface PendingConsumableGrant {
+  productId: string;
+  transactionId: string;
+}
 
 interface ConsumableTxStore {
   version: number;
   updatedAt: number;
   transactionIds: string[];
+  pending: PendingConsumableGrant[];
 }
 
 export class PurchaseStorage {
   private cache: StoredEntitlements | null = null;
-  private consumableTxIds: Set<string> | null = null;
+  private consumableStore: ConsumableTxStore | null = null;
+  private consumableWriteChain: Promise<void> = Promise.resolve();
 
   async load(): Promise<string[]> {
     if (this.cache) {
@@ -57,31 +66,118 @@ export class PurchaseStorage {
     await this.save([...current, entitlement]);
   }
 
-  /** Returns false if this transaction was already recorded (idempotent claim). */
-  async recordConsumableTransaction(transactionId: string): Promise<boolean> {
-    const ids = await this.loadConsumableTxIds();
-    if (ids.has(transactionId)) return false;
-    ids.add(transactionId);
-    this.consumableTxIds = ids;
+  /** Queue a paid consumable so a crash before wallet persist can still grant on settle. */
+  async addPendingGrant(transactionId: string, productId: string): Promise<void> {
+    const txId = transactionId.trim();
+    const catalogId = productId.trim();
+    if (!txId || !catalogId) return;
 
-    const durable = storage.getDurableProviderType();
-    const payload: ConsumableTxStore = {
-      version: STORAGE_VERSION,
-      transactionIds: [...ids],
-      updatedAt: Date.now(),
+    await this.withConsumableWriteLock(async () => {
+      const store = await this.loadConsumableStore();
+      if (store.transactionIds.includes(txId)) return;
+      if (store.pending.some((grant) => grant.transactionId === txId)) return;
+      store.pending.push({ transactionId: txId, productId: catalogId });
+      await this.persistConsumableStore(store);
+    });
+  }
+
+  /** Drop pending and remember the transaction so Restore cannot replay it. */
+  async completeGrant(transactionId: string): Promise<void> {
+    const txId = transactionId.trim();
+    if (!txId) return;
+
+    await this.withConsumableWriteLock(async () => {
+      const store = await this.loadConsumableStore();
+      store.pending = store.pending.filter((grant) => grant.transactionId !== txId);
+      if (!store.transactionIds.includes(txId)) {
+        store.transactionIds.push(txId);
+        if (store.transactionIds.length > MAX_COMPLETED_TX_IDS) {
+          store.transactionIds = store.transactionIds.slice(-MAX_COMPLETED_TX_IDS);
+        }
+      }
+      await this.persistConsumableStore(store);
+    });
+  }
+
+  async listPendingGrants(): Promise<PendingConsumableGrant[]> {
+    const store = await this.loadConsumableStore();
+    return store.pending.map((grant) => ({ ...grant }));
+  }
+
+  private withConsumableWriteLock<T>(op: () => Promise<T>): Promise<T> {
+    const run = this.consumableWriteChain.then(op, op);
+    this.consumableWriteChain = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  private async loadConsumableStore(): Promise<ConsumableTxStore> {
+    if (!this.consumableStore) {
+      const durable = storage.getDurableProviderType();
+      const data = await storage.load<Partial<ConsumableTxStore>>(IAP_CONSUMABLE_TX_KEY, durable);
+      this.consumableStore = normalizeConsumableStore(data);
+    }
+
+    return {
+      version: this.consumableStore.version,
+      updatedAt: this.consumableStore.updatedAt,
+      transactionIds: [...this.consumableStore.transactionIds],
+      pending: this.consumableStore.pending.map((grant) => ({ ...grant })),
     };
-    await storage.save(IAP_CONSUMABLE_TX_KEY, payload, durable);
-    return true;
   }
 
-  private async loadConsumableTxIds(): Promise<Set<string>> {
-    if (this.consumableTxIds) return this.consumableTxIds;
-
+  private async persistConsumableStore(store: ConsumableTxStore): Promise<void> {
+    const payload: ConsumableTxStore = {
+      version: CONSUMABLE_STORE_VERSION,
+      updatedAt: Date.now(),
+      transactionIds: store.transactionIds,
+      pending: store.pending,
+    };
+    this.consumableStore = payload;
     const durable = storage.getDurableProviderType();
-    const data = await storage.load<ConsumableTxStore>(IAP_CONSUMABLE_TX_KEY, durable);
-    this.consumableTxIds = new Set(data?.transactionIds ?? []);
-    return this.consumableTxIds;
+    await storage.save(IAP_CONSUMABLE_TX_KEY, payload, durable);
   }
+}
+
+function normalizeConsumableStore(data: Partial<ConsumableTxStore> | null): ConsumableTxStore {
+  const transactionIds = Array.isArray(data?.transactionIds)
+    ? uniqueStrings(data.transactionIds)
+    : [];
+  const pending = Array.isArray(data?.pending) ? sanitizePendingGrants(data.pending) : [];
+
+  return {
+    version: CONSUMABLE_STORE_VERSION,
+    updatedAt: data?.updatedAt ?? Date.now(),
+    transactionIds,
+    pending,
+  };
+}
+
+function sanitizePendingGrants(pending: PendingConsumableGrant[]): PendingConsumableGrant[] {
+  const seen = new Set<string>();
+  const grants: PendingConsumableGrant[] = [];
+  for (const grant of pending) {
+    if (!grant || typeof grant !== 'object') continue;
+    const transactionId = typeof grant.transactionId === 'string' ? grant.transactionId.trim() : '';
+    const productId = typeof grant.productId === 'string' ? grant.productId.trim() : '';
+    if (!transactionId || !productId || seen.has(transactionId)) continue;
+    seen.add(transactionId);
+    grants.push({ transactionId, productId });
+  }
+  return grants;
+}
+
+function uniqueStrings(values: unknown[]): string[] {
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    if (typeof value !== 'string' || value.length === 0 || seen.has(value)) continue;
+    seen.add(value);
+    unique.push(value);
+  }
+  return unique;
 }
 
 export const purchaseStorage = new PurchaseStorage();

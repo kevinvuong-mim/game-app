@@ -28,8 +28,9 @@ export interface ShopPurchaseResult {
 }
 
 class ShopService {
-  private items: ShopItem[] = catalog.items as ShopItem[];
   private purchaseInFlight = false;
+  private fulfillChain: Promise<void> = Promise.resolve();
+  private items: ShopItem[] = catalog.items as ShopItem[];
 
   getItems(type?: ShopItemType): ShopItem[] {
     if (!type) return this.items;
@@ -97,7 +98,6 @@ class ShopService {
         const result = await iap.purchase(product);
 
         if (result.success) {
-          // Coin packs are fulfilled via iap:purchase:success (also covers timeout recovery).
           eventBus.emit('shop:purchase', { itemId, price: item.price });
           return { success: true, cancelled: false };
         }
@@ -128,32 +128,71 @@ class ShopService {
     }
   }
 
-  /** Grant coin packs after a successful consumable IAP purchase. */
-  fulfillIapProduct(productId: string): void {
-    const item = this.items.find((entry) => {
+  /**
+   * Grant a coin pack once per store transaction. Awaits durable save so a crash
+   * cannot record the tx as granted without the coins.
+   */
+  async fulfillIapProduct(productId: string, transactionId: string): Promise<boolean> {
+    const run = this.fulfillChain.then(() =>
+      this.fulfillIapProductUnlocked(productId, transactionId)
+    );
+    this.fulfillChain = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  private async fulfillIapProductUnlocked(
+    productId: string,
+    transactionId: string
+  ): Promise<boolean> {
+    const txId = transactionId.trim();
+    if (!txId) {
+      logger.error('[Shop] Refusing consumable grant without transactionId', { productId });
+      return false;
+    }
+
+    if (!saveService.isHydrated()) {
+      throw new Error('Cannot fulfill IAP before save hydrate');
+    }
+
+    const item = this.findIapCatalogItem(productId);
+    if (!item) {
+      logger.error('[Shop] IAP product not in catalog', { productId });
+      return false;
+    }
+    if (item.type !== 'coins') {
+      return true;
+    }
+
+    const amount = item.coinAmount ?? 0;
+    if (amount <= 0) {
+      logger.warn(`[Shop] Coin pack missing coinAmount: ${item.id}`);
+      return false;
+    }
+
+    const newlyGranted = usePlatformStore.getState().applyConsumableGrant(txId, amount);
+    await saveService.saveLocal();
+    if (newlyGranted) {
+      logger.info('[Shop] Granted IAP coins', { productId, transactionId: txId, amount });
+    }
+
+    return true;
+  }
+
+  private findIapCatalogItem(productId: string): ShopItem | undefined {
+    return this.items.find((entry) => {
       if (entry.id === productId) return true;
       if (!entry.productKey) return false;
       return getProductByKey(entry.productKey).id === productId;
     });
-    if (item?.type === 'coins') {
-      this.grantCoins(item);
-    }
   }
 
   private grantItem(item: ShopItem): void {
     if (item.type === 'boost') {
       usePlatformStore.getState().addItem(item.id, 1);
     }
-  }
-
-  private grantCoins(item: ShopItem): void {
-    const amount = item.coinAmount ?? 0;
-    if (amount <= 0) {
-      logger.warn(`[Shop] Coin pack missing coinAmount: ${item.id}`);
-      return;
-    }
-    usePlatformStore.getState().addCoins(amount);
-    void saveService.saveLocal();
   }
 }
 

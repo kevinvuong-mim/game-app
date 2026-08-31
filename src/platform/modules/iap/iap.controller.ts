@@ -21,6 +21,9 @@ function syncAdsWithEntitlements(): void {
  * Wires IAP entitlements to ads and shop grants. Call once during App.init().
  */
 export function bindIapController(events: IEventBus): () => void {
+  iap.setConsumableFulfiller((productId, transactionId) =>
+    shop.fulfillIapProduct(productId, transactionId)
+  );
   syncAdsWithEntitlements();
 
   const unsubscribers = [
@@ -28,18 +31,19 @@ export function bindIapController(events: IEventBus): () => void {
       syncAdsWithEntitlements();
     }),
 
-    events.on(IAP_EVENTS.PURCHASE_SUCCESS, ({ productId }) => {
-      shop.fulfillIapProduct(productId);
-    }),
-
     events.on(IAP_EVENTS.PURCHASE_RESTORED, () => {
       // Re-sync even when entitlements were already known (no ENTITLEMENT_CHANGED).
       syncAdsWithEntitlements();
       events.emit('shop:restore', undefined);
     }),
+
+    events.on('app:resume', () => {
+      void iap.settlePendingConsumables().catch(() => undefined);
+    }),
   ];
 
   return () => {
+    iap.setConsumableFulfiller(null);
     for (const unsub of unsubscribers) unsub();
   };
 }

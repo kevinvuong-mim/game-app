@@ -19,6 +19,7 @@ import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { getConfig } from '@platform/core/config';
 import { MockIapAdapter } from './iap.mock-adapter';
+import { saveService } from '@platform/modules/save';
 import type { IEventBus } from '@platform/core/events';
 import { purchaseStorage, type PurchaseStorage } from './purchase.storage';
 
@@ -26,6 +27,8 @@ interface IapServiceDeps {
   emit?: IEventBus['emit'];
   storage?: PurchaseStorage;
 }
+
+export type ConsumableFulfiller = (productId: string, transactionId: string) => Promise<boolean>;
 
 class IapService {
   private readonly storage: PurchaseStorage;
@@ -35,11 +38,14 @@ class IapService {
   private enabled = true;
   private restoring = false;
   private purchasing = false;
+  private settleDirty = false;
   private authorityWarningLogged = false;
   private entitlements = new Set<string>();
   private provider: IAPProvider | null = null;
   private initPromise: Promise<void> | null = null;
+  private settlePromise: Promise<void> | null = null;
   private products = new Map<string, ProviderProduct>();
+  private consumableFulfiller: ConsumableFulfiller | null = null;
 
   constructor(deps: IapServiceDeps = {}) {
     this.storage = deps.storage ?? purchaseStorage;
@@ -52,6 +58,37 @@ class IapService {
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
+  }
+
+  /** Bound from `bindIapController` so this module does not import shop. */
+  setConsumableFulfiller(fulfiller: ConsumableFulfiller | null): void {
+    this.consumableFulfiller = fulfiller;
+  }
+
+  /**
+   * Replay coin packs that were paid but not durably granted (process death
+   * between store success and wallet save). Safe to call after `loadLocal`.
+   */
+  async settlePendingConsumables(): Promise<void> {
+    if (this.settlePromise) {
+      this.settleDirty = true;
+      return this.settlePromise;
+    }
+
+    this.settlePromise = (async () => {
+      try {
+        await this.runSettlePendingConsumables();
+      } finally {
+        const rerun = this.settleDirty;
+        this.settlePromise = null;
+        this.settleDirty = false;
+        if (rerun) {
+          await this.settlePendingConsumables();
+        }
+      }
+    })();
+
+    return this.settlePromise;
   }
 
   isEnabled(): boolean {
@@ -226,23 +263,20 @@ class IapService {
     const matched = getProductById(providerPurchase.productId) ?? product;
 
     if (matched.type === 'consumable') {
-      // Claim the transaction id first so a crash after fulfill cannot double-grant
-      // on restore / timeout recovery. A crash between claim and fulfill loses one
-      // grant (acceptable) instead of paying once and receiving coins twice.
-      const claimed = await this.storage.recordConsumableTransaction(
-        providerPurchase.transactionId
-      );
-      if (!claimed) {
-        logger.info('[IAP] Consumable transaction already granted', {
+      const transactionId = resolveConsumableTransactionId(providerPurchase, matched.id);
+      const granted = await this.fulfillConsumablePurchase(matched.id, transactionId);
+      if (!granted) {
+        logger.warn('[IAP] Consumable pending — wallet grant will retry on settle', {
           productId: matched.id,
-          transactionId: providerPurchase.transactionId,
+          transactionId,
         });
-        return { success: true, cancelled: false, entitlement: matched.entitlement };
+        void this.settlePendingConsumables();
       }
 
       this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
-        productId: providerPurchase.productId,
+        productId: providerPurchase.productId || matched.id,
         entitlement: matched.entitlement,
+        transactionId,
       });
     } else {
       await this.grantEntitlement(matched.entitlement);
@@ -514,6 +548,62 @@ class IapService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  private async fulfillConsumablePurchase(
+    productId: string,
+    transactionId: string
+  ): Promise<boolean> {
+    await this.storage.addPendingGrant(transactionId, productId);
+
+    if (!this.consumableFulfiller) {
+      logger.error('[IAP] Consumable fulfiller not bound — grant queued');
+      return false;
+    }
+
+    try {
+      const granted = await this.consumableFulfiller(productId, transactionId);
+      if (granted) {
+        await this.storage.completeGrant(transactionId);
+      }
+      return granted;
+    } catch (error) {
+      logger.warn('[IAP] Consumable fulfill failed — pending kept for settle', {
+        productId,
+        transactionId,
+        error,
+      });
+      return false;
+    }
+  }
+
+  private async runSettlePendingConsumables(): Promise<void> {
+    if (!saveService.isHydrated()) {
+      logger.warn('[IAP] Skipping consumable settle before save hydrate');
+      return;
+    }
+    if (!this.consumableFulfiller) {
+      return;
+    }
+
+    do {
+      this.settleDirty = false;
+      const pending = await this.storage.listPendingGrants();
+      for (const grant of pending) {
+        try {
+          const ok = await this.consumableFulfiller(grant.productId, grant.transactionId);
+          if (ok) {
+            await this.storage.completeGrant(grant.transactionId);
+            logger.info('[IAP] Settled pending consumable', grant);
+          }
+        } catch (error) {
+          logger.warn('[IAP] Pending consumable settle failed — will retry', {
+            ...grant,
+            error,
+          });
+        }
+      }
+    } while (this.settleDirty);
+  }
+
   private logClientAuthorityWarning(): void {
     if (this.authorityWarningLogged || !this.isEnabled()) {
       return;
@@ -524,6 +614,12 @@ class IapService {
       '[IAP] Entitlements are client-authoritative in this starter kit; add backend validation before treating remove_ads as tamper-resistant.'
     );
   }
+}
+
+function resolveConsumableTransactionId(purchase: ProviderPurchase, productId: string): string {
+  const raw = purchase.transactionId?.trim();
+  if (raw) return raw;
+  return `${productId}:${purchase.purchaseTime}`;
 }
 
 export const iap = new IapService();

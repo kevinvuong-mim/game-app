@@ -10,6 +10,8 @@ export interface PlatformStore extends PlatformState {
   // Currency
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
+  /** Apply a consumable IAP grant once per transaction id. Returns false if already applied. */
+  applyConsumableGrant: (transactionId: string, amount: number) => boolean;
 
   // Inventory
   addItem: (id: string, quantity?: number) => void;
@@ -52,6 +54,28 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
     if (currency.coins < amount) return false;
     set((s) => ({
       currency: { ...s.currency, coins: s.currency.coins - amount },
+    }));
+    return true;
+  },
+
+  applyConsumableGrant: (transactionId, amount) => {
+    const txId = transactionId.trim();
+    if (!txId || amount <= 0) return false;
+    const applied = get().currency.appliedConsumableTxIds ?? [];
+    if (applied.includes(txId)) return false;
+
+    const nextIds = [...applied, txId];
+    const capped =
+      nextIds.length > MAX_APPLIED_CONSUMABLE_TX_IDS
+        ? nextIds.slice(-MAX_APPLIED_CONSUMABLE_TX_IDS)
+        : nextIds;
+
+    set((s) => ({
+      currency: {
+        ...s.currency,
+        coins: s.currency.coins + amount,
+        appliedConsumableTxIds: capped,
+      },
     }));
     return true;
   },
@@ -146,14 +170,33 @@ export const usePlatformStore = createStore<PlatformStore>()((set, get) => ({
   reset: () => set(DEFAULT_STATE),
 }));
 
+const MAX_APPLIED_CONSUMABLE_TX_IDS = 500;
+
+function sanitizeAppliedConsumableTxIds(ids: unknown): string[] {
+  if (!Array.isArray(ids)) return [];
+
+  const unique: string[] = [];
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (typeof id !== 'string' || id.length === 0 || seen.has(id)) continue;
+    seen.add(id);
+    unique.push(id);
+  }
+
+  return unique.length > MAX_APPLIED_CONSUMABLE_TX_IDS
+    ? unique.slice(-MAX_APPLIED_CONSUMABLE_TX_IDS)
+    : unique;
+}
+
 function sanitizeCurrency(
   currency: PlatformState['currency'] | undefined
 ): PlatformState['currency'] {
+  const appliedConsumableTxIds = sanitizeAppliedConsumableTxIds(currency?.appliedConsumableTxIds);
   const coins = currency?.coins;
   if (typeof coins !== 'number' || !Number.isFinite(coins) || coins < 0) {
-    return { coins: 0 };
+    return { coins: 0, appliedConsumableTxIds };
   }
-  return { coins: Math.floor(coins) };
+  return { coins: Math.floor(coins), appliedConsumableTxIds };
 }
 
 function sanitizeInventory(

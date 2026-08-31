@@ -10,6 +10,7 @@ export const IAP_EVENTS = {
 export interface IapPurchaseSuccessPayload {
   productId: string;
   entitlement: string;
+  transactionId?: string;
 }
 
 export interface IapPurchaseFailedPayload {
