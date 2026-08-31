@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 import {
   i18n,
   guest,
@@ -23,7 +25,6 @@ import {
   registerIapProvider,
   registerAnalyticsProviders,
 } from '@platform/bootstrap/providers';
-import { Capacitor } from '@capacitor/core';
 import { iap } from '@platform/modules/iap';
 import { logger } from '@platform/core/error';
 import { apiClient } from '@platform/core/api';

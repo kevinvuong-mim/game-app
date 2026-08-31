@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 import {
   NOTIFICATION_CHANNEL,
   DAILY_REWARD_REMINDER_HOUR,
@@ -8,7 +10,6 @@ import {
   shouldSkipTodayDailyRewardReminder,
 } from './notification.model';
 import { t } from '@platform/modules/i18n';
-import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { dailyRewards } from '@platform/modules/daily-reward';
 import { ensureAndroidNotificationChannel } from './android-notification-channel';

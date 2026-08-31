@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 import {
   trackAdReward,
   trackGameOver,
@@ -6,7 +8,6 @@ import {
   trackSessionEnd,
   trackMissionComplete,
 } from '@platform/core/analytics/events';
-import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { services } from '@platform/core/services';
 import { saveService } from '@platform/modules/save';

@@ -1,7 +1,8 @@
+import type { PluginListenerHandle } from '@capacitor/core';
+
 import { logger } from '@platform/core/error';
 import { guest } from '@platform/modules/guest';
 import type { IEventBus } from '@platform/core/events';
-import type { PluginListenerHandle } from '@capacitor/core';
 import { gameSync, type GameSyncService } from './game-sync.service';
 
 /**

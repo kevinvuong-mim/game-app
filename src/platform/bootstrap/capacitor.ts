@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { services } from '@platform/core/services';

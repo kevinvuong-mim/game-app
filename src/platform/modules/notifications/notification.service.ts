@@ -1,10 +1,11 @@
+import { Capacitor } from '@capacitor/core';
+
 import {
   NOTIFICATION_TYPES,
   resolveNotificationRoute,
   type PushNotificationPayload,
 } from './notification.model';
 import { t } from '@platform/modules/i18n';
-import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { eventBus } from '@platform/core/events';
 import { getConfig } from '@platform/core/config';

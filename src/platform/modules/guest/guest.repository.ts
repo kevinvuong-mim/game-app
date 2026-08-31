@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 import {
   GUEST_STORAGE_KEY,
   type GuestCredentials,
@@ -6,7 +8,6 @@ import {
   isValidGuestCredentials,
   type GuestProfilePayload,
 } from './guest.model';
-import { Capacitor } from '@capacitor/core';
 import { logger } from '@platform/core/error';
 import { storage } from '@platform/core/storage';
 import { getConfig } from '@platform/core/config';

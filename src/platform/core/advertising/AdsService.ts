@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 import type {
   AdFormat,
   AdPlacement,
@@ -7,7 +9,6 @@ import type {
   AdsProviderConfig,
 } from './types';
 import { logger } from '../error';
-import { Capacitor } from '@capacitor/core';
 import { createAdsProvider } from './providers';
 import { getConfig, getEnvironment } from '../config';
 import { AdStateMachine, BannerStateMachine } from './AdStateMachine';

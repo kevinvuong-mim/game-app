@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 import {
   type DeviceLocale,
   type DevicePlatform,
@@ -6,7 +8,6 @@ import {
   normalizeNotificationState,
   createDefaultNotificationState,
 } from './notification.model';
-import { Capacitor } from '@capacitor/core';
 import { ApiError } from '@platform/core/api';
 import { storage } from '@platform/core/storage';
 import type { ApiEnvelope } from '@platform/core/api';

@@ -1,7 +1,8 @@
+import type { PluginListenerHandle } from '@capacitor/core';
+
 import { logger } from '@platform/core/error';
 import type { IEventBus } from '@platform/core/events';
 import { guest, type GuestService } from './guest.service';
-import type { PluginListenerHandle } from '@capacitor/core';
 
 /**
  * Flushes pending guest profile changes when connectivity returns.

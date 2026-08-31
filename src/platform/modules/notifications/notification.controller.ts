@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+
 import { logger } from '@platform/core/error';
 import { guest } from '@platform/modules/guest';
 import { getConfig } from '@platform/core/config';

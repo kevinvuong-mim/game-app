@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+
 import { logger } from '@platform/core/error';
 import { services } from '@platform/core/services';
 import { iap, createIapProvider } from '@platform/modules/iap';
