@@ -11,6 +11,7 @@ import {
   getProductById,
   IAP_PURCHASE_TIMEOUT_MS,
   IAP_TIMEOUT_RECOVERY_MS,
+  IAP_RECOVERY_PURCHASE_SKEW_MS,
   normalizeStorePriceString,
 } from './iap.config';
 import { IapError } from './iap.types';
@@ -20,7 +21,13 @@ import { eventBus } from '@platform/core/events';
 import { getConfig } from '@platform/core/config';
 import { MockIapAdapter } from './iap.mock-adapter';
 import type { IEventBus } from '@platform/core/events';
+import { saveService } from '@platform/modules/save';
 import { purchaseStorage, type PurchaseStorage } from './purchase.storage';
+
+interface CompletePurchaseResult extends PurchaseResult {
+  /** False when this consumable tx was already fulfilled — recovery must keep waiting. */
+  newlyFulfilled: boolean;
+}
 
 interface IapServiceDeps {
   emit?: IEventBus['emit'];
@@ -42,6 +49,7 @@ class IapService {
   private products = new Map<string, ProviderProduct>();
   /** Guest id to RevenueCat-logIn after init when `onReady` raced ahead of `ready`. */
   private pendingGuestLink: string | null = null;
+  private replayPendingPromise: Promise<void> | null = null;
 
   constructor(deps: IapServiceDeps = {}) {
     this.storage = deps.storage ?? purchaseStorage;
@@ -191,6 +199,7 @@ class IapService {
     this.purchasing = true;
     logger.info('[IAP] Purchase started', { productId: product.id });
 
+    const purchaseStartedAt = Date.now();
     const purchasePromise = this.provider.purchase(product.id);
 
     try {
@@ -212,7 +221,11 @@ class IapService {
 
       // Store purchase may still complete after a client timeout — keep waiting + poll.
       if (result.error && /timed out/i.test(result.error)) {
-        const recovered = await this.recoverAfterTimeout(product, purchasePromise);
+        const recovered = await this.recoverAfterTimeout(
+          product,
+          purchasePromise,
+          purchaseStartedAt
+        );
         if (recovered) {
           return { success: true, cancelled: false, entitlement: product.entitlement };
         }
@@ -230,31 +243,104 @@ class IapService {
     }
   }
 
+  /**
+   * Replay consumable grants that crashed after claim and before coins were durable.
+   * Call after `loadLocal` and after `PURCHASE_SUCCESS` is wired (see bindIapController).
+   */
+  async replayPendingConsumables(): Promise<void> {
+    if (this.replayPendingPromise) {
+      return this.replayPendingPromise;
+    }
+
+    this.replayPendingPromise = this.doReplayPendingConsumables().finally(() => {
+      this.replayPendingPromise = null;
+    });
+    return this.replayPendingPromise;
+  }
+
+  private async doReplayPendingConsumables(): Promise<void> {
+    const pending = await this.storage.getPendingConsumables();
+    if (pending.length === 0) return;
+
+    logger.info('[IAP] Replaying pending consumable fulfillments', { count: pending.length });
+
+    for (const item of pending) {
+      const product = getProductById(item.productId);
+      this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
+        productId: item.productId,
+        entitlement: product?.entitlement ?? item.productId,
+      });
+      try {
+        await saveService.saveLocal();
+        if (!saveService.isHydrated()) {
+          logger.warn('[IAP] Save not hydrated — leaving pending consumable for later replay', {
+            productId: item.productId,
+            transactionId: item.transactionId,
+          });
+          return;
+        }
+        await this.storage.finishConsumableFulfillment(item.transactionId);
+      } catch (error) {
+        logger.error('[IAP] Pending consumable replay failed — will retry next launch', {
+          productId: item.productId,
+          transactionId: item.transactionId,
+          error,
+        });
+        return;
+      }
+    }
+  }
+
   private async completePurchase(
     product: ProductDefinition,
     providerPurchase: ProviderPurchase
-  ): Promise<PurchaseResult> {
+  ): Promise<CompletePurchaseResult> {
     const matched = getProductById(providerPurchase.productId) ?? product;
+    const success = {
+      success: true as const,
+      cancelled: false,
+      entitlement: matched.entitlement,
+    };
 
     if (matched.type === 'consumable') {
-      // Claim the transaction id first so a crash after fulfill cannot double-grant
-      // on restore / timeout recovery. A crash between claim and fulfill loses one
-      // grant (acceptable) instead of paying once and receiving coins twice.
-      const claimed = await this.storage.recordConsumableTransaction(
-        providerPurchase.transactionId
+      const phase = await this.storage.beginConsumableFulfillment(
+        providerPurchase.transactionId,
+        matched.id
       );
-      if (!claimed) {
+
+      if (phase === 'granted' || phase === 'already_pending') {
         logger.info('[IAP] Consumable transaction already granted', {
           productId: matched.id,
           transactionId: providerPurchase.transactionId,
+          phase,
         });
-        return { success: true, cancelled: false, entitlement: matched.entitlement };
+        return { ...success, newlyFulfilled: false };
       }
 
       this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
         productId: providerPurchase.productId,
         entitlement: matched.entitlement,
       });
+
+      try {
+        // Wait until coins are on disk before marking granted — otherwise a kill
+        // after claim and before save permanently drops a paid pack.
+        await saveService.saveLocal();
+        if (!saveService.isHydrated()) {
+          logger.warn('[IAP] Save not hydrated — leaving consumable pending for replay', {
+            productId: matched.id,
+            transactionId: providerPurchase.transactionId,
+          });
+        } else {
+          await this.storage.finishConsumableFulfillment(providerPurchase.transactionId);
+        }
+      } catch (error) {
+        logger.error('[IAP] Consumable grant persist failed — left pending for replay', {
+          productId: matched.id,
+          transactionId: providerPurchase.transactionId,
+          error,
+        });
+      }
     } else {
       await this.grantEntitlement(matched.entitlement);
       this.emit(IAP_EVENTS.PURCHASE_SUCCESS, {
@@ -269,13 +355,14 @@ class IapService {
       type: matched.type,
     });
 
-    return { success: true, cancelled: false, entitlement: matched.entitlement };
+    return { ...success, newlyFulfilled: true };
   }
 
   /** After a client timeout, await the store promise and poll purchase history. */
   private async recoverAfterTimeout(
     product: ProductDefinition,
-    purchasePromise: Promise<ProviderPurchase>
+    purchasePromise: Promise<ProviderPurchase>,
+    purchaseStartedAt: number
   ): Promise<boolean> {
     if (!this.provider) return false;
 
@@ -303,6 +390,7 @@ class IapService {
           await this.completePurchase(product, settled);
           logger.info('[IAP] Recovered purchase after timeout (provider promise)', {
             productId: product.id,
+            transactionId: settled.transactionId,
           });
           return true;
         }
@@ -323,8 +411,19 @@ class IapService {
         if (product.type === 'consumable') {
           const withinMs = IAP_PURCHASE_TIMEOUT_MS + IAP_TIMEOUT_RECOVERY_MS;
           const recent = await this.provider.findRecentPurchase?.(product.id, withinMs);
-          if (recent?.transactionId) {
-            await this.completePurchase(product, recent);
+          if (
+            recent?.transactionId &&
+            this.isPurchaseFromCurrentAttempt(recent, purchaseStartedAt)
+          ) {
+            const result = await this.completePurchase(product, recent);
+            if (!result.newlyFulfilled) {
+              logger.info('[IAP] Timeout recovery: recent purchase already granted — waiting', {
+                productId: product.id,
+                transactionId: recent.transactionId,
+              });
+              continue;
+            }
+
             logger.info('[IAP] Recovered consumable after purchase timeout', {
               productId: product.id,
               transactionId: recent.transactionId,
@@ -358,6 +457,14 @@ class IapService {
       logger.warn('[IAP] Timeout recovery failed', error);
       return false;
     }
+  }
+
+  /** Drop store history from before this purchase attempt (previous pack of the same product). */
+  private isPurchaseFromCurrentAttempt(
+    purchase: ProviderPurchase,
+    purchaseStartedAt: number
+  ): boolean {
+    return purchase.purchaseTime >= purchaseStartedAt - IAP_RECOVERY_PURCHASE_SKEW_MS;
   }
 
   async restore(): Promise<RestoreResult> {

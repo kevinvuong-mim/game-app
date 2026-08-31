@@ -1,5 +1,6 @@
 import { iap } from './iap.service';
 import { IAP_EVENTS } from './iap.events';
+import { logger } from '@platform/core/error';
 import { shop } from '@platform/modules/shop';
 import { services } from '@platform/core/services';
 import { ENTITLEMENT_REMOVE_ADS } from './iap.config';
@@ -38,6 +39,10 @@ export function bindIapController(events: IEventBus): () => void {
       events.emit('shop:restore', undefined);
     }),
   ];
+
+  void iap.replayPendingConsumables().catch((error) => {
+    logger.warn('[IAP] Pending consumable replay failed', error);
+  });
 
   return () => {
     for (const unsub of unsubscribers) unsub();

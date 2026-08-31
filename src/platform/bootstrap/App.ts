@@ -128,6 +128,9 @@ class App {
     }
     if (config().iapEnabled) {
       this.controllerUnsubscribers.push(bindIapController(events));
+      await iap.replayPendingConsumables().catch((error) => {
+        logger.warn('[App] Pending IAP replay failed', error);
+      });
     }
 
     // Native: ATT → Notifications → UMP (non-blocking for game shell).

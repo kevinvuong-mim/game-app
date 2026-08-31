@@ -38,10 +38,16 @@ export const IAP_PURCHASE_TIMEOUT_MS = 60_000;
 /** Extra window after client timeout to poll / await the store purchase. */
 export const IAP_TIMEOUT_RECOVERY_MS = 90_000;
 
+/**
+ * Store `purchaseTime` may lag local `Date.now()`. Recovery ignores history
+ * older than this attempt started, minus this slack.
+ */
+export const IAP_RECOVERY_PURCHASE_SKEW_MS = 15_000;
+
 /** Dedicated storage key for entitlement persistence. */
 export const IAP_STORAGE_KEY = 'iap-entitlements';
 
-/** Durable set of consumable transaction ids already granted (prevents double-grant). */
+/** Durable consumable tx ids (granted) plus pending fulfillments (claimed, not yet saved). */
 export const IAP_CONSUMABLE_TX_KEY = 'iap-consumable-tx-v1';
 
 export function getProductById(productId: string): ProductDefinition | undefined {

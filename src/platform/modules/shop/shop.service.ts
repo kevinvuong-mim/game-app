@@ -156,6 +156,7 @@ class ShopService {
       return;
     }
     usePlatformStore.getState().addCoins(amount);
+    // Durable persist is awaited by IapService.completePurchase / pending replay.
     void saveService.saveLocal();
   }
 }
